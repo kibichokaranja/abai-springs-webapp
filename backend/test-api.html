@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Connectivity Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        const API_BASE_URL = 'http://localhost:5001/api';
+        const results = document.getElementById('results');
+        
+        async function testAPI() {
+            try {
+                console.log('Testing API connectivity...');
+                
+                // Test products API
+                console.log('Fetching products...');
+                const productsResponse = await fetch(`${API_BASE_URL}/products`);
+                console.log('Products response status:', productsResponse.status);
+                
+                if (!productsResponse.ok) {
+                    throw new Error(`Products API failed: ${productsResponse.status}`);
+                }
+                
+                const productsData = await productsResponse.json();
+                console.log('Products data:', productsData);
+                
+                // Test outlets API
+                console.log('Fetching outlets...');
+                const outletsResponse = await fetch(`${API_BASE_URL}/outlets`);
+                console.log('Outlets response status:', outletsResponse.status);
+                
+                if (!outletsResponse.ok) {
+                    throw new Error(`Outlets API failed: ${outletsResponse.status}`);
+                }
+                
+                const outletsData = await outletsResponse.json();
+                console.log('Outlets data:', outletsData);
+                
+                results.innerHTML = `
+                    <h2>✅ API Test Results:</h2>
+                    <p><strong>Products API:</strong> SUCCESS</p>
+                    <p>Products count: ${productsData.success ? productsData.data.length : 'N/A'}</p>
+                    <p><strong>Outlets API:</strong> SUCCESS</p>
+                    <p>Outlets count: ${outletsData.success ? outletsData.data.length : 'N/A'}</p>
+                    <h3>Products Data:</h3>
+                    <pre>${JSON.stringify(productsData, null, 2)}</pre>
+                    <h3>Outlets Data:</h3>
+                    <pre>${JSON.stringify(outletsData, null, 2)}</pre>
+                `;
+            } catch (error) {
+                console.error('API Test Error:', error);
+                results.innerHTML = `
+                    <h2>❌ API Test Failed:</h2>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p>This could be due to:</p>
+                    <ul>
+                        <li>CORS policy blocking the request</li>
+                        <li>Server not running on port 5001</li>
+                        <li>Network connectivity issues</li>
+                    </ul>
+                `;
+            }
+        }
+        
+        testAPI();
+    </script>
+</body>
+</html> 

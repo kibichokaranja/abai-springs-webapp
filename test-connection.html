@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Connection Test</title>
+</head>
+<body>
+    <h1>Testing API Connection</h1>
+    <div id="result">Testing...</div>
+    
+    <script>
+        async function testConnection() {
+            try {
+                const response = await fetch('http://localhost:5001/api/products');
+                const data = await response.json();
+                document.getElementById('result').innerHTML = `
+                    <h2>✅ Connection Successful!</h2>
+                    <p>Products found: ${data.data.length}</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <h2>❌ Connection Failed</h2>
+                    <p>Error: ${error.message}</p>
+                `;
+            }
+        }
+        
+        testConnection();
+    </script>
+</body>
+</html> 

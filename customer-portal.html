@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abai Springs - Customer Portal</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo h1 {
+            color: #333;
+            font-size: 28px;
+            margin-left: 15px;
+        }
+
+        .logo i {
+            font-size: 32px;
+            color: #667eea;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-item {
+            padding: 10px 20px;
+            color: #555;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .cart-icon {
+            position: relative;
+            font-size: 20px;
+            color: #667eea;
+            cursor: pointer;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 30px;
+        }
+
+        .products-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title i {
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            background: transparent;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                        linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                        linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 48px;
+        }
+
+        .product-info {
+            padding: 20px;
+        }
+
+        .product-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .product-description {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .product-price {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            overflow: hidden;
+        }
+
+        .quantity-btn {
+            padding: 8px 12px;
+            border: none;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .quantity-btn:hover {
+            background: #e9ecef;
+        }
+
+        .quantity-input {
+            width: 50px;
+            text-align: center;
+            border: none;
+            padding: 8px;
+            font-weight: 600;
+        }
+
+        .add-to-cart-btn {
+            flex: 1;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .add-to-cart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+
+        .cart-section {
+            margin-bottom: 30px;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .cart-item-image {
+            width: 50px;
+            height: 50px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .cart-item-price {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .cart-item-quantity {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cart-total {
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .total-row.final {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .checkout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .order-history {
+            margin-top: 30px;
+        }
+
+        .order-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .order-number {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .order-status {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-delivered {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .order-details {
+            color: #666;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .nav-menu {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <i class="fas fa-tint"></i>
+                <h1>Abai Springs</h1>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active">Products</a>
+                <a href="#" class="nav-item">My Orders</a>
+                <a href="#" class="nav-item">Account</a>
+                <a href="#" class="nav-item">Support</a>
+            </nav>
+            
+            <div class="user-info">
+                <div class="cart-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">3</span>
+                </div>
+                <span>Welcome, John Doe</span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="products-section">
+                <h2 class="section-title">
+                    <i class="fas fa-box"></i>
+                    Our Products
+                </h2>
+                
+                <div class="filters">
+                    <button class="filter-btn active">All</button>
+                    <button class="filter-btn">5L Bottles</button>
+                    <button class="filter-btn">10L Bottles</button>
+                    <button class="filter-btn">20L Bottles</button>
+                    <button class="filter-btn">Small Bottles</button>
+                </div>
+
+                <div class="products-grid">
+                    <div class="product-card">
+                        <div class="product-image">
+                            <i class="fas fa-tint"></i>
+                        </div>
+                        <div class="product-info">
+                            <div class="product-name">5L Premium Water</div>
+                            <div class="product-description">Family-sized premium water with natural minerals</div>
+                            <div class="product-price">$180</div>
+                            <div class="product-actions">
+                                <div class="quantity-controls">
+                                    <button class="quantity-btn" onclick="changeQuantity(this, -1)">-</button>
+                                    <input type="number" class="quantity-input" value="1" min="1">
+                                    <button class="quantity-btn" onclick="changeQuantity(this, 1)">+</button>
+                                </div>
+                                <button class="add-to-cart-btn" onclick="addToCart(this)">
+                                    <i class="fas fa-cart-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="product-card">
+                        <div class="product-image">
+                            <i class="fas fa-tint"></i>
+                        </div>
+                        <div class="product-info">
+                            <div class="product-name">10L Family Pack</div>
+                            <div class="product-description">Large capacity for events and offices</div>
+                            <div class="product-price">$350</div>
+                            <div class="product-actions">
+                                <div class="quantity-controls">
+                                    <button class="quantity-btn" onclick="changeQuantity(this, -1)">-</button>
+                                    <input type="number" class="quantity-input" value="1" min="1">
+                                    <button class="quantity-btn" onclick="changeQuantity(this, 1)">+</button>
+                                </div>
+                                <button class="add-to-cart-btn" onclick="addToCart(this)">
+                                    <i class="fas fa-cart-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="product-card">
+                        <div class="product-image">
+                            <i class="fas fa-tint"></i>
+                        </div>
+                        <div class="product-info">
+                            <div class="product-name">20L Office Pack</div>
+                            <div class="product-description">Perfect for office water dispensers</div>
+                            <div class="product-price">$600</div>
+                            <div class="product-actions">
+                                <div class="quantity-controls">
+                                    <button class="quantity-btn" onclick="changeQuantity(this, -1)">-</button>
+                                    <input type="number" class="quantity-input" value="1" min="1">
+                                    <button class="quantity-btn" onclick="changeQuantity(this, 1)">+</button>
+                                </div>
+                                <button class="add-to-cart-btn" onclick="addToCart(this)">
+                                    <i class="fas fa-cart-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="product-card">
+                        <div class="product-image">
+                            <i class="fas fa-tint"></i>
+                        </div>
+                        <div class="product-info">
+                            <div class="product-name">1L Personal Bottle</div>
+                            <div class="product-description">Perfect for personal hydration</div>
+                            <div class="product-price">$40</div>
+                            <div class="product-actions">
+                                <div class="quantity-controls">
+                                    <button class="quantity-btn" onclick="changeQuantity(this, -1)">-</button>
+                                    <input type="number" class="quantity-input" value="1" min="1">
+                                    <button class="quantity-btn" onclick="changeQuantity(this, 1)">+</button>
+                                </div>
+                                <button class="add-to-cart-btn" onclick="addToCart(this)">
+                                    <i class="fas fa-cart-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="product-card">
+                        <div class="product-image">
+                            <i class="fas fa-tint"></i>
+                        </div>
+                        <div class="product-info">
+                            <div class="product-name">500ml Bottle</div>
+                            <div class="product-description">Premium hydration with natural minerals</div>
+                            <div class="product-price">$25</div>
+                            <div class="product-actions">
+                                <div class="quantity-controls">
+                                    <button class="quantity-btn" onclick="changeQuantity(this, -1)">-</button>
+                                    <input type="number" class="quantity-input" value="1" min="1">
+                                    <button class="quantity-btn" onclick="changeQuantity(this, 1)">+</button>
+                                </div>
+                                <button class="add-to-cart-btn" onclick="addToCart(this)">
+                                    <i class="fas fa-cart-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="cart-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-shopping-cart"></i>
+                        Shopping Cart
+                    </h3>
+                    
+                    <div class="cart-item">
+                        <div class="cart-item-image">
+                            <i class="fas fa-tint"></i>
+                        </div>
+                        <div class="cart-item-info">
+                            <div class="cart-item-name">5L Premium Water</div>
+                            <div class="cart-item-price">$180</div>
+                        </div>
+                        <div class="cart-item-quantity">
+                            <span>2x</span>
+                        </div>
+                    </div>
+
+                    <div class="cart-item">
+                        <div class="cart-item-image">
+                            <i class="fas fa-tint"></i>
+                        </div>
+                        <div class="cart-item-info">
+                            <div class="cart-item-name">1L Personal Bottle</div>
+                            <div class="cart-item-price">$40</div>
+                        </div>
+                        <div class="cart-item-quantity">
+                            <span>1x</span>
+                        </div>
+                    </div>
+
+                    <div class="cart-total">
+                        <div class="total-row">
+                            <span>Subtotal:</span>
+                            <span>$400</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Delivery:</span>
+                            <span>$50</span>
+                        </div>
+                        <div class="total-row final">
+                            <span>Total:</span>
+                            <span>$450</span>
+                        </div>
+                    </div>
+
+                    <button class="checkout-btn">
+                        <i class="fas fa-credit-card"></i>
+                        Proceed to Checkout
+                    </button>
+                </div>
+
+                <div class="order-history">
+                    <h3 class="section-title">
+                        <i class="fas fa-history"></i>
+                        Recent Orders
+                    </h3>
+                    
+                    <div class="order-item">
+                        <div class="order-header">
+                            <span class="order-number">#ORD-1234</span>
+                            <span class="order-status status-delivered">Delivered</span>
+                        </div>
+                        <div class="order-details">
+                            2x 5L Premium Water<br>
+                            Delivered on Aug 12, 2025
+                        </div>
+                    </div>
+
+                    <div class="order-item">
+                        <div class="order-header">
+                            <span class="order-number">#ORD-1235</span>
+                            <span class="order-status status-pending">Pending</span>
+                        </div>
+                        <div class="order-details">
+                            1x 10L Family Pack<br>
+                            Expected delivery: Aug 15, 2025
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function changeQuantity(btn, change) {
+            const input = btn.parentElement.querySelector('.quantity-input');
+            let value = parseInt(input.value) + change;
+            if (value < 1) value = 1;
+            input.value = value;
+        }
+
+        function addToCart(btn) {
+            const card = btn.closest('.product-card');
+            const name = card.querySelector('.product-name').textContent;
+            const price = card.querySelector('.product-price').textContent;
+            const quantity = card.querySelector('.quantity-input').value;
+            
+            alert(`Added to cart: ${quantity}x ${name} - ${price}`);
+            
+            // Reset quantity to 1
+            card.querySelector('.quantity-input').value = 1;
+        }
+
+        // Filter functionality
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Navigation functionality
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+

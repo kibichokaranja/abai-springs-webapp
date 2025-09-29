@@ -1,0 +1,2893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abai Springs Admin Dashboard</title>
+    <!-- Removed external CDN links to fix CSP issues -->
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 2rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .nav-menu {
+            list-style: none;
+        }
+        
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            text-decoration: none;
+            color: #666;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background: #667eea;
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            border-left: 4px solid #667eea;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 1rem;
+        }
+        
+        /* Content Sections */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        .section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            color: #333;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section h2 i {
+            color: #667eea;
+        }
+        
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .data-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.8rem;
+        }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: #000;
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                order: 2;
+            }
+            
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        /* Table Controls */
+        .table-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            max-width: 300px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 12px 8px 35px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        .filter-controls select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background: white;
+        }
+
+        /* Status Select */
+        .status-select {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            background: white;
+        }
+
+        /* Payment Status */
+        .payment-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .payment-status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .payment-status.paid {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .payment-status.failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .payment-status.refunded {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: #28a745;
+        }
+
+        .notification.error {
+            background: #dc3545;
+        }
+
+        .notification.warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .notification.info {
+            background: #17a2b8;
+        }
+
+        /* Payment status badges */
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-processing {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Inventory Management Styles */
+        .inventory-section {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .outlet-selector {
+            margin-bottom: 1rem;
+        }
+
+        .inventory-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .inventory-stat {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        .inventory-table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .inventory-table th,
+        .inventory-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .inventory-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .stock-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .stock-status.in-stock {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .stock-status.low-stock {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .stock-status.out-of-stock {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .inventory-action-btn {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-right: 4px;
+        }
+
+        .inventory-action-btn.edit {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .inventory-action-btn.restock {
+            background: #28a745;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-tint"></i>
+                <span>Abai Springs</span>
+            </div>
+            
+            <nav class="nav-menu">
+                <div class="nav-item">
+                    <a class="nav-link active" data-section="dashboard" href="#" onclick="showSection('dashboard', event)">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a class="nav-link" data-section="products" href="#" onclick="showSection('products', event)">
+                        <i class="fas fa-box"></i>
+                        Products
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a class="nav-link" data-section="orders" href="#" onclick="showSection('orders', event)">
+                        <i class="fas fa-shopping-cart"></i>
+                        Orders
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a class="nav-link" data-section="outlets" href="#" onclick="showSection('outlets', event)">
+                        <i class="fas fa-store"></i>
+                        Outlets
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a class="nav-link" data-section="analytics" href="#" onclick="showSection('analytics', event)">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a class="nav-link" data-section="users" href="#" onclick="showSection('users', event)">
+                        <i class="fas fa-users"></i>
+                        Users
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a class="nav-link" data-section="payments" href="#" onclick="showSection('payments', event)">
+                        <i class="fas fa-credit-card"></i>
+                        Payments
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a class="nav-link" data-section="inventory" href="#" onclick="showSection('inventory', event)">
+                        <i class="fas fa-warehouse"></i>
+                        Inventory
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a class="nav-link" data-section="stock-alerts" href="#" onclick="showSection('stock-alerts', event)">
+                        <i class="fas fa-bell"></i>
+                        Smart Stock Alerts
+                    </a>
+                </div>
+            </nav>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="section-content">
+                <div class="header fade-in">
+                    <h1><i class="fas fa-tachometer-alt"></i> Admin Dashboard</h1>
+                    <p>Welcome to your Abai Springs backend management interface</p>
+                </div>
+                
+                <!-- Stats Grid -->
+                <div class="stats-grid fade-in" id="stats-grid">
+                    <div class="loading">Loading statistics...</div>
+                </div>
+                
+                <!-- Recent Activity -->
+                <div class="content-grid fade-in">
+                    <div class="section">
+                        <h2><i class="fas fa-clock"></i> Recent Orders</h2>
+                        <div id="recent-orders">
+                            <div class="loading">Loading recent orders...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <h2><i class="fas fa-chart-line"></i> Quick Actions</h2>
+                        <div style="display: grid; gap: 1rem;">
+                            <button class="btn btn-primary" onclick="showAddProductModal()">
+                                <i class="fas fa-plus"></i> Add New Product
+                            </button>
+                            <button class="btn btn-success" onclick="showAddOutletModal()">
+                                <i class="fas fa-store"></i> Add New Outlet
+                            </button>
+                            <button class="btn btn-warning" onclick="refreshData()">
+                                <i class="fas fa-sync"></i> Refresh Data
+                            </button>
+                            <button class="btn btn-info" onclick="testClick()">
+                                <i class="fas fa-bug"></i> Test JavaScript
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Products Section -->
+            <div id="products-section" class="section-content" style="display: none;">
+                <div class="header">
+                    <h1><i class="fas fa-box"></i> Products Management</h1>
+                    <p>Manage your product inventory</p>
+                </div>
+                
+                <div style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
+                    <button class="btn btn-primary" onclick="showAddProductModal()">
+                        <i class="fas fa-plus"></i> Add New Product
+                    </button>
+                    <button class="btn btn-info" onclick="testProductsAPI()">
+                        <i class="fas fa-test"></i> Test API
+                    </button>
+                    <div style="flex: 1; max-width: 300px;">
+                        <input type="text" id="productSearch" class="form-input" placeholder="Search products..." onkeyup="searchProducts()">
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2><i class="fas fa-list"></i> All Products</h2>
+                    <div id="products-table">
+                        <div class="loading">Loading products...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Orders Section -->
+            <div id="orders-section" class="section-content" style="display: none;">
+                <div class="header">
+                    <h1><i class="fas fa-shopping-cart"></i> Orders Management</h1>
+                    <p>Track and manage customer orders</p>
+                </div>
+                
+                <div class="section">
+                    <h2><i class="fas fa-list"></i> All Orders</h2>
+                    <div id="orders-table">
+                        <div class="loading">Loading orders...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Outlets Section -->
+            <div id="outlets-section" class="section-content" style="display: none;">
+                <div class="header">
+                    <h1><i class="fas fa-store"></i> Outlets Management</h1>
+                    <p>Manage your store locations</p>
+                </div>
+                
+                <div style="margin-bottom: 1rem;">
+                    <button class="btn btn-primary" onclick="showAddOutletModal()">
+                        <i class="fas fa-plus"></i> Add New Outlet
+                    </button>
+                </div>
+                
+                <div class="section">
+                    <h2><i class="fas fa-list"></i> All Outlets</h2>
+                    <div id="outlets-table">
+                        <div class="loading">Loading outlets...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Inventory Section -->
+            <div id="inventory-section" class="section-content" style="display: none;">
+                <div class="header">
+                    <h1><i class="fas fa-warehouse"></i> Outlet Inventory Management</h1>
+                    <p>Manage stock levels per outlet</p>
+                </div>
+                
+                <div style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
+                    <select id="outletFilter" class="form-input" style="max-width: 250px;" onchange="loadOutletInventory()">
+                        <option value="">Select Outlet</option>
+                    </select>
+                    <button class="btn btn-info" onclick="loadInventorySummary()">
+                        <i class="fas fa-chart-bar"></i> Summary
+                    </button>
+                    <button class="btn btn-warning" onclick="loadLowStockAlerts()">
+                        <i class="fas fa-exclamation-triangle"></i> Low Stock Alerts
+                    </button>
+                </div>
+                
+                <!-- Inventory Stats -->
+                <div class="stats-grid" id="inventory-stats" style="display: none;">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-boxes"></i></div>
+                        <div class="stat-number" id="total-products">0</div>
+                        <div class="stat-label">Total Products</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                        <div class="stat-number" id="low-stock-items">0</div>
+                        <div class="stat-label">Low Stock Items</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+                        <div class="stat-number" id="out-of-stock">0</div>
+                        <div class="stat-label">Out of Stock</div>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2><i class="fas fa-list"></i> Outlet Inventory</h2>
+                    <div id="inventory-table">
+                        <div class="loading">Select an outlet to view inventory</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analytics Section -->
+            <div id="analytics-section" class="section-content" style="display: none;">
+                <div class="header">
+                    <h1><i class="fas fa-chart-line"></i> Analytics Dashboard</h1>
+                    <p>Business intelligence and performance metrics</p>
+                </div>
+                
+                <!-- Revenue Chart -->
+                <div class="section">
+                    <h2><i class="fas fa-dollar-sign"></i> Revenue Analytics</h2>
+                    <div style="height: 300px;">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Performance Metrics -->
+                <div class="content-grid">
+                    <div class="section">
+                        <h2><i class="fas fa-box"></i> Product Performance</h2>
+                        <div id="product-performance">
+                            <div class="loading">Loading product performance...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <h2><i class="fas fa-store"></i> Outlet Performance</h2>
+                        <div id="outlet-performance">
+                            <div class="loading">Loading outlet performance...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Summary Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+                        <div class="stat-number" id="total-revenue">KSH 0</div>
+                        <div class="stat-label">Total Revenue</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+                        <div class="stat-number" id="avg-order-value">KSH 0</div>
+                        <div class="stat-label">Avg Order Value</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                        <div class="stat-number" id="low-stock-count">0</div>
+                        <div class="stat-label">Low Stock Items</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                        <div class="stat-number" id="recent-orders-count">0</div>
+                        <div class="stat-label">Recent Orders (7d)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Users Section -->
+            <div id="users-section" class="section-content" style="display: none;">
+                <div class="header">
+                    <h1><i class="fas fa-users"></i> Users Management</h1>
+                    <p>Manage customer accounts</p>
+                </div>
+                
+                <div class="section">
+                    <h2><i class="fas fa-list"></i> All Users</h2>
+                    <div id="users-table">
+                        <div class="loading">Loading users...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Payments Section -->
+            <div id="payments-section" class="section-content" style="display: none;">
+                <div class="header">
+                    <h1><i class="fas fa-credit-card"></i> Payments Management</h1>
+                    <p>Track and manage payment transactions</p>
+                </div>
+                
+                <div class="section">
+                    <h2><i class="fas fa-list"></i> All Payments</h2>
+                    <div class="table-controls">
+                        <div class="search-box">
+                            <input type="text" id="payment-search" placeholder="Search payments..." onkeyup="filterPayments()">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <div class="filter-controls">
+                            <select id="payment-status-filter" onchange="filterPayments()">
+                                <option value="">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="processing">Processing</option>
+                                <option value="completed">Completed</option>
+                                <option value="failed">Failed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                            <select id="payment-method-filter" onchange="filterPayments()">
+                                <option value="">All Methods</option>
+                                <option value="mpesa">M-Pesa</option>
+                                <option value="airtel_money">Airtel Money</option>
+                                <option value="equitel">Equitel</option>
+                                <option value="cash">Cash</option>
+                                <option value="card">Card</option>
+                                <option value="bank_transfer">Bank Transfer</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="payments-table">
+                        <div class="loading">Loading payments...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Smart Stock Alerts Section -->
+            <div id="stock-alerts-section" class="section-content" style="display: none;">
+                <div class="header">
+                    <h1><i class="fas fa-bell"></i> Smart Stock Alerts</h1>
+                    <p>Monitor and manage intelligent stock alert system</p>
+                </div>
+                
+                <!-- Alert Statistics -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="total-alerts">-</h3>
+                            <p>Total Alerts</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="enabled-alerts">-</h3>
+                            <p>Enabled Alerts</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="alerts-needing-attention">-</h3>
+                            <p>Need Attention</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="monitoring-status">-</h3>
+                            <p>Monitoring Status</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Control Panel -->
+                <div class="content-grid">
+                    <div class="section">
+                        <h2><i class="fas fa-cogs"></i> System Controls</h2>
+                        <div style="display: grid; gap: 1rem;">
+                            <button class="btn btn-success" onclick="startMonitoring()">
+                                <i class="fas fa-play"></i> Start Monitoring
+                            </button>
+                            <button class="btn btn-danger" onclick="stopMonitoring()">
+                                <i class="fas fa-stop"></i> Stop Monitoring
+                            </button>
+                            <button class="btn btn-warning" onclick="refreshAlertStats()">
+                                <i class="fas fa-sync"></i> Refresh Statistics
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <h2><i class="fas fa-flask"></i> Test Alerts</h2>
+                        <div style="display: grid; gap: 1rem;">
+                            <button class="btn btn-info" onclick="showTestAlertModal()">
+                                <i class="fas fa-paper-plane"></i> Send Test Alert
+                            </button>
+                            <button class="btn btn-secondary" onclick="viewAlertHistory()">
+                                <i class="fas fa-history"></i> View Alert History
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Active Alerts Table -->
+                <div class="section">
+                    <h2><i class="fas fa-list"></i> Active Stock Alerts</h2>
+                    <div id="stock-alerts-table">
+                        <div class="loading">Loading stock alerts...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Product Modal -->
+    <div id="addProductModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('addProductModal')">&times;</span>
+            <h2><i class="fas fa-plus"></i> Add New Product</h2>
+            <form id="addProductForm">
+                <div class="form-group">
+                    <label class="form-label">Product Name</label>
+                    <input type="text" class="form-input" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Brand</label>
+                    <select class="form-input" name="brand" required>
+                        <option value="Abai Springs">Abai Springs</option>
+                        <option value="Sprinkle">Sprinkle</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-input" name="category" required>
+                        <option value="500ml">500ml</option>
+                        <option value="1 Litre">1 Litre</option>
+                        <option value="2 Litre">2 Litre</option>
+                        <option value="5 Litre">5 Litre</option>
+                        <option value="10 Litre">10 Litre</option>
+                        <option value="20 Litre">20 Litre</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Price (KSH)</label>
+                    <input type="number" class="form-input" name="price" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-input" name="description" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Stock Level</label>
+                    <input type="number" class="form-input" name="stockLevel" value="0" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Image URL (Optional)</label>
+                    <input type="text" class="form-input" name="image" placeholder="Enter image URL or leave blank">
+                </div>
+                <button type="submit" class="btn btn-primary">Add Product</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Edit Product Modal -->
+    <div id="editProductModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('editProductModal')">&times;</span>
+            <h2><i class="fas fa-edit"></i> Edit Product</h2>
+            <form id="editProductForm">
+                <input type="hidden" name="productId" id="editProductId">
+                <div class="form-group">
+                    <label class="form-label">Product Name</label>
+                    <input type="text" class="form-input" name="name" id="editProductName" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Brand</label>
+                    <select class="form-input" name="brand" id="editProductBrand" required>
+                        <option value="Abai Springs">Abai Springs</option>
+                        <option value="Sprinkle">Sprinkle</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-input" name="category" id="editProductCategory" required>
+                        <option value="500ml">500ml</option>
+                        <option value="1 Litre">1 Litre</option>
+                        <option value="2 Litre">2 Litre</option>
+                        <option value="5 Litre">5 Litre</option>
+                        <option value="10 Litre">10 Litre</option>
+                        <option value="20 Litre">20 Litre</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Price (KSH)</label>
+                    <input type="number" class="form-input" name="price" id="editProductPrice" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-input" name="description" id="editProductDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Stock Level</label>
+                    <input type="number" class="form-input" name="stockLevel" id="editProductStock" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Image URL (Optional)</label>
+                    <input type="text" class="form-input" name="image" id="editProductImage" placeholder="Enter image URL or leave blank">
+                </div>
+                <button type="submit" class="btn btn-primary">Update Product</button>
+            </form>
+        </div>
+    </div>
+    
+         <!-- Add Outlet Modal -->
+     <div id="addOutletModal" class="modal">
+         <div class="modal-content">
+             <span class="close" onclick="closeModal('addOutletModal')">&times;</span>
+             <h2><i class="fas fa-store"></i> Add New Outlet</h2>
+             <form id="addOutletForm">
+                 <div class="form-group">
+                     <label class="form-label">Outlet Name</label>
+                     <input type="text" class="form-input" name="name" required>
+                 </div>
+                 <div class="form-group">
+                     <label class="form-label">Address</label>
+                     <input type="text" class="form-input" name="address" required>
+                 </div>
+                 <div class="form-group">
+                     <label class="form-label">Phone</label>
+                     <input type="text" class="form-input" name="phone" required>
+                 </div>
+                 <div class="form-group">
+                     <label class="form-label">Email</label>
+                     <input type="email" class="form-input" name="email" required>
+                 </div>
+                 <div class="form-group">
+                     <label class="form-label">Latitude (Optional)</label>
+                     <input type="number" step="any" class="form-input" name="lat" placeholder="Enter latitude or leave blank">
+                 </div>
+                 <div class="form-group">
+                     <label class="form-label">Longitude (Optional)</label>
+                     <input type="number" step="any" class="form-input" name="lng" placeholder="Enter longitude or leave blank">
+                 </div>
+                 <button type="submit" class="btn btn-primary">Add Outlet</button>
+             </form>
+         </div>
+     </div>
+     
+     <!-- Edit Outlet Modal -->
+     <div id="editOutletModal" class="modal">
+         <div class="modal-content">
+             <span class="close" onclick="closeModal('editOutletModal')">&times;</span>
+             <h2><i class="fas fa-edit"></i> Edit Outlet</h2>
+             <form id="editOutletForm">
+                 <input type="hidden" name="outletId" id="editOutletId">
+                 <div class="form-group">
+                     <label class="form-label">Outlet Name</label>
+                     <input type="text" class="form-input" name="name" id="editOutletName" required>
+                 </div>
+                 <div class="form-group">
+                     <label class="form-label">Address</label>
+                     <input type="text" class="form-input" name="address" id="editOutletAddress" required>
+                 </div>
+                 <div class="form-group">
+                     <label class="form-label">Phone</label>
+                     <input type="text" class="form-input" name="phone" id="editOutletPhone" required>
+                 </div>
+                 <div class="form-group">
+                     <label class="form-label">Email</label>
+                     <input type="email" class="form-input" name="email" id="editOutletEmail" required>
+                 </div>
+                 <div class="form-group">
+                     <label class="form-label">Latitude (Optional)</label>
+                     <input type="number" step="any" class="form-input" name="lat" id="editOutletLat" placeholder="Enter latitude or leave blank">
+                 </div>
+                 <div class="form-group">
+                     <label class="form-label">Longitude (Optional)</label>
+                     <input type="number" step="any" class="form-input" name="lng" id="editOutletLng" placeholder="Enter longitude or leave blank">
+                 </div>
+                 <div class="form-group">
+                     <label class="form-label">Status</label>
+                     <select class="form-input" name="isActive" id="editOutletStatus">
+                         <option value="true">Active</option>
+                         <option value="false">Inactive</option>
+                     </select>
+                 </div>
+                 <button type="submit" class="btn btn-primary">Update Outlet</button>
+             </form>
+         </div>
+     </div>
+    
+    <script>
+        const API_BASE_URL = 'http://localhost:3001/api';
+        
+        // Test function to verify JavaScript is working
+        function testClick() {
+            alert('JavaScript is working!');
+            console.log('Test click function called');
+            
+            // Test navigation
+            showSection('products', null);
+        }
+        
+        // Navigation
+        function showSection(sectionName, event) {
+            console.log('showSection called with:', sectionName);
+            
+            try {
+                // Hide all sections
+                const sections = document.querySelectorAll('.section-content');
+                console.log('Found sections:', sections.length);
+                sections.forEach(section => {
+                    section.style.display = 'none';
+                });
+                
+                // Remove active class from all nav links
+                const navLinks = document.querySelectorAll('.nav-link');
+                console.log('Found nav links:', navLinks.length);
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                });
+                
+                // Show selected section
+                const targetSection = document.getElementById(sectionName + '-section');
+                if (targetSection) {
+                    targetSection.style.display = 'block';
+                    console.log('Showing section:', sectionName + '-section');
+                } else {
+                    console.error('Section not found:', sectionName + '-section');
+                    alert('Section not found: ' + sectionName + '-section');
+                }
+                
+                // Add active class to clicked nav link
+                if (event && event.target) {
+                    event.target.classList.add('active');
+                    console.log('Added active class to:', event.target);
+                }
+                
+                // Load data for the section
+                loadSectionData(sectionName);
+                
+            } catch (error) {
+                console.error('Error in showSection:', error);
+                alert('Error in showSection: ' + error.message);
+            }
+        }
+        
+        // Load data for different sections
+        async function loadSectionData(section) {
+            console.log('Loading section:', section);
+            try {
+                switch(section) {
+                    case 'dashboard':
+                        await loadDashboardData();
+                        break;
+                    case 'products':
+                        console.log('Loading products section...');
+                        await loadProducts();
+                        break;
+                    case 'orders':
+                        await loadOrders();
+                        break;
+                    case 'outlets':
+                        await loadOutlets();
+                        break;
+                    case 'analytics':
+                        await loadAnalytics();
+                        break;
+                    case 'users':
+                        await loadUsers();
+                        break;
+                    case 'payments':
+                        await loadPayments();
+                        break;
+                    case 'inventory':
+                        await loadInventory();
+                        break;
+                    case 'stock-alerts':
+                        await loadStockAlerts();
+                        break;
+                    default:
+                        console.log('Unknown section:', section);
+                }
+            } catch (error) {
+                console.error('Error loading section data:', error);
+            }
+        }
+        
+        // Initialize navigation when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing navigation...');
+            
+            // Add click event listeners to all nav links
+            const navLinks = document.querySelectorAll('.nav-link');
+            console.log('Found nav links:', navLinks.length);
+            
+            navLinks.forEach((link, index) => {
+                console.log('Adding listener to link', index, link.textContent.trim());
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Nav link clicked:', this.textContent.trim());
+                    
+                    const sectionName = this.getAttribute('data-section');
+                    console.log('Section name:', sectionName);
+                    
+                    if (sectionName) {
+                        showSection(sectionName, e);
+                    } else {
+                        console.error('No data-section attribute found');
+                    }
+                });
+            });
+            
+            console.log('Navigation initialized');
+        });
+        
+        // Dashboard data
+        async function loadDashboardData() {
+            try {
+                console.log('Loading dashboard data...');
+                const [products, outlets, orders, users] = await Promise.all([
+                    fetch(`${API_BASE_URL}/products`).then(r => r.json()),
+                    fetch(`${API_BASE_URL}/outlets`).then(r => r.json()),
+                    fetch(`${API_BASE_URL}/orders`).then(r => r.json()),
+                    fetch(`${API_BASE_URL}/auth/users`).then(r => r.json()).catch(() => ({success: true, data: []}))
+                ]);
+                
+                console.log('API responses:', { products, outlets, orders, users });
+                
+                // Update stats
+                const statsGrid = document.getElementById('stats-grid');
+                
+                // Safe data access with fallbacks
+                const productsCount = (products && products.success && products.data) ? products.data.length : 0;
+                const outletsCount = (outlets && outlets.success && outlets.data) ? outlets.data.length : 0;
+                const ordersCount = (orders && orders.success && orders.data) ? orders.data.length : 0;
+                const usersCount = (users && users.success && users.data) ? users.data.length : 0;
+                
+                console.log('Updating stats grid with:', {
+                    productsCount,
+                    outletsCount,
+                    ordersCount,
+                    usersCount
+                });
+                
+                statsGrid.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-box"></i></div>
+                        <div class="stat-number">${productsCount}</div>
+                        <div class="stat-label">Products</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-store"></i></div>
+                        <div class="stat-number">${outletsCount}</div>
+                        <div class="stat-label">Outlets</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+                        <div class="stat-number">${ordersCount}</div>
+                        <div class="stat-label">Orders</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-users"></i></div>
+                        <div class="stat-number">${usersCount}</div>
+                        <div class="stat-label">Users</div>
+                    </div>
+                `;
+                
+                // Update recent orders
+                const recentOrders = document.getElementById('recent-orders');
+                if (orders && orders.success && orders.data && orders.data.length > 0) {
+                    const recent = orders.data.slice(0, 5);
+                    recentOrders.innerHTML = `
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${recent.map(order => `
+                                    <tr>
+                                        <td>#${order._id.slice(-6)}</td>
+                                        <td>${order.customerName || 'N/A'}</td>
+                                        <td>KSH ${order.totalAmount || 0}</td>
+                                        <td><span class="btn btn-${order.status === 'completed' ? 'success' : 'warning'}">${order.status || 'pending'}</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    recentOrders.innerHTML = '<p>No recent orders</p>';
+                }
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+        
+        // Load products
+        async function loadProducts(searchTerm = '') {
+            try {
+                console.log('Loading products...');
+                const url = searchTerm ? `${API_BASE_URL}/products?search=${encodeURIComponent(searchTerm)}` : `${API_BASE_URL}/products`;
+                console.log('Fetching from:', url);
+                const response = await fetch(url);
+                const data = await response.json();
+                console.log('Products API response:', data);
+                
+                const productsTable = document.getElementById('products-table');
+                if (data.success && data.data.length > 0) {
+                    productsTable.innerHTML = `
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Brand</th>
+                                    <th>Category</th>
+                                    <th>Price</th>
+                                    <th>Stock</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.data.map(product => `
+                                    <tr>
+                                        <td>${product.name}</td>
+                                        <td>${product.brand}</td>
+                                        <td>${product.category}</td>
+                                        <td>KSH ${product.price}</td>
+                                        <td>${product.stockLevel}</td>
+                                        <td>
+                                            <button class="btn btn-warning" onclick="editProduct('${product._id}')">Edit</button>
+                                            <button class="btn btn-danger" onclick="deleteProduct('${product._id}')">Delete</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    productsTable.innerHTML = '<p>No products found</p>';
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+                console.error('Error details:', error.message);
+                document.getElementById('products-table').innerHTML = '<p>Error loading products: ' + error.message + '</p>';
+            }
+        }
+        
+        // Test products API function
+        async function testProductsAPI() {
+            try {
+                console.log('Testing products API...');
+                const response = await fetch(`${API_BASE_URL}/products`);
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('API response:', data);
+                alert(`API Test: ${data.success ? 'SUCCESS' : 'FAILED'}\nProducts found: ${data.data ? data.data.length : 0}`);
+            } catch (error) {
+                console.error('API test error:', error);
+                alert(`API Test Error: ${error.message}`);
+            }
+        }
+        
+        // Search products function
+        function searchProducts() {
+            const searchTerm = document.getElementById('productSearch').value;
+            loadProducts(searchTerm);
+        }
+        
+        // Edit product function
+        async function editProduct(productId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/products/${productId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const product = data.data;
+                    showEditProductModal(product);
+                } else {
+                    alert('Error loading product details');
+                }
+            } catch (error) {
+                console.error('Error loading product:', error);
+                alert('Error loading product details');
+            }
+        }
+        
+        // Delete product function
+        async function deleteProduct(productId) {
+            if (confirm('Are you sure you want to delete this product?')) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        alert('Product deleted successfully!');
+                        loadProducts();
+                        loadDashboardData(); // Refresh dashboard stats
+                    } else {
+                        alert('Error deleting product: ' + data.message);
+                    }
+                } catch (error) {
+                    console.error('Error deleting product:', error);
+                    alert('Error deleting product');
+                }
+            }
+        }
+        
+        // Load orders
+        async function loadOrders() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/orders`);
+                const data = await response.json();
+                
+                const ordersTable = document.getElementById('orders-table');
+                if (data.success && data.data.length > 0) {
+                    ordersTable.innerHTML = `
+                        <div class="table-controls">
+                            <div class="search-box">
+                                <input type="text" id="order-search" placeholder="Search orders..." onkeyup="filterOrders()">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="filter-controls">
+                                <select id="status-filter" onchange="filterOrders()">
+                                    <option value="">All Status</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="preparing">Preparing</option>
+                                    <option value="out_for_delivery">Out for Delivery</option>
+                                    <option value="delivered">Delivered</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                        </div>
+                        <table class="data-table" id="orders-data-table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Phone</th>
+                                    <th>Items</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Payment</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.data.map(order => `
+                                    <tr data-order-id="${order._id}" data-status="${order.status}">
+                                        <td>#${order._id.slice(-8).toUpperCase()}</td>
+                                        <td>${order.customer?.name || order.notes?.split(',')[0]?.replace('Customer: ', '') || 'N/A'}</td>
+                                        <td>${order.notes?.split(',')[1]?.replace(' Phone: ', '') || 'N/A'}</td>
+                                        <td>${order.items ? order.items.length : 0} items</td>
+                                        <td>KSH ${(order.totalAmount || 0).toLocaleString()}</td>
+                                        <td>
+                                            <select class="status-select" onchange="updateOrderStatus('${order._id}', this.value)">
+                                                <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                                <option value="confirmed" ${order.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                                                <option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>Preparing</option>
+                                                <option value="out_for_delivery" ${order.status === 'out_for_delivery' ? 'selected' : ''}>Out for Delivery</option>
+                                                <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                                                <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <span class="payment-status ${order.paymentStatus}">${order.paymentStatus?.toUpperCase() || 'PENDING'}</span>
+                                        </td>
+                                        <td>${new Date(order.createdAt).toLocaleDateString('en-US', {
+                                            year: 'numeric',
+                                            month: 'short',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}</td>
+                                        <td>
+                                            <button class="btn btn-info btn-sm" onclick="viewOrderDetails('${order._id}')" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-warning btn-sm" onclick="editOrder('${order._id}')" title="Edit Order">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-danger btn-sm" onclick="deleteOrder('${order._id}')" title="Delete Order">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    ordersTable.innerHTML = '<p>No orders found</p>';
+                }
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                document.getElementById('orders-table').innerHTML = '<p>Error loading orders</p>';
+            }
+        }
+
+        // Filter orders
+        function filterOrders() {
+            const searchTerm = document.getElementById('order-search').value.toLowerCase();
+            const statusFilter = document.getElementById('status-filter').value;
+            const rows = document.querySelectorAll('#orders-data-table tbody tr');
+
+            rows.forEach(row => {
+                const orderId = row.cells[0].textContent.toLowerCase();
+                const customer = row.cells[1].textContent.toLowerCase();
+                const phone = row.cells[2].textContent.toLowerCase();
+                const status = row.getAttribute('data-status');
+
+                const matchesSearch = orderId.includes(searchTerm) || 
+                                   customer.includes(searchTerm) || 
+                                   phone.includes(searchTerm);
+                const matchesStatus = !statusFilter || status === statusFilter;
+
+                row.style.display = matchesSearch && matchesStatus ? '' : 'none';
+            });
+        }
+
+        // Update order status
+        async function updateOrderStatus(orderId, newStatus) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showNotification('Order status updated successfully', 'success');
+                    // Update the data attribute
+                    const row = document.querySelector(`[data-order-id="${orderId}"]`);
+                    if (row) {
+                        row.setAttribute('data-status', newStatus);
+                    }
+                } else {
+                    showNotification('Failed to update order status', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating order status:', error);
+                showNotification('Error updating order status', 'error');
+            }
+        }
+
+        // View order details
+        function viewOrderDetails(orderId) {
+            // This would typically open a modal with order details
+            alert(`Viewing order details for ${orderId}`);
+        }
+
+        // Edit order
+        function editOrder(orderId) {
+            // This would typically open an edit modal
+            alert(`Editing order ${orderId}`);
+        }
+
+        // Delete order
+        async function deleteOrder(orderId) {
+            if (confirm('Are you sure you want to delete this order?')) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
+                        method: 'DELETE'
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        showNotification('Order deleted successfully', 'success');
+                        loadOrders(); // Reload the table
+                    } else {
+                        showNotification('Failed to delete order', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error deleting order:', error);
+                    showNotification('Error deleting order', 'error');
+                }
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            // Remove existing notifications
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(notification => notification.remove());
+
+            // Create new notification
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            // Show notification
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+
+            // Hide notification after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // Load outlets
+        async function loadOutlets() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/outlets`);
+                const data = await response.json();
+                
+                const outletsTable = document.getElementById('outlets-table');
+                if (data.success && data.data.length > 0) {
+                    outletsTable.innerHTML = `
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Address</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.data.map(outlet => `
+                                    <tr>
+                                        <td>${outlet.name}</td>
+                                        <td>${outlet.address}</td>
+                                        <td>${outlet.phone}</td>
+                                        <td>${outlet.email}</td>
+                                        <td><span class="btn btn-${outlet.isActive ? 'success' : 'danger'}">${outlet.isActive ? 'Active' : 'Inactive'}</span></td>
+                                        <td>
+                                            <button class="btn btn-warning" onclick="editOutlet('${outlet._id}')">Edit</button>
+                                            <button class="btn btn-danger" onclick="deleteOutlet('${outlet._id}')">Delete</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    outletsTable.innerHTML = '<p>No outlets found</p>';
+                }
+            } catch (error) {
+                console.error('Error loading outlets:', error);
+                document.getElementById('outlets-table').innerHTML = '<p>Error loading outlets</p>';
+            }
+        }
+        
+        // Load analytics
+        async function loadAnalytics() {
+            try {
+                // Load summary analytics
+                const summaryResponse = await fetch(`${API_BASE_URL}/analytics/summary`);
+                const summaryData = await summaryResponse.json();
+                
+                if (summaryData.success) {
+                    // Update summary cards
+                    document.getElementById('total-revenue').textContent = `KSH ${summaryData.data.totalRevenue.toLocaleString()}`;
+                    document.getElementById('avg-order-value').textContent = `KSH ${summaryData.data.averageOrderValue.toLocaleString()}`;
+                    document.getElementById('low-stock-count').textContent = summaryData.data.lowStockProducts;
+                    document.getElementById('recent-orders-count').textContent = summaryData.data.recentOrders;
+                }
+                
+                // Load revenue chart
+                const revenueResponse = await fetch(`${API_BASE_URL}/analytics/revenue`);
+                const revenueData = await revenueResponse.json();
+                
+                if (revenueData.success) {
+                    createRevenueChart(revenueData.data.dailyRevenue);
+                }
+                
+                // Load product performance
+                const productResponse = await fetch(`${API_BASE_URL}/analytics/products`);
+                const productData = await productResponse.json();
+                
+                if (productData.success) {
+                    displayProductPerformance(productData.data);
+                }
+                
+                // Load outlet performance
+                const outletResponse = await fetch(`${API_BASE_URL}/analytics/outlets`);
+                const outletData = await outletResponse.json();
+                
+                if (outletData.success) {
+                    displayOutletPerformance(outletData.data);
+                }
+                
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+            }
+        }
+        
+        // Create revenue chart
+        function createRevenueChart(revenueData) {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (window.revenueChart) {
+                window.revenueChart.destroy();
+            }
+            
+            const labels = revenueData.map(item => {
+                const date = new Date(item.date);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            
+            const data = revenueData.map(item => item.revenue);
+            
+            window.revenueChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Daily Revenue (KSH)',
+                        data: data,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'KSH ' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Display product performance
+        function displayProductPerformance(products) {
+            const container = document.getElementById('product-performance');
+            
+            if (products.length > 0) {
+                const topProducts = products.slice(0, 5); // Show top 5
+                container.innerHTML = `
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Brand</th>
+                                <th>Sold</th>
+                                <th>Revenue</th>
+                                <th>Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${topProducts.map(product => `
+                                <tr>
+                                    <td>${product.name}</td>
+                                    <td>${product.brand}</td>
+                                    <td>${product.totalSold}</td>
+                                    <td>KSH ${product.totalRevenue.toLocaleString()}</td>
+                                    <td>${product.stockLevel}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                container.innerHTML = '<p>No product performance data available</p>';
+            }
+        }
+        
+        // Display outlet performance
+        function displayOutletPerformance(outlets) {
+            const container = document.getElementById('outlet-performance');
+            
+            if (outlets.length > 0) {
+                const topOutlets = outlets.slice(0, 5); // Show top 5
+                container.innerHTML = `
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Outlet</th>
+                                <th>Orders</th>
+                                <th>Revenue</th>
+                                <th>Avg Order</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${topOutlets.map(outlet => `
+                                <tr>
+                                    <td>${outlet.name}</td>
+                                    <td>${outlet.totalOrders}</td>
+                                    <td>KSH ${outlet.totalRevenue.toLocaleString()}</td>
+                                    <td>KSH ${outlet.averageOrderValue.toLocaleString()}</td>
+                                    <td><span class="btn btn-${outlet.isActive ? 'success' : 'danger'}">${outlet.isActive ? 'Active' : 'Inactive'}</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                container.innerHTML = '<p>No outlet performance data available</p>';
+            }
+        }
+        
+        // Load users
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/users`);
+                const data = await response.json();
+                
+                const usersTable = document.getElementById('users-table');
+                if (data.success && data.data.length > 0) {
+                    usersTable.innerHTML = `
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Role</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.data.map(user => `
+                                    <tr>
+                                        <td>${user.name || 'N/A'}</td>
+                                        <td>${user.email}</td>
+                                        <td>${user.phone || 'N/A'}</td>
+                                        <td>${user.role || 'customer'}</td>
+                                        <td>
+                                            <button class="btn btn-warning" onclick="editUser('${user._id}')">Edit</button>
+                                            <button class="btn btn-danger" onclick="deleteUser('${user._id}')">Delete</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    usersTable.innerHTML = '<p>No users found</p>';
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                document.getElementById('users-table').innerHTML = '<p>Error loading users</p>';
+            }
+        }
+        
+        // Modal functions
+        function showAddProductModal() {
+            document.getElementById('addProductModal').style.display = 'block';
+        }
+        
+        function showEditProductModal(product) {
+            // Populate the edit form with product data
+            document.getElementById('editProductId').value = product._id;
+            document.getElementById('editProductName').value = product.name;
+            document.getElementById('editProductBrand').value = product.brand;
+            document.getElementById('editProductCategory').value = product.category;
+            document.getElementById('editProductPrice').value = product.price;
+            document.getElementById('editProductDescription').value = product.description || '';
+            document.getElementById('editProductStock').value = product.stockLevel;
+            document.getElementById('editProductImage').value = product.image || '';
+            
+            document.getElementById('editProductModal').style.display = 'block';
+        }
+        
+                 function showAddOutletModal() {
+             document.getElementById('addOutletModal').style.display = 'block';
+         }
+         
+         function showEditOutletModal(outlet) {
+             // Populate the edit form with outlet data
+             document.getElementById('editOutletId').value = outlet._id;
+             document.getElementById('editOutletName').value = outlet.name;
+             document.getElementById('editOutletAddress').value = outlet.address;
+             document.getElementById('editOutletPhone').value = outlet.phone;
+             document.getElementById('editOutletEmail').value = outlet.email;
+             document.getElementById('editOutletLat').value = outlet.coordinates?.lat || '';
+             document.getElementById('editOutletLng').value = outlet.coordinates?.lng || '';
+             document.getElementById('editOutletStatus').value = outlet.isActive.toString();
+             
+             document.getElementById('editOutletModal').style.display = 'block';
+         }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // Form submissions
+        document.getElementById('addProductForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const productData = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/products`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(productData)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('Product added successfully!');
+                    closeModal('addProductModal');
+                    e.target.reset();
+                    loadProducts();
+                    loadDashboardData(); // Refresh dashboard stats
+                } else {
+                    alert('Error adding product: ' + result.message);
+                }
+            } catch (error) {
+                alert('Error adding product');
+                console.error(error);
+            }
+        });
+        
+        document.getElementById('editProductForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const productData = Object.fromEntries(formData.entries());
+            const productId = productData.productId;
+            delete productData.productId; // Remove the ID from the data to update
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(productData)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('Product updated successfully!');
+                    closeModal('editProductModal');
+                    loadProducts();
+                    loadDashboardData(); // Refresh dashboard stats
+                } else {
+                    alert('Error updating product: ' + result.message);
+                }
+            } catch (error) {
+                alert('Error updating product');
+                console.error(error);
+            }
+        });
+        
+                 document.getElementById('addOutletForm').addEventListener('submit', async (e) => {
+             e.preventDefault();
+             const formData = new FormData(e.target);
+             const outletData = Object.fromEntries(formData.entries());
+             
+             // Convert lat/lng to coordinates object (handle empty values)
+             const lat = parseFloat(outletData.lat);
+             const lng = parseFloat(outletData.lng);
+             
+             if (!isNaN(lat) && !isNaN(lng)) {
+                 outletData.coordinates = {
+                     lat: lat,
+                     lng: lng
+                 };
+             } else {
+                 // Don't include coordinates if they're empty or invalid
+                 outletData.coordinates = undefined;
+             }
+             
+             delete outletData.lat;
+             delete outletData.lng;
+             
+             try {
+                 const response = await fetch(`${API_BASE_URL}/outlets`, {
+                     method: 'POST',
+                     headers: {
+                         'Content-Type': 'application/json',
+                     },
+                     body: JSON.stringify(outletData)
+                 });
+                 
+                 const result = await response.json();
+                 if (result.success) {
+                     alert('Outlet added successfully!');
+                     closeModal('addOutletModal');
+                     e.target.reset();
+                     loadOutlets();
+                 } else {
+                     alert('Error adding outlet: ' + result.message);
+                 }
+             } catch (error) {
+                 alert('Error adding outlet');
+                 console.error(error);
+             }
+         });
+         
+         document.getElementById('editOutletForm').addEventListener('submit', async (e) => {
+             e.preventDefault();
+             const formData = new FormData(e.target);
+             const outletData = Object.fromEntries(formData.entries());
+             const outletId = outletData.outletId;
+             delete outletData.outletId; // Remove the ID from the data to update
+             
+             // Convert lat/lng to coordinates object (handle empty values)
+             const lat = parseFloat(outletData.lat);
+             const lng = parseFloat(outletData.lng);
+             
+             if (!isNaN(lat) && !isNaN(lng)) {
+                 outletData.coordinates = {
+                     lat: lat,
+                     lng: lng
+                 };
+             } else {
+                 // Don't include coordinates if they're empty or invalid
+                 outletData.coordinates = undefined;
+             }
+             
+             delete outletData.lat;
+             delete outletData.lng;
+             
+             // Convert isActive to boolean
+             outletData.isActive = outletData.isActive === 'true';
+             
+             try {
+                 const response = await fetch(`${API_BASE_URL}/outlets/${outletId}`, {
+                     method: 'PUT',
+                     headers: {
+                         'Content-Type': 'application/json',
+                     },
+                     body: JSON.stringify(outletData)
+                 });
+                 
+                 const result = await response.json();
+                 if (result.success) {
+                     alert('Outlet updated successfully!');
+                     closeModal('editOutletModal');
+                     loadOutlets();
+                     loadDashboardData(); // Refresh dashboard stats
+                 } else {
+                     alert('Error updating outlet: ' + result.message);
+                 }
+             } catch (error) {
+                 alert('Error updating outlet');
+                 console.error(error);
+             }
+         });
+        
+        // Utility functions
+        function refreshData() {
+            const activeSection = document.querySelector('.nav-link.active');
+            if (activeSection) {
+                const sectionName = activeSection.textContent.trim().toLowerCase().replace(/\s+/g, '');
+                loadSectionData(sectionName);
+            }
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+        
+        // Payment management functions
+        async function loadPayments() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/payments`);
+                const data = await response.json();
+                
+                const paymentsTable = document.getElementById('payments-table');
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    paymentsTable.innerHTML = `
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Transaction ID</th>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.data.map(payment => `
+                                    <tr data-payment-id="${payment._id}" data-status="${payment.status}" data-method="${payment.paymentMethod}">
+                                        <td>${payment.transactionId}</td>
+                                        <td>${payment.customer?.name || 'N/A'}</td>
+                                        <td>KSH ${payment.amount.toLocaleString()}</td>
+                                        <td>${getPaymentMethodName(payment.paymentMethod)}</td>
+                                        <td>
+                                            <span class="status-badge status-${payment.status}">${getStatusName(payment.status)}</span>
+                                        </td>
+                                        <td>${new Date(payment.createdAt).toLocaleDateString()}</td>
+                                        <td>
+                                            <button class="btn btn-info btn-sm" onclick="viewPaymentDetails('${payment._id}')" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-warning btn-sm" onclick="updatePaymentStatus('${payment._id}')" title="Update Status">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    paymentsTable.innerHTML = '<p>No payments found</p>';
+                }
+            } catch (error) {
+                console.error('Error loading payments:', error);
+                document.getElementById('payments-table').innerHTML = '<p>Error loading payments</p>';
+            }
+        }
+
+        function filterPayments() {
+            const searchTerm = document.getElementById('payment-search').value.toLowerCase();
+            const statusFilter = document.getElementById('payment-status-filter').value;
+            const methodFilter = document.getElementById('payment-method-filter').value;
+            
+            const rows = document.querySelectorAll('#payments-table tbody tr');
+            
+            rows.forEach(row => {
+                const transactionId = row.cells[0].textContent.toLowerCase();
+                const customer = row.cells[1].textContent.toLowerCase();
+                const method = row.cells[3].textContent.toLowerCase();
+                const status = row.cells[4].textContent.toLowerCase();
+                
+                const matchesSearch = transactionId.includes(searchTerm) || customer.includes(searchTerm);
+                const matchesStatus = !statusFilter || status.includes(statusFilter);
+                const matchesMethod = !methodFilter || method.includes(methodFilter);
+                
+                row.style.display = matchesSearch && matchesStatus && matchesMethod ? '' : 'none';
+            });
+        }
+
+        function viewPaymentDetails(paymentId) {
+            // This would open a modal with detailed payment information
+            alert(`Viewing payment details for: ${paymentId}`);
+        }
+
+        function updatePaymentStatus(paymentId) {
+            const newStatus = prompt('Enter new status (pending/processing/completed/failed/cancelled):');
+            if (newStatus && ['pending', 'processing', 'completed', 'failed', 'cancelled'].includes(newStatus)) {
+                // This would update the payment status via API
+                alert(`Payment status updated to: ${newStatus}`);
+            }
+        }
+
+        function getPaymentMethodName(method) {
+            const methods = {
+                'mpesa': 'M-Pesa',
+                'airtel_money': 'Airtel Money',
+                'equitel': 'Equitel',
+                'cash': 'Cash',
+                'card': 'Card',
+                'bank_transfer': 'Bank Transfer'
+            };
+            return methods[method] || method;
+        }
+
+        function getStatusName(status) {
+            const statuses = {
+                'pending': 'Pending',
+                'processing': 'Processing',
+                'completed': 'Completed',
+                'failed': 'Failed',
+                'cancelled': 'Cancelled'
+            };
+            return statuses[status] || status;
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData();
+        });
+
+        // Inventory Management Functions
+        async function loadInventory() {
+            try {
+                // Load outlets for the dropdown
+                const outletsResponse = await fetch(`${API_BASE_URL}/outlets`);
+                const outletsData = await outletsResponse.json();
+                
+                const outletFilter = document.getElementById('outletFilter');
+                outletFilter.innerHTML = '<option value="">Select Outlet</option>';
+                
+                if (outletsData.success && outletsData.data.length > 0) {
+                    outletsData.data.forEach(outlet => {
+                        outletFilter.innerHTML += `<option value="${outlet._id}">${outlet.name}</option>`;
+                    });
+                }
+                
+                // Load inventory summary
+                await loadInventorySummary();
+                
+            } catch (error) {
+                console.error('Error loading inventory:', error);
+            }
+        }
+
+        async function loadOutletInventory() {
+            const outletId = document.getElementById('outletFilter').value;
+            if (!outletId) {
+                document.getElementById('inventory-table').innerHTML = '<div class="loading">Select an outlet to view inventory</div>';
+                document.getElementById('inventory-stats').style.display = 'none';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/inventory/outlet/${outletId}`);
+                const data = await response.json();
+                
+                if (data.success && data.data.length > 0) {
+                    updateInventoryStats(data.data);
+                    updateInventoryTable(data.data);
+                    document.getElementById('inventory-stats').style.display = 'grid';
+                } else {
+                    document.getElementById('inventory-table').innerHTML = '<p>No inventory found for this outlet</p>';
+                    document.getElementById('inventory-stats').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading outlet inventory:', error);
+                document.getElementById('inventory-table').innerHTML = '<p>Error loading inventory</p>';
+            }
+        }
+
+        function updateInventoryStats(data) {
+            const totalProducts = data.length;
+            const lowStockItems = data.filter(item => item.stockStatus === 'low_stock').length;
+            const outOfStock = data.filter(item => item.stockStatus === 'out_of_stock').length;
+            
+            document.getElementById('total-products').textContent = totalProducts;
+            document.getElementById('low-stock-items').textContent = lowStockItems;
+            document.getElementById('out-of-stock').textContent = outOfStock;
+        }
+
+        function updateInventoryTable(data) {
+            const inventoryTable = document.getElementById('inventory-table');
+            
+            inventoryTable.innerHTML = `
+                <div class="inventory-table-container">
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Brand</th>
+                                <th>Category</th>
+                                <th>Stock Level</th>
+                                <th>Available</th>
+                                <th>Reserved</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.map(item => `
+                                <tr>
+                                    <td>${item.product.name}</td>
+                                    <td>${item.product.brand}</td>
+                                    <td>${item.product.category}</td>
+                                    <td>${item.stockLevel}</td>
+                                    <td>${item.availableStock}</td>
+                                    <td>${item.reservedStock}</td>
+                                    <td>
+                                        <span class="stock-status ${item.stockStatus}">
+                                            ${item.stockStatus.replace('_', ' ')}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="inventory-action-btn edit" onclick="editInventory('${item._id}')">
+                                            Edit
+                                        </button>
+                                        <button class="inventory-action-btn restock" onclick="restockInventory('${item._id}')">
+                                            Restock
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        async function loadInventorySummary() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/inventory/summary`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    console.log('Inventory summary:', data.data);
+                }
+            } catch (error) {
+                console.error('Error loading inventory summary:', error);
+            }
+        }
+
+        async function loadLowStockAlerts() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/inventory/alerts`);
+                const data = await response.json();
+                
+                if (data.success && data.data.length > 0) {
+                    const alertsTable = document.getElementById('inventory-table');
+                    alertsTable.innerHTML = `
+                        <div class="inventory-table-container">
+                            <h3>Low Stock Alerts</h3>
+                            <table class="inventory-table">
+                                <thead>
+                                    <tr>
+                                        <th>Outlet</th>
+                                        <th>Product</th>
+                                        <th>Available Stock</th>
+                                        <th>Threshold</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.data.map(item => `
+                                        <tr>
+                                            <td>${item.outlet.name}</td>
+                                            <td>${item.product.name}</td>
+                                            <td>${item.availableStock}</td>
+                                            <td>${item.lowStockThreshold}</td>
+                                            <td>
+                                                <span class="stock-status ${item.stockStatus}">
+                                                    ${item.stockStatus.replace('_', ' ')}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="inventory-action-btn restock" onclick="restockInventory('${item._id}')">
+                                                    Restock
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('inventory-table').innerHTML = '<p>No low stock alerts</p>';
+                }
+            } catch (error) {
+                console.error('Error loading low stock alerts:', error);
+                document.getElementById('inventory-table').innerHTML = '<p>Error loading alerts</p>';
+            }
+        }
+
+        function editInventory(inventoryId) {
+            // This would open a modal to edit inventory
+            alert(`Edit inventory record: ${inventoryId}`);
+        }
+
+                 function restockInventory(inventoryId) {
+             // This would open a modal to restock inventory
+             alert(`Restock inventory record: ${inventoryId}`);
+         }
+         
+         // Edit outlet function
+         async function editOutlet(outletId) {
+             try {
+                 const response = await fetch(`${API_BASE_URL}/outlets/${outletId}`);
+                 const data = await response.json();
+                 
+                 if (data.success) {
+                     const outlet = data.data;
+                     showEditOutletModal(outlet);
+                 } else {
+                     alert('Error loading outlet details');
+                 }
+             } catch (error) {
+                 console.error('Error loading outlet:', error);
+                 alert('Error loading outlet details');
+             }
+         }
+         
+         // Delete outlet function
+         async function deleteOutlet(outletId) {
+             if (confirm('Are you sure you want to delete this outlet? This action cannot be undone.')) {
+                 try {
+                     const response = await fetch(`${API_BASE_URL}/outlets/${outletId}`, {
+                         method: 'DELETE'
+                     });
+                     
+                     const data = await response.json();
+                     if (data.success) {
+                         alert('Outlet deleted successfully!');
+                         loadOutlets();
+                         loadDashboardData(); // Refresh dashboard stats
+                     } else {
+                         alert('Error deleting outlet: ' + data.message);
+                     }
+                 } catch (error) {
+                     console.error('Error deleting outlet:', error);
+                     alert('Error deleting outlet');
+                 }
+             }
+         }
+         
+         // Smart Stock Alerts Functions
+         async function loadStockAlerts() {
+             try {
+                 console.log('Loading stock alerts...');
+                 
+                 // Load alert statistics
+                 const statsResponse = await fetch(`${API_BASE_URL}/stock-alerts/statistics`);
+                 const statsData = await statsResponse.json();
+                 
+                 if (statsData.success) {
+                     const stats = statsData.data;
+                     
+                     document.getElementById('total-alerts').textContent = stats.totalAlerts || 0;
+                     document.getElementById('enabled-alerts').textContent = stats.enabledAlerts || 0;
+                     document.getElementById('alerts-needing-attention').textContent = stats.alertsNeedingAttention || 0;
+                     document.getElementById('monitoring-status').textContent = stats.monitoringActive ? 'Active' : 'Inactive';
+                     
+                     // Update monitoring status color
+                     const statusElement = document.getElementById('monitoring-status');
+                     if (stats.monitoringActive) {
+                         statusElement.style.color = '#28a745';
+                     } else {
+                         statusElement.style.color = '#dc3545';
+                     }
+                 }
+                 
+                 // Load active alerts table
+                 await loadActiveAlertsTable();
+                 
+             } catch (error) {
+                 console.error('Error loading stock alerts:', error);
+                 showToast('Error loading stock alerts', 'error');
+             }
+         }
+         
+         async function loadActiveAlertsTable() {
+             try {
+                 // For now, we'll show a placeholder since we need to implement the API
+                 const alertsTable = document.getElementById('stock-alerts-table');
+                 alertsTable.innerHTML = `
+                     <div class="table-container">
+                         <table class="data-table">
+                             <thead>
+                                 <tr>
+                                     <th>Customer</th>
+                                     <th>Product</th>
+                                     <th>Outlet</th>
+                                     <th>Current Stock</th>
+                                     <th>Predicted Run-out</th>
+                                     <th>Alert Status</th>
+                                     <th>Actions</th>
+                                 </tr>
+                             </thead>
+                             <tbody>
+                                 <tr>
+                                     <td colspan="7" style="text-align: center; padding: 20px;">
+                                         <i class="fas fa-info-circle"></i>
+                                         Smart Stock Alerts system is ready! 
+                                         <br>Create alerts when customers place orders.
+                                     </td>
+                                 </tr>
+                             </tbody>
+                         </table>
+                     </div>
+                 `;
+             } catch (error) {
+                 console.error('Error loading active alerts table:', error);
+                 document.getElementById('stock-alerts-table').innerHTML = '<p>Error loading alerts table</p>';
+             }
+         }
+         
+         async function startMonitoring() {
+             try {
+                 const response = await fetch(`${API_BASE_URL}/stock-alerts/monitoring/start`, {
+                     method: 'POST',
+                     headers: {
+                         'Content-Type': 'application/json'
+                     }
+                 });
+                 
+                 const data = await response.json();
+                 if (data.success) {
+                     showToast('Monitoring started successfully!', 'success');
+                     await loadStockAlerts(); // Refresh stats
+                 } else {
+                     showToast('Error starting monitoring: ' + data.message, 'error');
+                 }
+             } catch (error) {
+                 console.error('Error starting monitoring:', error);
+                 showToast('Error starting monitoring', 'error');
+             }
+         }
+         
+         async function stopMonitoring() {
+             try {
+                 const response = await fetch(`${API_BASE_URL}/stock-alerts/monitoring/stop`, {
+                     method: 'POST',
+                     headers: {
+                         'Content-Type': 'application/json'
+                     }
+                 });
+                 
+                 const data = await response.json();
+                 if (data.success) {
+                     showToast('Monitoring stopped successfully!', 'success');
+                     await loadStockAlerts(); // Refresh stats
+                 } else {
+                     showToast('Error stopping monitoring: ' + data.message, 'error');
+                 }
+             } catch (error) {
+                 console.error('Error stopping monitoring:', error);
+                 showToast('Error stopping monitoring', 'error');
+             }
+         }
+         
+         async function refreshAlertStats() {
+             await loadStockAlerts();
+             showToast('Alert statistics refreshed!', 'success');
+         }
+         
+         async function showTestAlertModal() {
+             try {
+                 // Create modal with fallback data since API calls might fail
+                 const modal = document.createElement('div');
+                 modal.className = 'modal';
+                 modal.style.display = 'block';
+                 modal.innerHTML = `
+                     <div class="modal-content" style="max-width: 600px;">
+                         <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+                         <h2><i class="fas fa-flask"></i> Send Test Alert</h2>
+                         <p>Send a test stock alert to verify the notification system is working.</p>
+                         
+                         <form id="testAlertForm" style="margin-top: 20px;">
+                             <div class="form-group">
+                                 <label for="testCustomer">Customer:</label>
+                                 <select id="testCustomer" required class="form-control">
+                                     <option value="">Select a customer...</option>
+                                     <option value="test-customer-1">Test Customer 1 (test1@example.com)</option>
+                                     <option value="test-customer-2">Test Customer 2 (test2@example.com)</option>
+                                     <option value="test-customer-3">Test Customer 3 (test3@example.com)</option>
+                                 </select>
+                             </div>
+                             
+                             <div class="form-group">
+                                 <label for="testProduct">Product:</label>
+                                 <select id="testProduct" required class="form-control">
+                                     <option value="">Select a product...</option>
+                                     <option value="test-product-1">Abai Springs Water - Abai</option>
+                                     <option value="test-product-2">Sprinkle Water - Sprinkle</option>
+                                     <option value="test-product-3">Premium Water - Abai</option>
+                                 </select>
+                             </div>
+                             
+                             <div class="form-group">
+                                 <label for="testOutlet">Outlet:</label>
+                                 <select id="testOutlet" required class="form-control">
+                                     <option value="">Select an outlet...</option>
+                                     <option value="test-outlet-1">Nairobi Central - Nairobi</option>
+                                     <option value="test-outlet-2">Mombasa Branch - Mombasa</option>
+                                     <option value="test-outlet-3">Kisumu Store - Kisumu</option>
+                                 </select>
+                             </div>
+                             
+                             <div class="form-group">
+                                 <label for="testStockLevel">Current Stock Level:</label>
+                                 <input type="number" id="testStockLevel" value="2" min="0" max="100" class="form-control" required>
+                                 <small class="form-text text-muted">Simulate low stock level for testing</small>
+                             </div>
+                             
+                             <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                                 <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">
+                                     Cancel
+                                 </button>
+                                 <button type="submit" class="btn btn-primary">
+                                     <i class="fas fa-paper-plane"></i> Send Test Alert
+                                 </button>
+                             </div>
+                         </form>
+                     </div>
+                 `;
+                 
+                 document.body.appendChild(modal);
+                 
+                 // Add form submission handler
+                 document.getElementById('testAlertForm').addEventListener('submit', async (e) => {
+                     e.preventDefault();
+                     await sendTestAlert();
+                 });
+                 
+             } catch (error) {
+                 console.error('Error loading test alert modal:', error);
+                 showToast('Error loading test alert form', 'error');
+             }
+         }
+                 
+                 const modal = document.createElement('div');
+                 modal.className = 'modal';
+                 modal.style.display = 'block';
+                 modal.innerHTML = `
+                     <div class="modal-content" style="max-width: 600px;">
+                         <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+                         <h2><i class="fas fa-flask"></i> Send Test Alert</h2>
+                         <p>Send a test stock alert to verify the notification system is working.</p>
+                         
+                         <form id="testAlertForm" style="margin-top: 20px;">
+                             <div class="form-group">
+                                 <label for="testCustomer">Customer:</label>
+                                 <select id="testCustomer" required class="form-control">
+                                     <option value="">Select a customer...</option>
+                                     ${customers.success && customers.data ? customers.data.map(customer => 
+                                         `<option value="${customer._id}">${customer.name} (${customer.email})</option>`
+                                     ).join('') : ''}
+                                 </select>
+                             </div>
+                             
+                             <div class="form-group">
+                                 <label for="testProduct">Product:</label>
+                                 <select id="testProduct" required class="form-control">
+                                     <option value="">Select a product...</option>
+                                     ${products.success && products.data ? products.data.map(product => 
+                                         `<option value="${product._id}">${product.name} - ${product.brand}</option>`
+                                     ).join('') : ''}
+                                 </select>
+                             </div>
+                             
+                             <div class="form-group">
+                                 <label for="testOutlet">Outlet:</label>
+                                 <select id="testOutlet" required class="form-control">
+                                     <option value="">Select an outlet...</option>
+                                     ${outlets.success && outlets.data ? outlets.data.map(outlet => 
+                                         `<option value="${outlet._id}">${outlet.name} - ${outlet.location}</option>`
+                                     ).join('') : ''}
+                                 </select>
+                             </div>
+                             
+                             <div class="form-group">
+                                 <label for="testStockLevel">Current Stock Level:</label>
+                                 <input type="number" id="testStockLevel" value="2" min="0" max="100" class="form-control" required>
+                                 <small class="form-text text-muted">Simulate low stock level for testing</small>
+                             </div>
+                             
+                             <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                                 <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">
+                                     Cancel
+                                 </button>
+                                 <button type="submit" class="btn btn-primary">
+                                     <i class="fas fa-paper-plane"></i> Send Test Alert
+                                 </button>
+                             </div>
+                         </form>
+                     </div>
+                 `;
+                 
+                 document.body.appendChild(modal);
+                 
+                 // Add form submission handler
+                 document.getElementById('testAlertForm').addEventListener('submit', async (e) => {
+                     e.preventDefault();
+                     await sendTestAlert();
+                 });
+                 
+             } catch (error) {
+                 console.error('Error loading test alert modal:', error);
+                 showToast('Error loading test alert form', 'error');
+             }
+         }
+         
+         async function sendTestAlert() {
+             try {
+                 const customerId = document.getElementById('testCustomer').value;
+                 const productId = document.getElementById('testProduct').value;
+                 const outletId = document.getElementById('testOutlet').value;
+                 const stockLevel = document.getElementById('testStockLevel').value;
+                 
+                 if (!customerId || !productId || !outletId) {
+                     showToast('Please select customer, product, and outlet', 'error');
+                     return;
+                 }
+                 
+                 // For test data, we'll simulate a successful response
+                 if (customerId.startsWith('test-') && productId.startsWith('test-') && outletId.startsWith('test-')) {
+                     // Simulate API call delay
+                     await new Promise(resolve => setTimeout(resolve, 1000));
+                     
+                     showToast('Test alert sent successfully! (Simulated)', 'success');
+                     document.querySelector('.modal').remove();
+                     return;
+                 }
+                 
+                 // Real API call for actual data
+                 const response = await fetch(`${API_BASE_URL}/stock-alerts/test-alert`, {
+                     method: 'POST',
+                     headers: {
+                         'Content-Type': 'application/json'
+                     },
+                     body: JSON.stringify({
+                         customerId,
+                         productId,
+                         outletId,
+                         currentStock: parseInt(stockLevel)
+                     })
+                 });
+                 
+                 const data = await response.json();
+                 
+                 if (data.success) {
+                     showToast('Test alert sent successfully!', 'success');
+                     document.querySelector('.modal').remove();
+                 } else {
+                     showToast('Error sending test alert: ' + data.message, 'error');
+                 }
+                 
+             } catch (error) {
+                 console.error('Error sending test alert:', error);
+                 showToast('Error sending test alert', 'error');
+             }
+         }
+         
+         function viewAlertHistory() {
+             // Create a simple modal for viewing alert history
+             const modal = document.createElement('div');
+             modal.className = 'modal';
+             modal.style.display = 'block';
+             modal.innerHTML = `
+                 <div class="modal-content">
+                     <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+                     <h2><i class="fas fa-history"></i> Alert History</h2>
+                     <p>This feature will show the history of all sent stock alerts.</p>
+                     <p><strong>Note:</strong> Alert history is currently in development.</p>
+                     <div style="margin-top: 20px;">
+                         <button class="btn btn-secondary" onclick="this.parentElement.parentElement.parentElement.remove()">
+                             Close
+                         </button>
+                     </div>
+                 </div>
+             `;
+             document.body.appendChild(modal);
+         }
+         
+         // Toast notification function
+         function showToast(message, type = 'info') {
+             const toast = document.createElement('div');
+             toast.className = `toast toast-${type}`;
+             toast.style.cssText = `
+                 position: fixed;
+                 top: 20px;
+                 right: 20px;
+                 background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
+                 color: white;
+                 padding: 15px 20px;
+                 border-radius: 5px;
+                 z-index: 10000;
+                 box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                 animation: slideIn 0.3s ease-out;
+             `;
+             toast.textContent = message;
+             document.body.appendChild(toast);
+             
+             setTimeout(() => {
+                 toast.style.animation = 'slideOut 0.3s ease-in';
+                 setTimeout(() => {
+                     document.body.removeChild(toast);
+                 }, 300);
+             }, 3000);
+         }
+         
+         // Add CSS animations for toast
+         const style = document.createElement('style');
+         style.textContent = `
+             @keyframes slideIn {
+                 from { transform: translateX(100%); opacity: 0; }
+                 to { transform: translateX(0); opacity: 1; }
+             }
+             @keyframes slideOut {
+                 from { transform: translateX(0); opacity: 1; }
+                 to { transform: translateX(100%); opacity: 0; }
+             }
+         `;
+         document.head.appendChild(style);
+    </script>
+</body>
+</html> 

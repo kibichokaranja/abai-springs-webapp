@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abai Springs - Staff Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 2rem;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .logo i {
+            font-size: 2rem;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .role-selector {
+            margin-bottom: 1.5rem;
+        }
+        
+        .role-selector label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .role-selector label::after {
+            content: " *";
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .role-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 0.5rem;
+        }
+
+        .role-option {
+            padding: 10px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .role-option:hover {
+            border-color: #667eea;
+            background-color: #f8f9ff;
+        }
+
+        .role-option.selected {
+            border-color: #667eea;
+            background-color: #667eea;
+            color: white;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+            background: #ccc !important;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            margin-top: 1rem;
+            padding: 10px;
+            background-color: #fdf2f2;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .success-message {
+            color: #27ae60;
+            margin-top: 1rem;
+            padding: 10px;
+            background-color: #f0f9f4;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .back-link {
+            margin-top: 2rem;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .loading {
+            display: none;
+            margin-left: 10px;
+        }
+
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <i class="fas fa-tint"></i>
+            <span>Abai Springs</span>
+        </div>
+        
+        <h1>Staff Portal</h1>
+        <p class="subtitle">Access your role-specific dashboard</p>
+
+        <form id="staffLoginForm">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required placeholder="Enter your email">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Enter your password">
+            </div>
+
+            <div class="form-group role-selector">
+                <label>Select Your Role</label>
+                <div class="role-options">
+                    <div class="role-option" data-role="owner">
+                        <i class="fas fa-crown"></i><br>
+                        Owner
+                    </div>
+                    <div class="role-option" data-role="sales">
+                        <i class="fas fa-chart-line"></i><br>
+                        Sales
+                    </div>
+                    <div class="role-option" data-role="driver">
+                        <i class="fas fa-truck"></i><br>
+                        Driver
+                    </div>
+                    <div class="role-option" data-role="warehouse">
+                        <i class="fas fa-warehouse"></i><br>
+                        Warehouse
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="login-btn" id="loginBtn" disabled>
+                <span>Select Role to Login</span>
+                <span class="loading">
+                    <div class="spinner"></div>
+                </span>
+            </button>
+        </form>
+
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+
+        <a href="/" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Customer Portal
+        </a>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3001/api';
+        let selectedRole = null;
+
+        // Role selection
+        document.querySelectorAll('.role-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.role-option').forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                selectedRole = option.dataset.role;
+                
+                // Enable login button when role is selected
+                const loginBtn = document.getElementById('loginBtn');
+                const btnText = loginBtn.querySelector('span:first-child');
+                loginBtn.disabled = false;
+                btnText.textContent = 'Login to Dashboard';
+            });
+        });
+
+        // Form submission
+        document.getElementById('staffLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!selectedRole) {
+                showError('Please select your role');
+                return;
+            }
+
+            // Show loading state
+            const loginBtn = document.getElementById('loginBtn');
+            const loading = document.querySelector('.loading');
+            const btnText = loginBtn.querySelector('span:first-child');
+            
+            loginBtn.disabled = true;
+            loading.style.display = 'inline-block';
+            btnText.textContent = 'Logging in...';
+            
+            try {
+                // Mock authentication (since we don't have a server running)
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+                
+                // Check credentials
+                const validCredentials = {
+                    'admin@abaisprings.com': { password: 'password123', role: 'owner', name: 'Business Owner' },
+                    'sales@abaisprings.com': { password: 'sales123', role: 'sales', name: 'Sales Manager' },
+                    'driver@abaisprings.com': { password: 'driver123', role: 'driver', name: 'Delivery Driver' },
+                    'warehouse@abaisprings.com': { password: 'warehouse123', role: 'warehouse', name: 'Warehouse Manager' }
+                };
+
+                const userCreds = validCredentials[email];
+                
+                if (userCreds && userCreds.password === password && userCreds.role === selectedRole) {
+                    // Success
+                    showSuccess(`Welcome, ${userCreds.name}! Redirecting to dashboard...`);
+                    
+                    // Store staff session
+                    localStorage.setItem('staffToken', 'mock-jwt-token-' + Date.now());
+                    localStorage.setItem('staffUser', JSON.stringify({
+                        email: email,
+                        role: selectedRole,
+                        name: userCreds.name
+                    }));
+                    localStorage.setItem('staffRole', selectedRole);
+                    
+                    // Redirect to role-specific dashboard
+                    setTimeout(() => {
+                        if (selectedRole === 'owner') {
+                            window.location.href = '/admin';
+                        } else if (selectedRole === 'sales') {
+                            window.location.href = 'sales-dashboard.html';
+                        } else if (selectedRole === 'driver') {
+                            window.location.href = 'driver-dashboard.html';
+                        } else if (selectedRole === 'warehouse') {
+                            window.location.href = 'warehouse-dashboard.html';
+                        } else {
+                            alert(`${userCreds.name} dashboard coming soon!`);
+                        }
+                    }, 2000);
+                    
+                } else {
+                    // Error
+                    showError('Invalid credentials. Please check your email, password, and role selection.');
+                }
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                showError('Login failed. Please try again.');
+            } finally {
+                // Reset button state
+                loginBtn.disabled = false;
+                loading.style.display = 'none';
+                btnText.textContent = 'Login to Dashboard';
+            }
+        });
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // Sample login credentials for testing
+        console.log('Sample Staff Login Credentials:');
+        console.log('Owner: admin@abaisprings.com / password123');
+        console.log('Sales: sales@abaisprings.com / sales123');
+        console.log('Driver: driver@abaisprings.com / driver123');
+        console.log('Warehouse: warehouse@abaisprings.com / warehouse123');
+    </script>
+</body>
+</html>
+

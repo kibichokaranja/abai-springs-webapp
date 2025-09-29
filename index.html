@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Abai Springs - Premium Water</title>
+  
+  <!-- PWA Meta Tags -->
+  <meta name="description" content="Premium water delivery service with smart stock alerts and real-time tracking">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Abai Springs">
+  <meta name="msapplication-TileColor" content="#2563eb">
+  <meta name="msapplication-tap-highlight" content="no">
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- Apple Touch Icons -->
+  <link rel="apple-touch-icon" href="images/logo.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="images/logo.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="images/logo.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="images/logo.png">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="images/logo.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="images/logo.png">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:700,900|Open+Sans:400,600&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  
+  <!-- Scripts -->
+  <script defer src="script.js"></script>
+  <script defer src="chatbot.js"></script>
+  <script defer src="pwa-install.js"></script>
+  
+  <!-- PWA Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('✅ Service Worker registered:', registration);
+          })
+          .catch(error => {
+            console.log('❌ Service Worker registration failed:', error);
+          });
+      });
+    }
+  </script>
+    
+    <!-- Debug script removed - chatbot is now working properly -->
+</head>
+<body>
+  <!-- Announcement Bar -->
+  <div class="announcement-bar">
+    <span>Now shipping anywhere in Kenya!</span>
+  </div>
+  <header class="main-header glassy-header">
+    <div class="brand-bar">
+      <span class="logo-text abai-glow-move">Abai Springs</span>
+    </div>
+    <nav class="main-nav">
+      <button class="nav-toggle" aria-label="Open navigation menu" onclick="toggleMobileNav(this)">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+      <ul class="nav-links">
+        <li><a href="#home" class="nav-link ripple-link">Home</a></li>
+        <li><a href="#about" class="nav-link ripple-link">About</a></li>
+        <li class="nav-products-dropdown">
+          <a id="nav-products-link" class="nav-link ripple-link" onclick="toggleProductsDropdown(event)">Products <span style="font-size:0.8em;">▼</span></a>
+          <div id="nav-products-dropdown-menu" class="nav-products-dropdown-menu" style="display:none;">
+            <button class="products-dropdown-btn" onclick="showBrandProducts('abai')">Abai Springs</button>
+            <button class="products-dropdown-btn" onclick="showBrandProducts('sprinkle')">Sprinkle</button>
+          </div>
+        </li>
+        <li class="nav-outlet-dropdown">
+          <a id="nav-outlet-link" class="nav-link ripple-link" onclick="toggleNavOutletDropdown(event)">Outlets <span style="font-size:0.8em;">▼</span></a>
+          <div id="nav-outlet-dropdown-menu" class="nav-outlet-dropdown-menu" style="display:none;">
+            <!-- Outlets will be loaded dynamically -->
+          </div>
+        </li>
+        <li><a href="#" class="nav-link ripple-link" onclick="openWhatsAppPopup(); return false;">Contact</a></li>
+        <li id="auth-nav-item">
+          <a href="#" class="nav-link ripple-link" id="login-link" onclick="toggleLoginModal(); return false;">
+            <i class="fas fa-sign-in-alt"></i> Login
+          </a>
+        </li>
+      </ul>
+    </nav>
+    <div class="header-actions">
+      <div class="cart-icon" onclick="toggleCart()" aria-label="Open cart" tabindex="0">
+        <span class="cart-emoji">🛒</span> <span id="cart-count">0</span>
+      </div>
+      <div class="user-menu" id="user-menu" style="display: none;">
+        <button class="user-menu-btn" onclick="toggleUserMenu()">
+          <i class="fas fa-user"></i>
+          <span id="user-name">User</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="user-dropdown" id="user-dropdown">
+          <a href="#" onclick="showProfile()">
+            <i class="fas fa-user-circle"></i> Profile
+          </a>
+          <a href="#" onclick="showOrders()">
+            <i class="fas fa-shopping-bag"></i> My Orders
+          </a>
+          <a href="#" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+  
+  <!-- Discount Message -->
+  <div class="hero-discount">
+    <span class="discount-badge">10% OFF</span>
+    <span class="discount-text">Get 10% off your first order! Use code <strong>ABAI10</strong></span>
+  </div>
+  
+  <!-- Premium Creative Splash Overlay -->
+  <div id="splash-overlay" class="splash-overlay" style="display:block;">
+    <div class="splash-animated-bg"></div>
+    <div class="splash-bubbles-container"></div>
+    <div class="splash-center-content">
+      <div class="splash-logo-anim-container">
+        <img src="images/logo.png" alt="Abai Springs logo" class="splash-logo-creative">
+        <div class="splash-water-fill"></div>
+      </div>
+      <div class="splash-tagline-creative">Pure. Natural. Refreshing.</div>
+    </div>
+  </div>
+  
+  <!-- Hero Banner with Logo and Discount -->
+  <section class="hero-banner">
+    <h1 class="hero-title">Premium Drinking Water</h1>
+  </section>
+
+  <!-- Products Section -->
+  <section class="products-section" id="products">
+    <div class="outlet-selector-bar" id="outlet-selector-bar">
+      <label for="outlet-selector"><strong>Select Outlet:</strong></label>
+      <select id="outlet-selector" class="modern-outlet-dropdown" required onchange="onOutletChange()">
+        <option value="" disabled selected>Select an outlet</option>
+        <!-- Outlets will be loaded dynamically -->
+      </select>
+      <button id="refresh-data-btn" onclick="manualRefresh()" class="refresh-btn">
+        <i class="fas fa-sync-alt"></i> Refresh Data
+      </button>
+    </div>
+    <h2 class="products-main-title" id="products-title">Our Products</h2>
+    
+    <!-- Brand Selection Dropdown -->
+    <div class="brand-selector">
+      <label for="brand-selector"><strong>Select Brand:</strong></label>
+      <select id="brand-selector" class="modern-brand-dropdown" onchange="showBrandProducts(this.value)">
+        <option value="abai" selected>Abai Springs</option>
+        <option value="sprinkle">Sprinkle</option>
+      </select>
+    </div>
+    
+    <!-- Abai Springs Products -->
+    <div class="products-grid" id="abai-products" style="display: grid;">
+      <div class="product-card-modern">
+        <img src="images/500ml.png" alt="500ml Abai Springs bottle" class="product-img-modern">
+        <div class="product-info-modern">
+          <h3>500ml</h3>
+          <p>Perfect for on-the-go hydration.</p>
+          <div class="product-price">KSH 20</div>
+          <button class="modern-add-to-cart" onclick="addToCart('500ml', 20, 'Abai Springs')">Add to Cart</button>
+        </div>
+      </div>
+      <div class="product-card-modern">
+        <img src="images/1l.png" alt="1 Litre Abai Springs bottle" class="product-img-modern">
+        <div class="product-info-modern">
+          <h3>1 Litre</h3>
+          <p>Great for daily use and travel.</p>
+          <div class="product-price">KSH 30</div>
+          <button class="modern-add-to-cart" onclick="addToCart('1 Litre', 30, 'Abai Springs')">Add to Cart</button>
+        </div>
+      </div>
+      <div class="product-card-modern">
+        <img src="images/5l.png" alt="5 Litre Abai Springs bottle" class="product-img-modern">
+        <div class="product-info-modern">
+          <h3>5 Litre</h3>
+          <p>Ideal for families and small offices.</p>
+          <div class="product-price">KSH 80</div>
+          <button class="modern-add-to-cart" onclick="addToCart('5 Litre', 80, 'Abai Springs')">Add to Cart</button>
+        </div>
+      </div>
+      <div class="product-card-modern">
+        <img src="images/10l.png" alt="10 Litre Abai Springs bottle" class="product-img-modern">
+        <div class="product-info-modern">
+          <h3>10 Litre</h3>
+          <p>Perfect for gatherings and events.</p>
+          <div class="product-price">KSH 100</div>
+          <button class="modern-add-to-cart" onclick="addToCart('10 Litre', 100, 'Abai Springs')">Add to Cart</button>
+        </div>
+      </div>
+      <div class="product-card-modern">
+        <img src="images/20l.png" alt="20 Litre Abai Springs bottle" class="product-img-modern">
+        <div class="product-info-modern">
+          <h3>20 Litre</h3>
+          <p>Bulk size for large needs.</p>
+          <div class="product-price">KSH 150</div>
+          <button class="modern-add-to-cart" onclick="addToCart('20 Litre', 150, 'Abai Springs')">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Sprinkle Products (Hidden by default) -->
+    <div class="products-grid" id="sprinkle-products" style="display: none !important; visibility: hidden;">
+      <div class="product-card-modern sprinkle-card-modern">
+        <img src="images/500ml.png" alt="500ml Sprinkle bottle" class="product-img-modern">
+        <div class="product-info-modern">
+          <h3>500ml</h3>
+          <p>Perfect for on-the-go hydration.</p>
+          <div class="product-price">KSH 18</div>
+          <button class="modern-add-to-cart" onclick="addToCart('500ml', 18, 'Sprinkle')">Add to Cart</button>
+        </div>
+      </div>
+      <div class="product-card-modern sprinkle-card-modern">
+        <img src="images/1l.png" alt="1 Litre Sprinkle bottle" class="product-img-modern">
+        <div class="product-info-modern">
+          <h3>1 Litre</h3>
+          <p>Great for daily use and travel.</p>
+          <div class="product-price">KSH 25</div>
+          <button class="modern-add-to-cart" onclick="addToCart('1 Litre', 25, 'Sprinkle')">Add to Cart</button>
+        </div>
+      </div>
+      <div class="product-card-modern sprinkle-card-modern">
+        <img src="images/sprinkle-5l.png" alt="5 Litre Sprinkle bottle" class="product-img-modern">
+        <div class="product-info-modern">
+          <h3>5 Litre</h3>
+          <p>Ideal for families and small offices.</p>
+          <div class="product-price">KSH 70</div>
+          <button class="modern-add-to-cart" onclick="addToCart('5 Litre', 70, 'Sprinkle')">Add to Cart</button>
+        </div>
+      </div>
+      <div class="product-card-modern sprinkle-card-modern">
+        <img src="images/sprinkle-10l.png" alt="10 Litre Sprinkle bottle" class="product-img-modern">
+        <div class="product-info-modern">
+          <h3>10 Litre</h3>
+          <p>Perfect for gatherings and events.</p>
+          <div class="product-price">KSH 90</div>
+          <button class="modern-add-to-cart" onclick="addToCart('10 Litre', 90, 'Sprinkle')">Add to Cart</button>
+        </div>
+      </div>
+      <div class="product-card-modern sprinkle-card-modern">
+        <img src="images/sprinkle-20l.png" alt="20 Litre Sprinkle bottle" class="product-img-modern">
+        <div class="product-info-modern">
+          <h3>20 Litre</h3>
+          <p>Bulk size for large needs.</p>
+          <div class="product-price">KSH 120</div>
+          <button class="modern-add-to-cart" onclick="addToCart('20 Litre', 120, 'Sprinkle')">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+    <!-- End of products grid -->
+    
+
+    <div class="view-cart-btn-container">
+      <button id="view-cart-btn" onclick="toggleCart()">
+        <span class="cart-btn-icon">🛒</span> View Cart
+      </button>
+    </div>
+  </section>
+
+  <!-- Video Section -->
+  <section class="video-section" id="video">
+    <div class="video-heading-message">
+      <h2>Our Story</h2>
+      <p>Discover the journey of Abai Springs water from the heart of Mt. Kenya to your table.</p>
+    </div>
+    <div class="video-fullwidth-container">
+      <video controls poster="images/500ml.png" class="brand-video">
+        <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section class="about-section" id="about">
+    <div class="about-decor decor-top-left">
+      <svg width="60" height="60" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="40" rx="18" ry="10" fill="#4fc3f7" fill-opacity="0.18"/><path d="M30 10C36 22 50 30 30 58C10 30 24 22 30 10Z" fill="#4fc3f7" fill-opacity="0.28"/></svg>
+    </div>
+    <div class="about-decor decor-bottom-right">
+      <svg width="70" height="70" viewBox="0 0 70 70" fill="none"><ellipse cx="35" cy="50" rx="20" ry="12" fill="#1976d2" fill-opacity="0.13"/><path d="M35 18C42 32 62 42 35 68C8 42 28 32 35 18Z" fill="#1976d2" fill-opacity="0.18"/></svg>
+    </div>
+    <div class="about-content">
+      <div class="about-text">
+        <h2>About Abai Springs</h2>
+        <h3>From the Heart of Mt. Kenya</h3>
+        <p>
+          Abai Springs is more than just water—it's a journey from the pure, untouched springs of Mt. Kenya to your table. Our water is naturally filtered through volcanic rock, enriched with essential minerals, and bottled at the source to preserve its crisp, refreshing taste.<br><br>
+          Inspired by the majesty of Mt. Kenya, we are committed to sustainability, community, and delivering nature’s finest hydration. Every drop tells a story of purity, adventure, and the spirit of Kenya.
+        </p>
+        <ul class="about-facts">
+          <li><strong>Source:</strong> Pristine springs at the foothills of Mt. Kenya</li>
+          <li><strong>Mineral-rich:</strong> Naturally filtered through volcanic rock</li>
+          <li><strong>Sustainability:</strong> Eco-friendly bottling and community support</li>
+          <li><strong>Adventure:</strong> Every bottle is a taste of Kenya’s wild beauty</li>
+        </ul>
+      </div>
+      <div class="about-image">
+        <img src="images/500ml.png" alt="Abai Springs 500ml bottle" />
+      </div>
+    </div>
+    <div class="about-wave">
+      <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0 40C360 80 1080 0 1440 40V60H0V40Z" fill="#1976d2" fill-opacity="0.10">
+          <animate attributeName="d" dur="4s" repeatCount="indefinite"
+            values="M0 40C360 80 1080 0 1440 40V60H0V40Z;M0 30C360 60 1080 20 1440 30V60H0V30Z;M0 40C360 80 1080 0 1440 40V60H0V40Z" />
+        </path>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Abai Springs Subscribe & Save Section -->
+  <section class="abai-subscribe-section">
+    <div class="abai-subscribe-bg"></div>
+    <div class="abai-subscribe-content">
+      <div class="abai-subscribe-left">
+        <h2 class="abai-subscribe-title">Hydrate & Save with Abai Springs</h2>
+        <p class="abai-subscribe-desc">Never run out of pure Mt. Kenya water. Subscribe for regular doorstep delivery and enjoy exclusive savings, gifts, and the freshest hydration—always.</p>
+        <ul class="abai-subscribe-steps">
+          <li>
+            <span class="abai-step-icon">
+              <!-- Bottle SVG -->
+              <svg width="36" height="48" viewBox="0 0 36 48" fill="none"><rect x="10" y="8" width="16" height="32" rx="8" fill="#4fc3f7"/><rect x="14" y="2" width="8" height="12" rx="4" fill="#1976d2"/><ellipse cx="18" cy="44" rx="8" ry="4" fill="#e3f0ff"/></svg>
+            </span>
+            <span class="abai-step-text"><strong>1.</strong> Choose your bottle size</span>
+          </li>
+          <li>
+            <span class="abai-step-icon">
+              <!-- Calendar SVG -->
+              <svg width="36" height="36" viewBox="0 0 36 36" fill="none"><rect x="4" y="8" width="28" height="22" rx="6" fill="#e3f0ff"/><rect x="8" y="12" width="20" height="14" rx="4" fill="#4fc3f7"/><rect x="14" y="4" width="8" height="6" rx="2" fill="#1976d2"/></svg>
+            </span>
+            <span class="abai-step-text"><strong>2.</strong> Set your delivery schedule</span>
+          </li>
+          <li>
+            <span class="abai-step-icon">
+              <!-- Delivery SVG -->
+              <svg width="44" height="36" viewBox="0 0 44 36" fill="none"><rect x="2" y="10" width="40" height="18" rx="6" fill="#4fc3f7"/><rect x="8" y="18" width="28" height="8" rx="4" fill="#e3f0ff"/><circle cx="12" cy="30" r="3" fill="#1976d2"/><circle cx="32" cy="30" r="3" fill="#1976d2"/></svg>
+            </span>
+            <span class="abai-step-text"><strong>3.</strong> Enjoy doorstep delivery & exclusive perks</span>
+          </li>
+        </ul>
+                    <button class="abai-subscribe-btn" onclick="toggleLoginModal()">Subscribe Now</button>
+      </div>
+      <div class="abai-subscribe-right">
+        <img src="images/20l.png" alt="Abai Springs 20L bottle" class="abai-subscribe-bottle-img" />
+        <div class="abai-subscribe-water-anim"></div>
+      </div>
+    </div>
+  </section>
+  <!-- End Abai Springs Subscribe & Save Section -->
+
+  <!-- Features/Highlights Section -->
+  <section class="brand-features-section">
+    <div class="features-row">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <!-- Water drop/source icon -->
+          <svg width="48" height="48" fill="none" viewBox="0 0 48 48"><defs><radialGradient id="g1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#4fc3f7"/><stop offset="100%" stop-color="#1976d2"/></radialGradient></defs><ellipse cx="24" cy="36" rx="16" ry="8" fill="#e3f0ff"/><path d="M24 10C24 10 14 24 24 34C34 24 24 10 24 10Z" fill="url(#g1)" stroke="#1976d2" stroke-width="2"/><circle cx="24" cy="24" r="5" fill="#fff" stroke="#4fc3f7" stroke-width="2"/></svg>
+        </div>
+        <h4>Pure Mt. Kenya Source</h4>
+        <p>Drawn from pristine springs at the foothills of Mt. Kenya, naturally filtered for unmatched purity.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <!-- Minerals icon -->
+          <svg width="48" height="48" fill="none" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="#e3f0ff"/><path d="M24 14L28 24H20L24 14Z" fill="#4fc3f7" stroke="#1976d2" stroke-width="2"/><circle cx="24" cy="30" r="4" fill="#fff" stroke="#1976d2" stroke-width="2"/><path d="M24 34V38" stroke="#1976d2" stroke-width="2"/></svg>
+        </div>
+        <h4>Mineral-Rich Hydration</h4>
+        <p>Enriched with essential minerals for a crisp, refreshing taste and healthy hydration.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <!-- Eco-friendly/leaf icon -->
+          <svg width="48" height="48" fill="none" viewBox="0 0 48 48"><rect x="4" y="4" width="40" height="40" rx="20" fill="#e3f0ff"/><path d="M24 34C30 28 34 20 24 14C14 20 18 28 24 34Z" fill="#4fc3f7" stroke="#1976d2" stroke-width="2"/><path d="M24 34V24" stroke="#1976d2" stroke-width="2"/><ellipse cx="24" cy="20" rx="2" ry="4" fill="#fff"/></svg>
+        </div>
+        <h4>Eco-Friendly Bottling</h4>
+        <p>Committed to sustainability with recyclable bottles and responsible sourcing practices.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <!-- Adventure/mountain icon -->
+          <svg width="48" height="48" fill="none" viewBox="0 0 48 48"><rect x="4" y="4" width="40" height="40" rx="20" fill="#e3f0ff"/><path d="M12 36L24 16L36 36H12Z" fill="#4fc3f7" stroke="#1976d2" stroke-width="2"/><circle cx="24" cy="28" r="3" fill="#fff" stroke="#1976d2" stroke-width="2"/><path d="M24 25V19" stroke="#1976d2" stroke-width="2"/></svg>
+        </div>
+        <h4>Adventure in Every Drop</h4>
+        <p>Experience the spirit of Kenya—every bottle is a taste of wild beauty and adventure.</p>
+      </div>
+    </div>
+  </section>
+  <!-- End Features Section -->
+  <footer class="main-footer" id="contact">
+    <div class="footer-content">
+      <div class="footer-brand-anim">
+        <div class="footer-camel-anim">
+          <svg class="camel-svg" viewBox="0 0 90 60" width="90" height="60" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Simple stylized camel -->
+            <g class="camel-body">
+              <ellipse cx="40" cy="40" rx="18" ry="10" fill="#c2a060"/>
+              <ellipse cx="60" cy="38" rx="8" ry="7" fill="#c2a060"/>
+              <ellipse cx="25" cy="45" rx="7" ry="5" fill="#c2a060"/>
+              <ellipse cx="70" cy="32" rx="4" ry="3" fill="#c2a060"/>
+              <ellipse cx="75" cy="30" rx="2.5" ry="2" fill="#c2a060"/>
+              <ellipse cx="77.5" cy="29" rx="1.2" ry="1.2" fill="#6d4c1b"/>
+              <!-- Legs -->
+              <rect x="32" y="50" width="2" height="8" fill="#c2a060"/>
+              <rect x="38" y="50" width="2" height="8" fill="#c2a060"/>
+              <rect x="60" y="45" width="2" height="10" fill="#c2a060"/>
+              <rect x="65" y="45" width="2" height="10" fill="#c2a060"/>
+              <!-- Bottle -->
+              <g class="camel-bottle">
+                <rect x="74" y="34" width="3" height="10" rx="1.2" fill="#2196f3"/>
+                <rect x="74.5" y="33" width="2" height="2" rx="1" fill="#1976d2"/>
+              </g>
+            </g>
+            <!-- Water stream (hidden at start) -->
+            <rect class="camel-water-stream" x="76" y="44" width="2" height="18" fill="#2196f3" rx="1" style="opacity:0;"/>
+          </svg>
+        </div>
+        <div class="footer-brand-glow">
+          <span class="footer-brand-text-glow">ABAI SPRINGS</span>
+        </div>
+      </div>
+      <div class="footer-links">
+        <div class="footer-quick-links">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="#about">About</a></li>
+            <li><a href="#products">Products</a></li>
+            <li><a href="#outlet-selector-bar">Outlets</a></li>
+            <li><a href="#" onclick="openWhatsAppPopup(); return false;">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-social-icons">
+          <a href="https://wa.me/254723945475" class="footer-social-icon" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp">
+            <!-- WhatsApp Outline SVG -->
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.52 3.48A11.94 11.94 0 0 0 12 0C5.37 0 0 5.37 0 12c0 2.11.55 4.09 1.51 5.8L0 24l6.29-1.65A11.94 11.94 0 0 0 12 24c6.63 0 12-5.37 12-12 0-3.19-1.25-6.19-3.48-8.52zM12 22c-1.93 0-3.77-.5-5.36-1.44l-.38-.22-3.75.98.99-3.65-.24-.39A9.94 9.94 0 0 1 2 12c0-5.52 4.48-10 10-10s10 4.48 10 10-4.48 10-10 10zm5.2-7.2c-.27-.13-1.6-.79-1.85-.88-.25-.09-.43-.13-.61.13-.18.26-.7.88-.86 1.06-.16.18-.32.2-.59.07-.27-.13-1.13-.42-2.15-1.34-.79-.7-1.32-1.56-1.48-1.83-.16-.27-.02-.41.12-.54.13-.13.29-.34.43-.51.14-.17.18-.29.27-.48.09-.19.05-.36-.02-.5-.07-.13-.61-1.47-.84-2.01-.22-.54-.44-.47-.61-.48-.16-.01-.35-.01-.54-.01-.19 0-.5.07-.76.34-.26.27-1 1.01-1 2.46 0 1.45 1.03 2.85 1.18 3.05.15.2 2.03 3.23 5.02 4.4.7.29 1.25.46 1.68.59.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.69.25-1.28.18-1.41-.07-.13-.25-.2-.52-.33z" stroke="currentColor"/></svg>
+          </a>
+          <a href="mailto:springs@abailodges.com" class="footer-social-icon" aria-label="Email" title="Email">
+            <!-- Email Outline SVG -->
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor"/><polyline points="22,6 12,13 2,6" stroke="currentColor"/></svg>
+          </a>
+          <a href="#" class="footer-social-icon" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram">
+            <!-- Instagram Outline SVG -->
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor"/><circle cx="12" cy="12" r="4" stroke="currentColor"/><circle cx="18" cy="6" r="1" stroke="currentColor"/></svg>
+          </a>
+          <a href="#" class="footer-social-icon" target="_blank" rel="noopener" aria-label="Twitter/X" title="Twitter/X">
+            <!-- X/Twitter Outline SVG -->
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 7L7 17M7 7l10 10" stroke="currentColor"/></svg>
+          </a>
+          <a href="#" class="footer-social-icon" target="_blank" rel="noopener" aria-label="TikTok" title="TikTok">
+            <!-- TikTok Outline SVG -->
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8.5c-.6 0-1.1-.1-1.6-.3v6.1c0 2.1-1.7 3.8-3.8 3.8s-3.8-1.7-3.8-3.8 1.7-3.8 3.8-3.8c.2 0 .4 0 .6.1v2.1c-.2-.1-.4-.1-.6-.1-1 0-1.7.8-1.7 1.7s.8 1.7 1.7 1.7 1.7-.8 1.7-1.7v-8.2h2.1c.1 1.1.9 2 2 2.2v2.2z" stroke="currentColor"/><path d="M16 6.5c1.1.2 2 .9 2 2.2h-2v-2.2z" stroke="currentColor"/><path d="M14.1 5.3v2.1c.2.1.4.1.6.1.7 0 1.3-.1 1.9-.4v-2.1c-.6.3-1.2.4-1.9.4-.2 0-.4 0-.6-.1z" stroke="currentColor"/></svg>
+          </a>
+        </div>
+        <div class="footer-updates">
+          <h4>Get Updates</h4>
+          <form class="footer-newsletter" onsubmit="handleNewsletterSubscribe(event);">
+            <div class="footer-bottle-icon">
+              <img src="images/500ml.png" alt="Abai Springs 500ml bottle" height="60" style="vertical-align:middle;">
+            </div>
+            <input type="email" id="newsletter-email" placeholder="Enter your email" required>
+            <button type="submit">Subscribe</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2025 Abai Springs. All rights reserved.</span>
+    </div>
+  </footer>
+
+  <audio id="shop-now-sound" src="sounds/splash.mp3" preload="auto"></audio>
+  <audio id="proceed-sound" src="sounds/cash.mp3" preload="auto"></audio>
+  <audio id="add-to-cart-sound" src="sounds/pop.mp3" preload="auto"></audio>
+
+  <!-- Slide-in Cart Sidebar and Overlay -->
+  <div id="cart-overlay" class="cart-overlay" style="display:none;"></div>
+  <aside id="cart-sidebar" class="cart-sidebar" style="display:none;">
+    <div class="cart-sidebar-header">
+      <h2>Your Cart</h2>
+      <button class="cart-sidebar-close" onclick="toggleCartSidebar()" aria-label="Close cart">&times;</button>
+    </div>
+    <div id="cart-sidebar-items" class="cart-sidebar-items">
+      <!-- Cart items will be dynamically inserted here -->
+    </div>
+    <div class="cart-sidebar-footer">
+      <div class="cart-sidebar-subtotal">
+        <span>Subtotal:</span>
+        <span id="cart-sidebar-subtotal">Ksh 0</span>
+      </div>
+      <button onclick="checkout()" class="proceed-payment" aria-label="Proceed to payment">Proceed to Payment</button>
+      <button class="continue-shopping" onclick="toggleCartSidebar()" aria-label="Continue shopping">Continue Shopping</button>
+    </div>
+  </aside>
+
+  <!-- Toast Notification -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Spinner utility for loading states -->
+  <div id="global-spinner" class="global-spinner" style="display:none;">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Login Modal -->
+  <div id="login-modal" class="login-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="login-modal-title">
+    <div class="login-modal-content">
+      <button class="login-modal-close" onclick="toggleLoginModal()" aria-label="Close login">&times;</button>
+      <h2 id="login-modal-title">Login to Your Account</h2>
+      
+      <!-- Login Form -->
+      <form class="login-form" id="login-form" onsubmit="handleLogin(event)">
+        <div class="floating-label-group">
+          <input type="email" id="login-email" name="email" required autocomplete="username" placeholder=" " />
+          <label for="login-email" class="floating-label">Email</label>
+        </div>
+        <div class="floating-label-group">
+          <input type="password" id="login-password" name="password" required autocomplete="current-password" placeholder=" " />
+          <label for="login-password" class="floating-label">Password</label>
+        </div>
+        <button type="submit" class="proceed-payment login-submit-btn">
+          <span class="btn-text">Login</span>
+          <span class="btn-loading" style="display: none;">
+            <div class="spinner"></div>
+            Logging in...
+          </span>
+        </button>
+      </form>
+      
+      <!-- Register Form (Hidden by default) -->
+      <form class="register-form" id="register-form" style="display: none;" onsubmit="handleRegister(event)">
+        <div class="floating-label-group">
+          <input type="text" id="register-name" name="name" required placeholder=" " />
+          <label for="register-name" class="floating-label">Full Name</label>
+        </div>
+        <div class="floating-label-group">
+          <input type="email" id="register-email" name="email" required placeholder=" " />
+          <label for="register-email" class="floating-label">Email</label>
+        </div>
+        <div class="floating-label-group">
+          <input type="tel" id="register-phone" name="phone" required placeholder=" " />
+          <label for="register-phone" class="floating-label">Phone Number</label>
+        </div>
+        <div class="floating-label-group">
+          <input type="password" id="register-password" name="password" required placeholder=" " />
+          <label for="register-password" class="floating-label">Password</label>
+        </div>
+        <div class="floating-label-group">
+          <input type="password" id="register-confirm-password" name="confirmPassword" required placeholder=" " />
+          <label for="register-confirm-password" class="floating-label">Confirm Password</label>
+        </div>
+        <button type="submit" class="proceed-payment register-submit-btn">
+          <span class="btn-text">Create Account</span>
+          <span class="btn-loading" style="display: none;">
+            <div class="spinner"></div>
+            Creating account...
+          </span>
+        </button>
+      </form>
+      
+      <div class="login-modal-links">
+        <a href="#" id="toggle-register" tabindex="0">Create Account</a> |
+        <a href="#" tabindex="0">Forgot Password?</a>
+      </div>
+      
+      <div id="login-error" class="error-message" style="display: none;"></div>
+      <div id="login-success" class="success-message" style="display: none;"></div>
+    </div>
+  </div>
+
+  <button class="floating-login-btn" onclick="toggleLoginModal()" aria-label="Login">
+    <!-- User Icon SVG -->
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-2.2 3.6-4 8-4s8 1.8 8 4"/></svg>
+  </button>
+
+  <!-- WhatsApp Contact Popup Modal -->
+  <div id="whatsapp-modal" class="whatsapp-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="whatsapp-modal-title">
+    <div class="whatsapp-modal-content">
+      <button class="whatsapp-modal-close" onclick="closeWhatsAppPopup()" aria-label="Close WhatsApp popup">&times;</button>
+      <div class="whatsapp-modal-header">
+        <div class="whatsapp-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.52 3.48A11.94 11.94 0 0 0 12 0C5.37 0 0 5.37 0 12c0 2.11.55 4.09 1.51 5.8L0 24l6.29-1.65A11.94 11.94 0 0 0 12 24c6.63 0 12-5.37 12-12 0-3.19-1.25-6.19-3.48-8.52zM12 22c-1.93 0-3.77-.5-5.36-1.44l-.38-.22-3.75.98.99-3.65-.24-.39A9.94 9.94 0 0 1 2 12c0-5.52 4.48-10 10-10s10 4.48 10 10-4.48 10-10 10zm5.2-7.2c-.27-.13-1.6-.79-1.85-.88-.25-.09-.43-.13-.61.13-.18.26-.7.88-.86 1.06-.16.18-.32.2-.59.07-.27-.13-1.13-.42-2.15-1.34-.79-.7-1.32-1.56-1.48-1.83-.16-.27-.02-.41.12-.54.13-.13.29-.34.43-.51.14-.17.18-.29.27-.48.09-.19.05-.36-.02-.5-.07-.13-.61-1.47-.84-2.01-.22-.54-.44-.47-.61-.48-.16-.01-.35-.01-.54-.01-.19 0-.5.07-.76.34-.26.27-1 1.01-1 2.46 0 1.45 1.03 2.85 1.18 3.05.15.2 2.03 3.23 5.02 4.4.7.29 1.25.46 1.68.59.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.69.25-1.28.18-1.41-.07-.13-.25-.2-.52-.33z"/>
+          </svg>
+        </div>
+        <h2 id="whatsapp-modal-title">Contact Us on WhatsApp</h2>
+        <p>Get in touch with our team for any questions or support</p>
+      </div>
+      <div class="whatsapp-modal-body">
+        <div class="whatsapp-contact-info">
+          <div class="contact-option">
+            <div class="contact-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+            </div>
+            <div class="contact-details">
+              <h3>WhatsApp Business</h3>
+              <p>+254 723 945 475</p>
+              <small>Available 24/7 for your convenience</small>
+            </div>
+          </div>
+        </div>
+        <div class="whatsapp-actions">
+          <a href="https://wa.me/254723945475?text=Hello%20Abai%20Springs%2C%20I%20would%20like%20to%20know%20more%20about%20your%20products" 
+             class="whatsapp-btn" 
+             target="_blank" 
+             rel="noopener"
+             onclick="closeWhatsAppPopup()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.52 3.48A11.94 11.94 0 0 0 12 0C5.37 0 0 5.37 0 12c0 2.11.55 4.09 1.51 5.8L0 24l6.29-1.65A11.94 11.94 0 0 0 12 24c6.63 0 12-5.37 12-12 0-3.19-1.25-6.19-3.48-8.52zM12 22c-1.93 0-3.77-.5-5.36-1.44l-.38-.22-3.75.98.99-3.65-.24-.39A9.94 9.94 0 0 1 2 12c0-5.52 4.48-10 10-10s10 4.48 10 10-4.48 10-10 10zm5.2-7.2c-.27-.13-1.6-.79-1.85-.88-.25-.09-.43-.13-.61.13-.18.26-.7.88-.86 1.06-.16.18-.32.2-.59.07-.27-.13-1.13-.42-2.15-1.34-.79-.7-1.32-1.56-1.48-1.83-.16-.27-.02-.41.12-.54.13-.13.29-.34.43-.51.14-.17.18-.29.27-.48.09-.19.05-.36-.02-.5-.07-.13-.61-1.47-.84-2.01-.22-.54-.44-.47-.61-.48-.16-.01-.35-.01-.54-.01-.19 0-.5.07-.76.34-.26.27-1 1.01-1 2.46 0 1.45 1.03 2.85 1.18 3.05.15.2 2.03 3.23 5.02 4.4.7.29 1.25.46 1.68.59.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.69.25-1.28.18-1.41-.07-.13-.25-.2-.52-.33z"/>
+            </svg>
+            Open WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subscription Success Modal -->
+  <div id="subscription-modal" class="subscription-modal">
+    <div class="subscription-modal-content">
+      <button class="subscription-modal-close" onclick="closeSubscriptionModal()" aria-label="Close subscription popup">&times;</button>
+      <div class="subscription-success-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22,4 12,14.01 9,11.01"/>
+        </svg>
+      </div>
+      <div class="subscription-header">
+        <h2>Welcome to the Abai Springs Family! 🎉</h2>
+        <p>Thank you for subscribing to our newsletter</p>
+      </div>
+      <div class="subscription-benefits">
+        <div class="benefit-item">
+          <div class="benefit-icon">💧</div>
+          <div class="benefit-text">
+            <strong>Exclusive Offers</strong>
+            <span>Get special discounts and promotions</span>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon">📱</div>
+          <div class="benefit-text">
+            <strong>Smart Alerts</strong>
+            <span>Personalized stock reminders</span>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon">🚚</div>
+          <div class="benefit-text">
+            <strong>Delivery Updates</strong>
+            <span>Track your orders in real-time</span>
+          </div>
+        </div>
+      </div>
+      <div class="subscription-actions">
+        <button class="subscription-btn primary" onclick="closeSubscriptionModal()">
+          Start Shopping
+        </button>
+        <button class="subscription-btn secondary" onclick="openWhatsAppPopup(); closeSubscriptionModal();">
+          Contact Us
+        </button>
+      </div>
+      <div class="subscription-footer">
+        <p>Stay hydrated with Kenya's premium water! 💧</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div id="profile-modal" class="profile-modal">
+    <div class="profile-modal-content">
+      <button class="profile-modal-close" onclick="closeProfileModal()" aria-label="Close profile popup">&times;</button>
+      <div class="profile-header">
+        <div class="profile-avatar">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <h2>Profile Information</h2>
+        <p>Your account details and preferences</p>
+      </div>
+      <div class="profile-info">
+        <div class="profile-field">
+          <div class="field-label">Name:</div>
+          <div class="field-value" id="profile-name">Loading...</div>
+        </div>
+        <div class="profile-field">
+          <div class="field-label">Email:</div>
+          <div class="field-value" id="profile-email">Loading...</div>
+        </div>
+        <div class="profile-field">
+          <div class="field-label">Phone:</div>
+          <div class="field-value" id="profile-phone">Loading...</div>
+        </div>
+      </div>
+      <div class="profile-actions">
+        <button class="profile-btn primary" onclick="closeProfileModal()">Close</button>
+        <button class="profile-btn secondary" onclick="openOrdersModal(); closeProfileModal();">View Orders</button>
+      </div>
+      <div class="profile-footer">
+        <p>Stay hydrated with Abai Springs! <span class="water-icon">💧</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orders Modal -->
+  <div id="orders-modal" class="orders-modal">
+    <div class="orders-modal-content">
+      <button class="orders-modal-close" onclick="closeOrdersModal()" aria-label="Close orders popup">&times;</button>
+      <div class="orders-header">
+        <div class="orders-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+            <path d="M12 11h4"/>
+            <path d="M12 16h4"/>
+            <path d="M8 11h.01"/>
+            <path d="M8 16h.01"/>
+          </svg>
+        </div>
+        <h2>Your Orders</h2>
+        <p>Track your recent orders and their status</p>
+      </div>
+      <div class="orders-content">
+        <div id="orders-loading" class="orders-loading">
+          <div class="loading-spinner"></div>
+          <p>Loading your orders...</p>
+        </div>
+        <div id="orders-list" class="orders-list" style="display: none;">
+          <!-- Orders will be populated here -->
+        </div>
+        <div id="orders-empty" class="orders-empty" style="display: none;">
+          <div class="empty-icon">📦</div>
+          <h3>No Orders Yet</h3>
+          <p>You haven't placed any orders yet. Start shopping to see your orders here!</p>
+        </div>
+      </div>
+      <div class="orders-actions">
+        <button class="orders-btn primary" onclick="closeOrdersModal()">Close</button>
+        <button class="orders-btn secondary" onclick="window.location.href='/'">Continue Shopping</button>
+      </div>
+      <div class="orders-footer">
+        <p>Stay hydrated with Abai Springs! <span class="water-icon">💧</span></p>
+      </div>
+    </div>
+  </div>
+
+      <!-- Test button removed - chatbot is now working properly -->
+
+</body>
+</html>
+

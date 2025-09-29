@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Dashboard - Abai Springs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 2rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            text-decoration: none;
+            color: #666;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: #667eea;
+            color: white;
+            transform: translateX(5px);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .logout-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        /* Content Sections */
+        .content-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .data-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .data-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-right: 0.5rem;
+        }
+
+        .btn-primary { background: #667eea; color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .action-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .action-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .recent-activity {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .activity-time {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .financial-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .financial-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .financial-amount {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .financial-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-crown"></i>
+                <span>Owner Portal</span>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active" data-section="overview">
+                        <i class="fas fa-chart-pie"></i>
+                        Overview
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-section="financial">
+                        <i class="fas fa-dollar-sign"></i>
+                        Financial
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-section="users">
+                        <i class="fas fa-users"></i>
+                        User Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-section="analytics">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-section="settings">
+                        <i class="fas fa-cog"></i>
+                        Settings
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div>
+                    <h1>Owner Dashboard</h1>
+                    <p>Complete business overview and management</p>
+                </div>
+                <div class="user-info">
+                    <div class="user-name" id="userName">Loading...</div>
+                    <button class="logout-btn" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+
+            <!-- Overview Section -->
+            <div id="overview-section" class="content-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-pie"></i>
+                    Business Overview
+                </h2>
+
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: #667eea;">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="stat-number" id="totalOrders">0</div>
+                        <div class="stat-label">Total Orders</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: #27ae60;">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-number" id="totalRevenue">KSH 0</div>
+                        <div class="stat-label">Total Revenue</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: #f39c12;">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-number" id="totalCustomers">0</div>
+                        <div class="stat-label">Customers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: #e74c3c;">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="stat-number" id="totalProducts">0</div>
+                        <div class="stat-label">Products</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Quick Actions</h3>
+                <div class="quick-actions">
+                    <div class="action-card" onclick="showSection('financial')">
+                        <div class="action-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div>View Financial Reports</div>
+                    </div>
+                    <div class="action-card" onclick="showSection('users')">
+                        <div class="action-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div>Manage Users</div>
+                    </div>
+                    <div class="action-card" onclick="showSection('analytics')">
+                        <div class="action-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div>View Analytics</div>
+                    </div>
+                    <div class="action-card" onclick="window.open('/admin', '_blank')">
+                        <div class="action-icon">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <div>Full Admin Panel</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Section -->
+            <div id="financial-section" class="content-section" style="display: none;">
+                <h2 class="section-title">
+                    <i class="fas fa-dollar-sign"></i>
+                    Financial Overview
+                </h2>
+                
+                <div class="financial-summary">
+                    <div class="financial-card">
+                        <div class="financial-amount" id="monthlyRevenue">KSH 0</div>
+                        <div class="financial-label">Monthly Revenue</div>
+                    </div>
+                    <div class="financial-card">
+                        <div class="financial-amount" id="monthlyOrders">0</div>
+                        <div class="financial-label">Monthly Orders</div>
+                    </div>
+                    <div class="financial-card">
+                        <div class="financial-amount" id="avgOrderValue">KSH 0</div>
+                        <div class="financial-label">Average Order Value</div>
+                    </div>
+                    <div class="financial-card">
+                        <div class="financial-amount" id="profitMargin">0%</div>
+                        <div class="financial-label">Profit Margin</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Recent Transactions</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsTable">
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: #666;">Loading transactions...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- User Management Section -->
+            <div id="users-section" class="content-section" style="display: none;">
+                <h2 class="section-title">
+                    <i class="fas fa-users"></i>
+                    User Management
+                </h2>
+                
+                <div style="margin-bottom: 1rem;">
+                    <button class="btn btn-primary" onclick="addUser()">
+                        <i class="fas fa-user-plus"></i> Add New User
+                    </button>
+                    <button class="btn btn-success" onclick="refreshUsers()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTable">
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: #666;">Loading users...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Analytics Section -->
+            <div id="analytics-section" class="content-section" style="display: none;">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    Business Analytics
+                </h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: #667eea;">
+                            <i class="fas fa-trending-up"></i>
+                        </div>
+                        <div class="stat-number" id="growthRate">0%</div>
+                        <div class="stat-label">Growth Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: #27ae60;">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="stat-number" id="customerSatisfaction">0%</div>
+                        <div class="stat-label">Customer Satisfaction</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: #f39c12;">
+                            <i class="fas fa-repeat"></i>
+                        </div>
+                        <div class="stat-number" id="repeatCustomers">0%</div>
+                        <div class="stat-label">Repeat Customers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: #e74c3c;">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-number" id="avgDeliveryTime">0h</div>
+                        <div class="stat-label">Avg Delivery Time</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settings-section" class="content-section" style="display: none;">
+                <h2 class="section-title">
+                    <i class="fas fa-cog"></i>
+                    System Settings
+                </h2>
+                
+                <div class="quick-actions">
+                    <div class="action-card" onclick="window.open('/admin', '_blank')">
+                        <div class="action-icon">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <div>Full Admin Panel</div>
+                    </div>
+                    <div class="action-card" onclick="exportData()">
+                        <div class="action-icon">
+                            <i class="fas fa-download"></i>
+                        </div>
+                        <div>Export Data</div>
+                    </div>
+                    <div class="action-card" onclick="backupSystem()">
+                        <div class="action-icon">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <div>Backup System</div>
+                    </div>
+                    <div class="action-card" onclick="systemHealth()">
+                        <div class="action-icon">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                        <div>System Health</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3001/api';
+        let currentUser = null;
+
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadDashboardData();
+            setupNavigation();
+        });
+
+        function checkAuth() {
+            const staffToken = localStorage.getItem('staffToken');
+            const staffUser = localStorage.getItem('staffUser');
+            const staffRole = localStorage.getItem('staffRole');
+
+            if (!staffToken || !staffUser || staffRole !== 'owner') {
+                alert('Access denied. Owner privileges required.');
+                window.location.href = '/staff-login';
+                return;
+            }
+
+            currentUser = JSON.parse(staffUser);
+            document.getElementById('userName').textContent = currentUser.name || 'Owner';
+        }
+
+        function setupNavigation() {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all links
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    
+                    // Add active class to clicked link
+                    this.classList.add('active');
+                    
+                    // Show corresponding section
+                    const section = this.getAttribute('data-section');
+                    showSection(section);
+                });
+            });
+        }
+
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show selected section
+            const targetSection = document.getElementById(sectionName + '-section');
+            if (targetSection) {
+                targetSection.style.display = 'block';
+            }
+            
+            // Load section-specific data
+            switch(sectionName) {
+                case 'financial':
+                    loadFinancialData();
+                    break;
+                case 'users':
+                    loadUsersData();
+                    break;
+                case 'analytics':
+                    loadAnalyticsData();
+                    break;
+            }
+        }
+
+        async function loadDashboardData() {
+            try {
+                const [orders, products, users] = await Promise.all([
+                    fetch(`${API_BASE_URL}/orders`).then(r => r.json()),
+                    fetch(`${API_BASE_URL}/products`).then(r => r.json()),
+                    fetch(`${API_BASE_URL}/auth/users`).then(r => r.json()).catch(() => ({success: true, data: []}))
+                ]);
+
+                // Update stats
+                document.getElementById('totalOrders').textContent = orders.success ? orders.data.length : 0;
+                document.getElementById('totalProducts').textContent = products.success ? products.data.length : 0;
+                document.getElementById('totalCustomers').textContent = users.success ? users.data.length : 0;
+                
+                // Calculate revenue
+                const totalRevenue = orders.success ? orders.data.reduce((sum, order) => sum + (order.total || 0), 0) : 0;
+                document.getElementById('totalRevenue').textContent = `KSH ${totalRevenue.toLocaleString()}`;
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        async function loadFinancialData() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/orders`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const orders = data.data;
+                    const monthlyRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+                    const avgOrderValue = orders.length > 0 ? monthlyRevenue / orders.length : 0;
+                    
+                    document.getElementById('monthlyRevenue').textContent = `KSH ${monthlyRevenue.toLocaleString()}`;
+                    document.getElementById('monthlyOrders').textContent = orders.length;
+                    document.getElementById('avgOrderValue').textContent = `KSH ${avgOrderValue.toFixed(2)}`;
+                    document.getElementById('profitMargin').textContent = '25%'; // Placeholder
+                    
+                    // Update transactions table
+                    const transactionsTable = document.getElementById('transactionsTable');
+                    transactionsTable.innerHTML = orders.slice(0, 10).map(order => `
+                        <tr>
+                            <td>${order.orderNumber || order._id}</td>
+                            <td>${order.customer?.name || 'Unknown'}</td>
+                            <td>KSH ${order.total || 0}</td>
+                            <td><span class="btn btn-${order.status === 'completed' ? 'success' : 'warning'}">${order.status}</span></td>
+                            <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading financial data:', error);
+            }
+        }
+
+        async function loadUsersData() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/users`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const usersTable = document.getElementById('usersTable');
+                    usersTable.innerHTML = data.data.map(user => `
+                        <tr>
+                            <td>${user.name || 'Unknown'}</td>
+                            <td>${user.email}</td>
+                            <td>${user.role || 'customer'}</td>
+                            <td><span class="btn btn-success">Active</span></td>
+                            <td>
+                                <button class="btn btn-warning btn-sm">Edit</button>
+                                <button class="btn btn-danger btn-sm">Delete</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading users data:', error);
+            }
+        }
+
+        async function loadAnalyticsData() {
+            // Placeholder analytics data
+            document.getElementById('growthRate').textContent = '15%';
+            document.getElementById('customerSatisfaction').textContent = '92%';
+            document.getElementById('repeatCustomers').textContent = '78%';
+            document.getElementById('avgDeliveryTime').textContent = '2.5h';
+        }
+
+        function logout() {
+            localStorage.removeItem('staffToken');
+            localStorage.removeItem('staffUser');
+            localStorage.removeItem('staffRole');
+            window.location.href = '/staff-login';
+        }
+
+        function addUser() {
+            alert('Add user functionality - redirecting to admin panel');
+            window.open('/admin', '_blank');
+        }
+
+        function refreshUsers() {
+            loadUsersData();
+        }
+
+        function exportData() {
+            alert('Export data functionality coming soon!');
+        }
+
+        function backupSystem() {
+            alert('Backup system functionality coming soon!');
+        }
+
+        function systemHealth() {
+            alert('System health check functionality coming soon!');
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

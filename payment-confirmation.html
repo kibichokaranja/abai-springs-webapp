@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Confirmation - Abai Springs</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .payment-confirmation {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .payment-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .payment-status {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-weight: 600;
+            margin: 1rem 0;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-processing {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .payment-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .payment-info, .order-info {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+        }
+
+        .info-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: #666;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .payment-timeline {
+            margin: 2rem 0;
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .timeline-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .timeline-content h4 {
+            margin: 0 0 0.25rem 0;
+            color: #333;
+        }
+
+        .timeline-content p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .payment-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .mobile-money-instructions {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .mobile-money-instructions h4 {
+            color: #1976d2;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .mobile-money-instructions ul {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .mobile-money-instructions li {
+            margin-bottom: 0.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .payment-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .payment-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-confirmation">
+        <div class="payment-header">
+            <h1><i class="fas fa-credit-card"></i> Payment Confirmation</h1>
+            <div id="payment-status" class="payment-status status-pending">
+                <i class="fas fa-clock"></i> Payment Pending
+            </div>
+        </div>
+
+        <div class="payment-details">
+            <div class="payment-info">
+                <div class="info-title">
+                    <i class="fas fa-credit-card"></i>
+                    Payment Information
+                </div>
+                <div id="payment-info-content">
+                    <!-- Payment info will be populated here -->
+                </div>
+            </div>
+
+            <div class="order-info">
+                <div class="info-title">
+                    <i class="fas fa-shopping-cart"></i>
+                    Order Information
+                </div>
+                <div id="order-info-content">
+                    <!-- Order info will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="payment-timeline">
+            <h3><i class="fas fa-history"></i> Payment Timeline</h3>
+            <div id="timeline-content">
+                <!-- Timeline will be populated here -->
+            </div>
+        </div>
+
+        <div id="mobile-money-instructions" class="mobile-money-instructions" style="display: none;">
+            <h4><i class="fas fa-mobile-alt"></i> Mobile Money Instructions</h4>
+            <ul id="instructions-list">
+                <!-- Instructions will be populated here -->
+            </ul>
+        </div>
+
+        <div class="payment-actions">
+            <button id="check-status-btn" class="btn btn-primary" onclick="checkPaymentStatus()">
+                <i class="fas fa-sync-alt"></i> Check Status
+            </button>
+            <a href="orders.html" class="btn btn-secondary">
+                <i class="fas fa-list"></i> View Orders
+            </a>
+            <a href="index.html" class="btn btn-success">
+                <i class="fas fa-home"></i> Back to Home
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5001/api';
+        let paymentId = null;
+        let orderId = null;
+        let paymentMethod = null;
+        let statusCheckInterval = null;
+
+        // Get URL parameters
+        function getUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return {
+                orderId: urlParams.get('orderId'),
+                paymentId: urlParams.get('paymentId')
+            };
+        }
+
+        // Load payment and order details
+        async function loadPaymentDetails() {
+            const params = getUrlParams();
+            orderId = params.orderId;
+            paymentId = params.paymentId;
+
+            if (!orderId || !paymentId) {
+                alert('Missing order or payment information');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Please login to view payment details');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                // Load payment details
+                const paymentResponse = await fetch(`${API_BASE_URL}/payments/${paymentId}/status`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const paymentData = await paymentResponse.json();
+
+                if (paymentData.success) {
+                    const payment = paymentData.data;
+                    paymentMethod = payment.paymentMethod;
+                    
+                    displayPaymentInfo(payment);
+                    displayOrderInfo(payment.order);
+                    updatePaymentStatus(payment.status);
+                    displayTimeline(payment);
+                    displayMobileMoneyInstructions(payment);
+
+                    // Start status checking for mobile money payments
+                    if (['mpesa', 'airtel_money', 'equitel'].includes(paymentMethod) && payment.status === 'processing') {
+                        startStatusChecking();
+                    }
+                } else {
+                    alert('Failed to load payment details');
+                    window.location.href = 'orders.html';
+                }
+            } catch (error) {
+                console.error('Error loading payment details:', error);
+                alert('Error loading payment details');
+                window.location.href = 'orders.html';
+            }
+        }
+
+        // Display payment information
+        function displayPaymentInfo(payment) {
+            const container = document.getElementById('payment-info-content');
+            
+            const paymentInfo = [
+                { label: 'Transaction ID', value: payment.transactionId },
+                { label: 'Amount', value: `KSH ${payment.amount.toLocaleString()}` },
+                { label: 'Payment Method', value: getPaymentMethodName(payment.paymentMethod) },
+                { label: 'Status', value: getStatusName(payment.status) },
+                { label: 'Created', value: new Date(payment.createdAt).toLocaleString() }
+            ];
+
+            if (payment.processedAt) {
+                paymentInfo.push({ label: 'Processed', value: new Date(payment.processedAt).toLocaleString() });
+            }
+
+            if (payment.mpesaDetails?.phoneNumber) {
+                paymentInfo.push({ label: 'Phone Number', value: payment.mpesaDetails.phoneNumber });
+            }
+
+            container.innerHTML = paymentInfo.map(item => `
+                <div class="info-item">
+                    <span class="info-label">${item.label}:</span>
+                    <span class="info-value">${item.value}</span>
+                </div>
+            `).join('');
+        }
+
+        // Display order information
+        function displayOrderInfo(order) {
+            const container = document.getElementById('order-info-content');
+            
+            const orderInfo = [
+                { label: 'Order ID', value: `#${order._id.slice(-8).toUpperCase()}` },
+                { label: 'Items', value: `${order.items.length} items` },
+                { label: 'Subtotal', value: `KSH ${order.subtotal.toLocaleString()}` },
+                { label: 'Delivery Fee', value: `KSH ${order.deliveryFee.toLocaleString()}` },
+                { label: 'Total', value: `KSH ${order.totalAmount.toLocaleString()}` },
+                { label: 'Status', value: getOrderStatusName(order.status) }
+            ];
+
+            container.innerHTML = orderInfo.map(item => `
+                <div class="info-item">
+                    <span class="info-label">${item.label}:</span>
+                    <span class="info-value">${item.value}</span>
+                </div>
+            `).join('');
+        }
+
+        // Update payment status display
+        function updatePaymentStatus(status) {
+            const statusElement = document.getElementById('payment-status');
+            const statusClasses = {
+                'pending': 'status-pending',
+                'processing': 'status-processing',
+                'completed': 'status-completed',
+                'failed': 'status-failed',
+                'cancelled': 'status-failed'
+            };
+
+            statusElement.className = `payment-status ${statusClasses[status] || 'status-pending'}`;
+            
+            const statusText = {
+                'pending': '<i class="fas fa-clock"></i> Payment Pending',
+                'processing': '<i class="fas fa-spinner fa-spin"></i> Processing Payment',
+                'completed': '<i class="fas fa-check-circle"></i> Payment Completed',
+                'failed': '<i class="fas fa-times-circle"></i> Payment Failed',
+                'cancelled': '<i class="fas fa-ban"></i> Payment Cancelled'
+            };
+
+            statusElement.innerHTML = statusText[status] || statusText['pending'];
+        }
+
+        // Display payment timeline
+        function displayTimeline(payment) {
+            const container = document.getElementById('timeline-content');
+            const timeline = [];
+
+            // Order created
+            timeline.push({
+                icon: 'fas fa-shopping-cart',
+                title: 'Order Created',
+                description: 'Your order has been placed successfully',
+                time: new Date(payment.createdAt).toLocaleString()
+            });
+
+            // Payment initiated
+            timeline.push({
+                icon: 'fas fa-credit-card',
+                title: 'Payment Initiated',
+                description: `Payment initiated via ${getPaymentMethodName(payment.paymentMethod)}`,
+                time: new Date(payment.createdAt).toLocaleString()
+            });
+
+            // Payment processing
+            if (payment.status === 'processing') {
+                timeline.push({
+                    icon: 'fas fa-spinner fa-spin',
+                    title: 'Processing Payment',
+                    description: 'Payment is being processed. Please wait...',
+                    time: 'Now'
+                });
+            }
+
+            // Payment completed
+            if (payment.status === 'completed') {
+                timeline.push({
+                    icon: 'fas fa-check-circle',
+                    title: 'Payment Completed',
+                    description: 'Payment has been processed successfully',
+                    time: payment.processedAt ? new Date(payment.processedAt).toLocaleString() : 'Now'
+                });
+            }
+
+            // Payment failed
+            if (payment.status === 'failed') {
+                timeline.push({
+                    icon: 'fas fa-times-circle',
+                    title: 'Payment Failed',
+                    description: payment.errorMessage || 'Payment processing failed',
+                    time: 'Now'
+                });
+            }
+
+            container.innerHTML = timeline.map(item => `
+                <div class="timeline-item">
+                    <div class="timeline-icon">
+                        <i class="${item.icon}"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h4>${item.title}</h4>
+                        <p>${item.description}</p>
+                        <small>${item.time}</small>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Display mobile money instructions
+        function displayMobileMoneyInstructions(payment) {
+            const instructionsDiv = document.getElementById('mobile-money-instructions');
+            const instructionsList = document.getElementById('instructions-list');
+
+            if (['mpesa', 'airtel_money', 'equitel'].includes(payment.paymentMethod) && payment.status === 'processing') {
+                instructionsDiv.style.display = 'block';
+                
+                const instructions = {
+                    'mpesa': [
+                        'Check your M-Pesa app for an STK push notification',
+                        'Enter your M-Pesa PIN when prompted',
+                        'Confirm the payment amount and recipient',
+                        'Wait for the payment confirmation'
+                    ],
+                    'airtel_money': [
+                        'Check your Airtel Money app for a payment request',
+                        'Enter your Airtel Money PIN when prompted',
+                        'Confirm the payment details',
+                        'Wait for the payment confirmation'
+                    ],
+                    'equitel': [
+                        'Check your Equitel app for a payment request',
+                        'Enter your Equitel PIN when prompted',
+                        'Confirm the payment details',
+                        'Wait for the payment confirmation'
+                    ]
+                };
+
+                const methodInstructions = instructions[payment.paymentMethod] || [];
+                instructionsList.innerHTML = methodInstructions.map(instruction => 
+                    `<li>${instruction}</li>`
+                ).join('');
+            } else {
+                instructionsDiv.style.display = 'none';
+            }
+        }
+
+        // Start status checking for mobile money payments
+        function startStatusChecking() {
+            statusCheckInterval = setInterval(async () => {
+                await checkPaymentStatus();
+            }, 3000); // Check every 3 seconds
+        }
+
+        // Check payment status
+        async function checkPaymentStatus() {
+            if (!paymentId) return;
+
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/payments/${paymentId}/status`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const payment = data.data;
+                    updatePaymentStatus(payment.status);
+                    displayTimeline(payment);
+
+                    // Stop checking if payment is completed or failed
+                    if (['completed', 'failed', 'cancelled'].includes(payment.status)) {
+                        if (statusCheckInterval) {
+                            clearInterval(statusCheckInterval);
+                            statusCheckInterval = null;
+                        }
+                        
+                        // Update the check status button
+                        const checkBtn = document.getElementById('check-status-btn');
+                        checkBtn.innerHTML = '<i class="fas fa-check"></i> Payment Finalized';
+                        checkBtn.disabled = true;
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking payment status:', error);
+            }
+        }
+
+        // Helper functions
+        function getPaymentMethodName(method) {
+            const methods = {
+                'mpesa': 'M-Pesa',
+                'airtel_money': 'Airtel Money',
+                'equitel': 'Equitel',
+                'cash': 'Cash on Delivery',
+                'card': 'Credit/Debit Card',
+                'bank_transfer': 'Bank Transfer'
+            };
+            return methods[method] || method;
+        }
+
+        function getStatusName(status) {
+            const statuses = {
+                'pending': 'Pending',
+                'processing': 'Processing',
+                'completed': 'Completed',
+                'failed': 'Failed',
+                'cancelled': 'Cancelled'
+            };
+            return statuses[status] || status;
+        }
+
+        function getOrderStatusName(status) {
+            const statuses = {
+                'pending': 'Pending',
+                'confirmed': 'Confirmed',
+                'preparing': 'Preparing',
+                'out_for_delivery': 'Out for Delivery',
+                'delivered': 'Delivered',
+                'cancelled': 'Cancelled'
+            };
+            return statuses[status] || status;
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPaymentDetails();
+        });
+
+        // Clean up interval when page is unloaded
+        window.addEventListener('beforeunload', function() {
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+            }
+        });
+    </script>
+</body>
+</html>
+

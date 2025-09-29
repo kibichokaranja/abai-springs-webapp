@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Portal - Abai Springs</title>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        .user-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .dashboards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .dashboard-card:hover::before {
+            transform: translateX(0);
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .dashboard-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .icon-executive { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .icon-customer { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .icon-driver { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+        .icon-financial { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .icon-predictive { background: linear-gradient(135deg, #fa709a, #fee140); }
+
+        .dashboard-card:hover .dashboard-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .dashboard-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .dashboard-description {
+            color: #718096;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .dashboard-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .feature-tag {
+            background: #e2e8f0;
+            color: #4a5568;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .access-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .access-button:hover {
+            background: linear-gradient(135deg, #5a67d8, #6b46c1);
+            transform: translateY(-2px);
+        }
+
+        .restricted {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .restricted .access-button {
+            background: #cbd5e0;
+            color: #718096;
+            cursor: not-allowed;
+        }
+
+        .restricted .access-button:hover {
+            background: #cbd5e0;
+            transform: none;
+        }
+
+        .logout-link {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .logout-link:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2.2rem;
+            }
+
+            .dashboards-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .dashboard-card {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/api/auth/logout" class="logout-link">
+        <i class="fas fa-sign-out-alt"></i> Logout
+    </a>
+
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-tint" style="color: #667eea; margin-right: 15px;"></i>Abai Springs</h1>
+            <p>Business Intelligence Portal</p>
+            <div class="user-badge">
+                <i class="fas fa-user"></i> <%= user.name %> - <%= user.role.toUpperCase() %>
+            </div>
+        </div>
+
+        <div class="dashboards-grid">
+            <% dashboards.forEach(dashboard => { %>
+                <a href="<%= dashboard.url %>" class="dashboard-card">
+                    <div class="dashboard-icon icon-<%= dashboard.id %>">
+                        <i class="<%= getDashboardIcon(dashboard.id) %>"></i>
+                    </div>
+                    <div class="dashboard-title"><%= dashboard.title %></div>
+                    <div class="dashboard-description"><%= dashboard.description %></div>
+                    <div class="dashboard-features">
+                        <% getDashboardFeatures(dashboard.id).forEach(feature => { %>
+                            <span class="feature-tag"><%= feature %></span>
+                        <% }) %>
+                    </div>
+                    <div class="access-button">
+                        Access Dashboard
+                    </div>
+                </a>
+            <% }) %>
+        </div>
+    </div>
+
+    <script>
+        // Add click tracking
+        document.querySelectorAll('.dashboard-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                const dashboardType = this.href.split('/').pop();
+                console.log(`Accessing dashboard: ${dashboardType}`);
+            });
+        });
+    </script>
+</body>
+</html>
+
+<%
+function getDashboardIcon(type) {
+    const icons = {
+        executive: 'fas fa-chart-line',
+        customer: 'fas fa-user-circle',
+        driver: 'fas fa-truck',
+        financial: 'fas fa-chart-pie',
+        predictive: 'fas fa-brain'
+    };
+    return icons[type] || 'fas fa-dashboard';
+}
+
+function getDashboardFeatures(type) {
+    const features = {
+        executive: ['Live Analytics', 'Revenue Tracking', 'Business Insights'],
+        customer: ['Order Tracking', 'Wallet Management', 'Personal Analytics'],
+        driver: ['Route Optimization', 'Earnings Tracking', 'Performance Metrics'],
+        financial: ['Revenue Reports', 'Expense Analysis', 'Profit Tracking'],
+        predictive: ['AI Predictions', 'Demand Forecasting', 'Smart Insights']
+    };
+    return features[type] || [];
+}
+%>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

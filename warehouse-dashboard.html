@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Dashboard - Abai Springs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 2rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .user-info {
+            background: #f8f9ff;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .user-info h3 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .user-info p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            text-decoration: none;
+            color: #666;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: #667eea;
+            color: white;
+            transform: translateX(5px);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .outlet-selector {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .outlet-selector select {
+            padding: 8px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+        }
+
+        .outlet-selector button {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        .stat-card p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .stat-card .trend {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .trend.positive {
+            color: #27ae60;
+        }
+
+        .trend.negative {
+            color: #e74c3c;
+        }
+
+        /* Inventory Section */
+        .inventory-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .inventory-section h2 {
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .inventory-table th,
+        .inventory-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e1e5e9;
+        }
+
+        .inventory-table th {
+            background: #f8f9ff;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .stock-level {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .stock-high {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .stock-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .stock-low {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .stock-critical {
+            background: #f5c6cb;
+            color: #721c24;
+            font-weight: bold;
+        }
+
+        /* Action Buttons */
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-right: 5px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        /* Stock Movement Section */
+        .movement-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .movement-section h2 {
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+
+        .movement-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .movement-table th,
+        .movement-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e1e5e9;
+        }
+
+        .movement-table th {
+            background: #f8f9ff;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .movement-type {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .movement-in {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .movement-out {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .movement-transfer {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        /* Performance Section */
+        .performance-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .performance-section h2 {
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-container {
+            height: 300px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                order: 2;
+            }
+            
+            .main-content {
+                order: 1;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: #27ae60;
+        }
+
+        .notification.error {
+            background: #e74c3c;
+        }
+
+        .notification.warning {
+            background: #f39c12;
+        }
+
+        .notification.info {
+            background: #17a2b8;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-warehouse"></i>
+                <span>Warehouse Dashboard</span>
+            </div>
+
+            <div class="user-info">
+                <h3 id="userName">Warehouse Manager</h3>
+                <p id="userEmail">warehouse@abaisprings.com</p>
+                <p id="selectedOutlet">Outlet: Not Selected</p>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active" data-section="overview">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Overview
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-section="inventory">
+                        <i class="fas fa-boxes"></i>
+                        Inventory
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-section="movements">
+                        <i class="fas fa-exchange-alt"></i>
+                        Stock Movements
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-section="performance">
+                        <i class="fas fa-chart-line"></i>
+                        Performance
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-section="reports">
+                        <i class="fas fa-file-alt"></i>
+                        Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div>
+                    <h1>Warehouse Dashboard</h1>
+                    <p>Manage inventory and stock movements</p>
+                </div>
+                <div class="outlet-selector">
+                    <select id="outletSelect">
+                        <option value="">Select Outlet</option>
+                    </select>
+                    <button onclick="loadOutletData()">Load Data</button>
+                </div>
+            </div>
+
+            <!-- Overview Section -->
+            <div id="overview" class="section active">
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3 id="totalProducts">0</h3>
+                        <p>Total Products</p>
+                        <div class="trend positive" id="productsTrend">+0%</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="lowStock">0</h3>
+                        <p>Low Stock Items</p>
+                        <div class="trend negative" id="lowStockTrend">+0%</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="totalValue">$0</h3>
+                        <p>Inventory Value</p>
+                        <div class="trend positive" id="valueTrend">+0%</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="movements">0</h3>
+                        <p>Today's Movements</p>
+                        <div class="trend" id="movementsTrend">0 new</div>
+                    </div>
+                </div>
+
+                <!-- Current Inventory -->
+                <div class="inventory-section">
+                    <h2>Current Inventory</h2>
+                    <table class="inventory-table" id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>SKU</th>
+                                <th>Category</th>
+                                <th>Stock Level</th>
+                                <th>Min Stock</th>
+                                <th>Value</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryBody">
+                            <tr>
+                                <td colspan="8" style="text-align: center; color: #666;">
+                                    Select an outlet to view inventory
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Inventory Section -->
+            <div id="inventory" class="section" style="display: none;">
+                <div class="inventory-section">
+                    <h2>Inventory Management</h2>
+                    <table class="inventory-table" id="inventoryManagementTable">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>SKU</th>
+                                <th>Category</th>
+                                <th>Stock Level</th>
+                                <th>Min Stock</th>
+                                <th>Value</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryManagementBody">
+                            <tr>
+                                <td colspan="8" style="text-align: center; color: #666;">
+                                    Select an outlet to view inventory
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Stock Movements Section -->
+            <div id="movements" class="section" style="display: none;">
+                <div class="movement-section">
+                    <h2>Stock Movements</h2>
+                    <table class="movement-table" id="movementsTable">
+                        <thead>
+                            <tr>
+                                <th>Movement ID</th>
+                                <th>Product</th>
+                                <th>Type</th>
+                                <th>Quantity</th>
+                                <th>From/To</th>
+                                <th>Date</th>
+                                <th>Reason</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="movementsBody">
+                            <tr>
+                                <td colspan="8" style="text-align: center; color: #666;">
+                                    Select an outlet to view movements
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Performance Section -->
+            <div id="performance" class="section" style="display: none;">
+                <div class="performance-section">
+                    <h2>Warehouse Performance</h2>
+                    <div class="chart-container" id="performanceChart">
+                        <div>
+                            <i class="fas fa-chart-line" style="font-size: 3rem; color: #667eea; margin-bottom: 1rem;"></i>
+                            <p>Select an outlet to view performance data</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Section -->
+            <div id="reports" class="section" style="display: none;">
+                <div class="inventory-section">
+                    <h2>Warehouse Reports</h2>
+                    <div class="chart-container" id="reportsChart">
+                        <div>
+                            <i class="fas fa-file-alt" style="font-size: 3rem; color: #667eea; margin-bottom: 1rem;"></i>
+                            <p>Select an outlet to view reports</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3001/api';
+        let currentUser = null;
+        let selectedOutlet = null;
+        let outlets = [];
+
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            loadOutlets();
+        });
+
+        function checkAuth() {
+            const staffUser = localStorage.getItem('staffUser');
+            const staffRole = localStorage.getItem('staffRole');
+            
+            if (!staffUser || staffRole !== 'warehouse') {
+                window.location.href = 'staff-login.html';
+                return;
+            }
+
+            currentUser = JSON.parse(staffUser);
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('userEmail').textContent = currentUser.email;
+        }
+
+        async function loadOutlets() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/outlets`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    outlets = data.outlets;
+                    populateOutletSelect();
+                }
+            } catch (error) {
+                console.error('Error loading outlets:', error);
+                // Mock data for testing
+                outlets = [
+                    { _id: '1', name: 'Kagio Branch', location: 'Kagio, Kirinyaga' },
+                    { _id: '2', name: 'Karen Branch', location: 'Karen, Nairobi' },
+                    { _id: '3', name: 'Kiambu Road Branch', location: 'Kiambu Road, Nairobi' },
+                    { _id: '4', name: 'Northern Bypass Branch', location: 'Northern Bypass' }
+                ];
+                populateOutletSelect();
+            }
+        }
+
+        function populateOutletSelect() {
+            const select = document.getElementById('outletSelect');
+            select.innerHTML = '<option value="">Select Outlet</option>';
+            
+            outlets.forEach(outlet => {
+                const option = document.createElement('option');
+                option.value = outlet._id;
+                option.textContent = outlet.name;
+                select.appendChild(option);
+            });
+        }
+
+        function loadOutletData() {
+            const outletId = document.getElementById('outletSelect').value;
+            if (!outletId) {
+                showNotification('Please select an outlet first', 'error');
+                return;
+            }
+
+            selectedOutlet = outlets.find(o => o._id === outletId);
+            document.getElementById('selectedOutlet').textContent = `Outlet: ${selectedOutlet.name}`;
+            
+            // Load mock data for the selected outlet
+            loadMockData();
+            showNotification(`Data loaded for ${selectedOutlet.name}`, 'success');
+        }
+
+        function loadMockData() {
+            // Mock inventory data
+            const totalProducts = Math.floor(Math.random() * 50) + 20;
+            const lowStock = Math.floor(Math.random() * 10) + 2;
+            const totalValue = Math.floor(Math.random() * 50000) + 10000;
+            const movements = Math.floor(Math.random() * 20) + 5;
+
+            document.getElementById('totalProducts').textContent = totalProducts;
+            document.getElementById('lowStock').textContent = lowStock;
+            document.getElementById('totalValue').textContent = `$${totalValue.toLocaleString()}`;
+            document.getElementById('movements').textContent = movements;
+
+            // Mock trends
+            document.getElementById('productsTrend').textContent = `+${Math.floor(Math.random() * 10) + 2}%`;
+            document.getElementById('lowStockTrend').textContent = `+${Math.floor(Math.random() * 5) + 1}%`;
+            document.getElementById('valueTrend').textContent = `+${Math.floor(Math.random() * 15) + 5}%`;
+            document.getElementById('movementsTrend').textContent = `${Math.floor(Math.random() * 8) + 2} new`;
+
+            // Load mock inventory
+            loadMockInventory();
+            loadMockMovements();
+        }
+
+        function loadMockInventory() {
+            const mockInventory = [
+                {
+                    product: 'Abai Springs 20L',
+                    sku: 'ABS-20L-001',
+                    category: 'Bottled Water',
+                    stockLevel: 150,
+                    minStock: 50,
+                    value: 45000,
+                    status: 'high'
+                },
+                {
+                    product: 'Abai Springs 10L',
+                    sku: 'ABS-10L-001',
+                    category: 'Bottled Water',
+                    stockLevel: 75,
+                    minStock: 30,
+                    value: 22500,
+                    status: 'high'
+                },
+                {
+                    product: 'Abai Springs 5L',
+                    sku: 'ABS-5L-001',
+                    category: 'Bottled Water',
+                    stockLevel: 25,
+                    minStock: 20,
+                    value: 7500,
+                    status: 'medium'
+                },
+                {
+                    product: 'Abai Springs 1L',
+                    sku: 'ABS-1L-001',
+                    category: 'Bottled Water',
+                    stockLevel: 8,
+                    minStock: 15,
+                    value: 2400,
+                    status: 'low'
+                },
+                {
+                    product: 'Premium Filter',
+                    sku: 'FIL-PRE-001',
+                    category: 'Accessories',
+                    stockLevel: 3,
+                    minStock: 10,
+                    value: 1500,
+                    status: 'critical'
+                }
+            ];
+
+            populateInventoryTable(mockInventory, 'inventoryBody');
+            populateInventoryTable(mockInventory, 'inventoryManagementBody');
+        }
+
+        function loadMockMovements() {
+            const mockMovements = [
+                {
+                    id: 'MOV001',
+                    product: 'Abai Springs 20L',
+                    type: 'in',
+                    quantity: 50,
+                    fromTo: 'Supplier',
+                    date: '2025-08-30',
+                    reason: 'Restock'
+                },
+                {
+                    id: 'MOV002',
+                    product: 'Abai Springs 10L',
+                    type: 'out',
+                    quantity: 25,
+                    fromTo: 'Sales',
+                    date: '2025-08-30',
+                    reason: 'Order fulfillment'
+                },
+                {
+                    id: 'MOV003',
+                    product: 'Abai Springs 5L',
+                    type: 'transfer',
+                    quantity: 15,
+                    fromTo: 'Karen Branch',
+                    date: '2025-08-29',
+                    reason: 'Inter-outlet transfer'
+                },
+                {
+                    id: 'MOV004',
+                    product: 'Premium Filter',
+                    type: 'in',
+                    quantity: 20,
+                    fromTo: 'Supplier',
+                    date: '2025-08-29',
+                    reason: 'New stock'
+                }
+            ];
+
+            populateMovementsTable(mockMovements);
+        }
+
+        function populateInventoryTable(inventory, tableBodyId) {
+            const tbody = document.getElementById(tableBodyId);
+            tbody.innerHTML = '';
+
+            inventory.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.product}</td>
+                    <td>${item.sku}</td>
+                    <td>${item.category}</td>
+                    <td>${item.stockLevel}</td>
+                    <td>${item.minStock}</td>
+                    <td>$${item.value.toLocaleString()}</td>
+                    <td><span class="stock-level stock-${item.status}">${item.status}</span></td>
+                    <td>
+                        <button class="action-btn btn-primary" onclick="adjustStock('${item.sku}', 'add')">Add</button>
+                        <button class="action-btn btn-warning" onclick="adjustStock('${item.sku}', 'remove')">Remove</button>
+                        <button class="action-btn btn-info" onclick="viewHistory('${item.sku}')">History</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function populateMovementsTable(movements) {
+            const tbody = document.getElementById('movementsBody');
+            tbody.innerHTML = '';
+
+            movements.forEach(movement => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${movement.id}</td>
+                    <td>${movement.product}</td>
+                    <td><span class="movement-type movement-${movement.type}">${movement.type}</span></td>
+                    <td>${movement.quantity}</td>
+                    <td>${movement.fromTo}</td>
+                    <td>${movement.date}</td>
+                    <td>${movement.reason}</td>
+                    <td>
+                        <button class="action-btn btn-info" onclick="viewMovement('${movement.id}')">View</button>
+                        <button class="action-btn btn-warning" onclick="editMovement('${movement.id}')">Edit</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function adjustStock(sku, action) {
+            const actionText = action === 'add' ? 'added to' : 'removed from';
+            showNotification(`Stock ${actionText} ${sku}`, 'success');
+            // In a real app, this would make an API call
+        }
+
+        function viewHistory(sku) {
+            showNotification(`Viewing history for ${sku}`, 'info');
+            // In a real app, this would show a modal with history
+        }
+
+        function viewMovement(movementId) {
+            showNotification(`Viewing movement ${movementId}`, 'info');
+            // In a real app, this would show movement details
+        }
+
+        function editMovement(movementId) {
+            showNotification(`Editing movement ${movementId}`, 'warning');
+            // In a real app, this would open an edit form
+        }
+
+        // Navigation
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                if (link.getAttribute('onclick') === 'logout()') return;
+                
+                e.preventDefault();
+                const section = link.dataset.section;
+                
+                // Update active nav
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                
+                // Show section
+                document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+                document.getElementById(section).style.display = 'block';
+            });
+        });
+
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function logout() {
+            localStorage.removeItem('staffToken');
+            localStorage.removeItem('staffUser');
+            localStorage.removeItem('staffRole');
+            window.location.href = 'staff-login.html';
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

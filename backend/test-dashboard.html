@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard API Test</title>
+</head>
+<body>
+    <h1>Dashboard API Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        const API_BASE_URL = 'http://localhost:5001/api';
+        const results = document.getElementById('results');
+        
+        async function testAPI() {
+            try {
+                // Test products API
+                const productsResponse = await fetch(`${API_BASE_URL}/products`);
+                const productsData = await productsResponse.json();
+                
+                // Test outlets API
+                const outletsResponse = await fetch(`${API_BASE_URL}/outlets`);
+                const outletsData = await outletsResponse.json();
+                
+                results.innerHTML = `
+                    <h2>API Test Results:</h2>
+                    <p><strong>Products API:</strong> ${productsData.success ? 'SUCCESS' : 'FAILED'}</p>
+                    <p>Products count: ${productsData.success ? productsData.data.length : 'N/A'}</p>
+                    <p><strong>Outlets API:</strong> ${outletsData.success ? 'SUCCESS' : 'FAILED'}</p>
+                    <p>Outlets count: ${outletsData.success ? outletsData.data.length : 'N/A'}</p>
+                    <h3>Products Data:</h3>
+                    <pre>${JSON.stringify(productsData, null, 2)}</pre>
+                    <h3>Outlets Data:</h3>
+                    <pre>${JSON.stringify(outletsData, null, 2)}</pre>
+                `;
+            } catch (error) {
+                results.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+        
+        testAPI();
+    </script>
+</body>
+</html> 

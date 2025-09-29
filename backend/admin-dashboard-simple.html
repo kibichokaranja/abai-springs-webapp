@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abai Springs Admin Dashboard - Simple</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: white;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .brand {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .nav-item {
+            margin-bottom: 10px;
+        }
+        
+        .nav-link {
+            display: block;
+            padding: 12px 16px;
+            text-decoration: none;
+            color: #666;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 20px;
+        }
+        
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-info { background: #17a2b8; color: white; }
+        
+        .test-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="brand">Abai Springs</div>
+            
+            <div class="nav-item">
+                <a class="nav-link active" onclick="showSection('dashboard')">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+            </div>
+            <div class="nav-item">
+                <a class="nav-link" onclick="showSection('products')">
+                    <i class="fas fa-box"></i> Products
+                </a>
+            </div>
+            <div class="nav-item">
+                <a class="nav-link" onclick="showSection('orders')">
+                    <i class="fas fa-shopping-cart"></i> Orders
+                </a>
+            </div>
+            <div class="nav-item">
+                <a class="nav-link" onclick="showSection('outlets')">
+                    <i class="fas fa-store"></i> Outlets
+                </a>
+            </div>
+            <div class="nav-item">
+                <a class="nav-link" onclick="showSection('stock-alerts')">
+                    <i class="fas fa-bell"></i> Smart Stock Alerts
+                </a>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="section active">
+                <h1>Dashboard</h1>
+                <div class="test-info">
+                    <strong>Dashboard Section</strong><br>
+                    This is the main dashboard. Navigation should work to switch between sections.
+                </div>
+                <button class="btn btn-info" onclick="testClick()">Test JavaScript</button>
+            </div>
+            
+            <!-- Products Section -->
+            <div id="products-section" class="section">
+                <h1>Products</h1>
+                <div class="test-info">
+                    <strong>Products Section</strong><br>
+                    This section shows product management.
+                </div>
+                <button class="btn btn-primary">Add Product</button>
+            </div>
+            
+            <!-- Orders Section -->
+            <div id="orders-section" class="section">
+                <h1>Orders</h1>
+                <div class="test-info">
+                    <strong>Orders Section</strong><br>
+                    This section shows order management.
+                </div>
+                <button class="btn btn-success">View Orders</button>
+            </div>
+            
+            <!-- Outlets Section -->
+            <div id="outlets-section" class="section">
+                <h1>Outlets</h1>
+                <div class="test-info">
+                    <strong>Outlets Section</strong><br>
+                    This section shows outlet management.
+                </div>
+                <button class="btn btn-warning">Manage Outlets</button>
+            </div>
+            
+            <!-- Stock Alerts Section -->
+            <div id="stock-alerts-section" class="section">
+                <h1>Smart Stock Alerts</h1>
+                <div class="test-info">
+                    <strong>Stock Alerts Section</strong><br>
+                    This section shows smart stock alert management.
+                </div>
+                <button class="btn btn-success">Start Monitoring</button>
+                <button class="btn btn-warning">Send Test Alert</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('Simple dashboard loaded');
+        
+        function showSection(sectionName) {
+            console.log('showSection called with:', sectionName);
+            
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Show selected section
+            const targetSection = document.getElementById(sectionName + '-section');
+            if (targetSection) {
+                targetSection.classList.add('active');
+                console.log('Showing section:', sectionName);
+            } else {
+                console.error('Section not found:', sectionName + '-section');
+                alert('Section not found: ' + sectionName + '-section');
+            }
+            
+            // Add active class to clicked nav link
+            event.target.classList.add('active');
+        }
+        
+        function testClick() {
+            alert('JavaScript is working!');
+            console.log('Test button clicked');
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, navigation ready');
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+

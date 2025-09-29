@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abai Springs - Staff Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            color: white;
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        input[type="email"]:focus, input[type="password"]:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+
+        .role-selection {
+            margin-bottom: 30px;
+        }
+
+        .role-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .role-btn {
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .role-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .role-btn.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .role-icon {
+            font-size: 24px;
+        }
+
+        .role-text {
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .back-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: #764ba2;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            background: #fdf2f2;
+            border: 1px solid #fecaca;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message {
+            color: #059669;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            color: #667eea;
+            font-style: italic;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+            
+            .role-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <div class="logo-icon">💧</div>
+            <div class="logo-text">Abai Springs</div>
+        </div>
+        
+        <h1>Staff Portal</h1>
+        <p class="subtitle">Access your role-specific dashboard.</p>
+
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required placeholder="Enter your email">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Enter your password">
+            </div>
+
+            <div class="form-group role-selection">
+                <label>Select Your Role</label>
+                <div class="role-grid">
+                    <div class="role-btn" data-role="owner">
+                        <div class="role-icon">👑</div>
+                        <div class="role-text">Owner</div>
+                    </div>
+                    <div class="role-btn" data-role="sales">
+                        <div class="role-icon">📊</div>
+                        <div class="role-text">Sales</div>
+                    </div>
+                    <div class="role-btn" data-role="driver">
+                        <div class="role-icon">🚚</div>
+                        <div class="role-text">Driver</div>
+                    </div>
+                    <div class="role-btn" data-role="warehouse">
+                        <div class="role-icon">🏢</div>
+                        <div class="role-text">Warehouse</div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="login-btn" id="loginBtn">
+                <span id="loginText">Login to Dashboard</span>
+                <span class="loading" id="loadingText">Logging in...</span>
+            </button>
+        </form>
+
+        <a href="index.html" class="back-link">
+            ← Back to Customer Portal
+        </a>
+    </div>
+
+    <script>
+        let selectedRole = 'owner';
+
+        // Role selection
+        document.querySelectorAll('.role-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove selected class from all buttons
+                document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
+                // Add selected class to clicked button
+                btn.classList.add('selected');
+                selectedRole = btn.dataset.role;
+            });
+        });
+
+        // Set default selected role
+        document.querySelector('[data-role="owner"]').classList.add('selected');
+
+        // Form submission
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            // Show loading state
+            document.getElementById('loginText').style.display = 'none';
+            document.getElementById('loadingText').style.display = 'inline';
+            document.getElementById('loginBtn').disabled = true;
+            
+            // Hide any previous messages
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+
+            try {
+                // Mock authentication (since we don't have a server running)
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+                
+                // Check credentials
+                const validCredentials = {
+                    'admin@abaisprings.com': { password: 'password123', role: 'owner', name: 'Business Owner' },
+                    'sales@abaisprings.com': { password: 'sales123', role: 'sales', name: 'Sales Manager' },
+                    'driver@abaisprings.com': { password: 'driver123', role: 'driver', name: 'Delivery Driver' },
+                    'warehouse@abaisprings.com': { password: 'warehouse123', role: 'warehouse', name: 'Warehouse Manager' }
+                };
+
+                const userCreds = validCredentials[email];
+                
+                if (userCreds && userCreds.password === password && userCreds.role === selectedRole) {
+                    // Success
+                    document.getElementById('successMessage').textContent = `Welcome, ${userCreds.name}! Redirecting to dashboard...`;
+                    document.getElementById('successMessage').style.display = 'block';
+                    
+                    // Store user info in localStorage
+                    localStorage.setItem('staffUser', JSON.stringify({
+                        email: email,
+                        role: selectedRole,
+                        name: userCreds.name
+                    }));
+                    
+                    // Redirect to appropriate dashboard
+                    setTimeout(() => {
+                        if (selectedRole === 'owner') {
+                            window.location.href = 'owner-dashboard.html';
+                        } else {
+                            alert(`${userCreds.name} dashboard coming soon!`);
+                        }
+                    }, 2000);
+                    
+                } else {
+                    // Error
+                    document.getElementById('errorMessage').textContent = 'Invalid credentials. Please check your email, password, and role selection.';
+                    document.getElementById('errorMessage').style.display = 'block';
+                }
+                
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = 'Login failed. Please try again.';
+                document.getElementById('errorMessage').style.display = 'block';
+            } finally {
+                // Reset loading state
+                document.getElementById('loginText').style.display = 'inline';
+                document.getElementById('loadingText').style.display = 'none';
+                document.getElementById('loginBtn').disabled = false;
+            }
+        });
+
+        // Pre-fill with test credentials
+        document.getElementById('email').value = 'admin@abaisprings.com';
+        document.getElementById('password').value = 'password123';
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

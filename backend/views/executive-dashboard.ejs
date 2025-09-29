@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= config.title %> - Abai Springs</title>
+    
+    <!-- Chart.js for beautiful charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    
+    <!-- Socket.IO for real-time updates -->
+    <script src="<%= socketUrl %>/socket.io/socket.io.js"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 1.1rem;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-role {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 5px;
+            display: inline-block;
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            background: #48bb78;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-top: 15px;
+            animation: pulse 2s infinite;
+        }
+
+        .live-indicator i {
+            margin-right: 8px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        .metric-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .metric-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .metric-icon.revenue { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .metric-icon.orders { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .metric-icon.customers { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .metric-icon.growth { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            color: #718096;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .metric-change {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .metric-change.positive {
+            color: #48bb78;
+        }
+
+        .metric-change.negative {
+            color: #f56565;
+        }
+
+        .metric-change i {
+            margin-right: 5px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .chart-container.large {
+            height: 400px;
+        }
+
+        .refresh-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .refresh-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .refresh-button i {
+            margin-right: 8px;
+        }
+
+        .last-updated {
+            color: #718096;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .alert {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .alert i {
+            margin-right: 10px;
+        }
+
+        .success {
+            background: #c6f6d5;
+            color: #276749;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 15px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metric-card {
+                padding: 20px;
+            }
+
+            .chart-card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1><i class="fas fa-tint" style="color: #667eea; margin-right: 15px;"></i>Abai Springs</h1>
+                <p><%= config.title %> - <%= config.description %></p>
+                <div class="live-indicator">
+                    <i class="fas fa-circle"></i>
+                    Live Data
+                </div>
+            </div>
+            <div class="user-info">
+                <div class="user-role"><%= user.role.toUpperCase() %></div>
+                <div style="color: #718096;">Welcome, <%= user.name %></div>
+                <button class="refresh-button" onclick="refreshDashboard()">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon revenue">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                </div>
+                <div class="metric-value" id="revenueToday">KES 0</div>
+                <div class="metric-label">Revenue Today</div>
+                <div class="metric-change positive" id="revenueChange">
+                    <i class="fas fa-arrow-up"></i>
+                    +0%
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon orders">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                </div>
+                <div class="metric-value" id="ordersToday">0</div>
+                <div class="metric-label">Orders Today</div>
+                <div class="metric-change positive" id="ordersChange">
+                    <i class="fas fa-arrow-up"></i>
+                    +0%
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon customers">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="metric-value" id="newCustomers">0</div>
+                <div class="metric-label">New Customers</div>
+                <div class="metric-change positive" id="customersChange">
+                    <i class="fas fa-arrow-up"></i>
+                    +0%
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon growth">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+                <div class="metric-value" id="growthRate">0%</div>
+                <div class="metric-label">Growth Rate</div>
+                <div class="metric-change positive" id="growthChange">
+                    <i class="fas fa-arrow-up"></i>
+                    +0%
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-title">
+                    Revenue Trends
+                </div>
+                <div class="chart-container large">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">Order Status</div>
+                <div class="chart-container">
+                    <canvas id="orderStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="last-updated" id="lastUpdated">
+            Last updated: <span id="lastUpdatedTime">Loading...</span>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let socket;
+        let charts = {};
+        const API_BASE_URL = '<%= apiBaseUrl %>';
+        const USER_DATA = <%- JSON.stringify(user) %>;
+        const DASHBOARD_DATA = <%- JSON.stringify(executiveData || {}) %>;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSocketConnection();
+            loadDashboardData();
+            initializeCharts();
+        });
+
+        // Socket.IO connection
+        function initializeSocketConnection() {
+            socket = io('<%= socketUrl %>');
+            
+            socket.on('connect', function() {
+                console.log('Connected to real-time updates');
+                socket.emit('join_dashboard', { 
+                    userId: USER_DATA.id, 
+                    dashboardType: 'executive' 
+                });
+            });
+
+            socket.on('metrics_updated', function(data) {
+                updateDashboardMetrics(data);
+            });
+
+            socket.on('disconnect', function() {
+                console.log('Disconnected from real-time updates');
+            });
+        }
+
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/dashboards/executive/data`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateDashboardMetrics(data.data);
+                    updateLastUpdated(data.timestamp);
+                } else {
+                    console.error('Failed to load dashboard data:', data.message);
+                }
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        // Update dashboard metrics
+        function updateDashboardMetrics(data) {
+            if (!data || !data.metrics) return;
+
+            const metrics = data.metrics;
+
+            // Update revenue
+            if (metrics.revenue) {
+                document.getElementById('revenueToday').textContent = 
+                    `KES ${formatNumber(metrics.revenue.total || 0)}`;
+                updateChangeIndicator('revenueChange', metrics.revenue.growth || 0);
+            }
+
+            // Update orders
+            if (metrics.orders) {
+                document.getElementById('ordersToday').textContent = 
+                    formatNumber(metrics.orders.total || 0);
+                updateChangeIndicator('ordersChange', metrics.orders.growth || 0);
+            }
+
+            // Update customers
+            if (metrics.customers) {
+                document.getElementById('newCustomers').textContent = 
+                    formatNumber(metrics.customers.new || 0);
+                updateChangeIndicator('customersChange', metrics.customers.growth || 0);
+            }
+
+            // Update growth rate
+            document.getElementById('growthRate').textContent = 
+                `${(metrics.growth || 0).toFixed(1)}%`;
+            updateChangeIndicator('growthChange', metrics.growth || 0);
+        }
+
+        // Initialize charts
+        function initializeCharts() {
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            charts.revenue = new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Revenue (KES)',
+                        data: [],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return 'KES ' + formatNumber(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Order Status Chart
+            const orderStatusCtx = document.getElementById('orderStatusChart').getContext('2d');
+            charts.orderStatus = new Chart(orderStatusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'Preparing', 'Out for Delivery', 'Delivered'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: [
+                            '#f6e05e',
+                            '#4299e1',
+                            '#ed8936',
+                            '#48bb78'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Load initial chart data
+            updateChartsData(DASHBOARD_DATA);
+        }
+
+        // Update charts with new data
+        function updateChartsData(data) {
+            if (!data || !data.charts) return;
+
+            // Update revenue chart
+            if (data.charts.revenue && charts.revenue) {
+                charts.revenue.data.labels = data.charts.revenue.map(item => item.date);
+                charts.revenue.data.datasets[0].data = data.charts.revenue.map(item => item.value);
+                charts.revenue.update('none');
+            }
+
+            // Update order status chart
+            if (data.charts.orders && charts.orderStatus) {
+                charts.orderStatus.data.datasets[0].data = data.charts.orders;
+                charts.orderStatus.update('none');
+            }
+        }
+
+        // Utility functions
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString();
+        }
+
+        function updateChangeIndicator(elementId, change) {
+            const element = document.getElementById(elementId);
+            const isPositive = change >= 0;
+            
+            element.className = `metric-change ${isPositive ? 'positive' : 'negative'}`;
+            element.innerHTML = `
+                <i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i>
+                ${isPositive ? '+' : ''}${change.toFixed(1)}%
+            `;
+        }
+
+        function updateLastUpdated(timestamp) {
+            const date = new Date(timestamp);
+            document.getElementById('lastUpdatedTime').textContent = 
+                date.toLocaleString();
+        }
+
+        function refreshDashboard() {
+            loadDashboardData();
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            loadDashboardData();
+        }, 30000);
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+

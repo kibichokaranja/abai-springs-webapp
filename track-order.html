@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Your Order - Abai Springs</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .tracking-container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .tracking-header {
+            background: linear-gradient(135deg, #1976d2 0%, #4fc3f7 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .tracking-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="water" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="2" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23water)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .tracking-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 40px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .tracking-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .tracking-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .tracking-content {
+            padding: 40px 30px;
+        }
+
+        .search-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-left: 4px solid #1976d2;
+        }
+
+        .search-title {
+            color: #1976d2;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-title::before {
+            content: '🔍';
+            font-size: 18px;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #1976d2;
+            box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+        }
+
+        .search-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #1976d2 0%, #4fc3f7 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(25, 118, 210, 0.4);
+        }
+
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .search-help {
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .order-details {
+            display: none;
+        }
+
+        .order-details.show {
+            display: block;
+        }
+
+        .order-summary {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 4px solid #1976d2;
+        }
+
+        .summary-title {
+            color: #1976d2;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .summary-title::before {
+            content: '📋';
+            font-size: 18px;
+        }
+
+        .order-detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .order-detail-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .detail-label {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .detail-value {
+            color: #1976d2;
+            font-weight: 600;
+        }
+
+        .progress-section {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            border: 1px solid #bbdefb;
+        }
+
+        .progress-title {
+            color: #1976d2;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-title::before {
+            content: '📦';
+            font-size: 16px;
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin: 30px 0;
+        }
+
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: #e9ecef;
+            z-index: 1;
+        }
+
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            flex: 1;
+        }
+
+        .step-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-bottom: 10px;
+            background: #e9ecef;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .step-icon.completed {
+            background: #4caf50;
+            color: white;
+        }
+
+        .step-icon.current {
+            background: #1976d2;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .step-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #666;
+            text-align: center;
+        }
+
+        .step-label.completed,
+        .step-label.current {
+            color: #1976d2;
+            font-weight: 600;
+        }
+
+        .delivery-info {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+
+        .delivery-title {
+            color: #1976d2;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .delivery-title::before {
+            content: '🚚';
+            font-size: 16px;
+        }
+
+        .delivery-detail {
+            display: flex;
+            margin-bottom: 10px;
+            align-items: flex-start;
+        }
+
+        .delivery-detail:last-child {
+            margin-bottom: 0;
+        }
+
+        .delivery-label {
+            font-weight: 600;
+            color: #555;
+            min-width: 120px;
+        }
+
+        .delivery-value {
+            color: #333;
+            flex: 1;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 40px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1976d2 0%, #4fc3f7 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(25, 118, 210, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #e9ecef;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #1976d2;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .tracking-container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .tracking-header {
+                padding: 30px 20px;
+            }
+
+            .tracking-content {
+                padding: 30px 20px;
+            }
+
+            .tracking-title {
+                font-size: 28px;
+            }
+
+            .search-form {
+                flex-direction: column;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .progress-steps {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .progress-steps::before {
+                display: none;
+            }
+
+            .delivery-detail {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .delivery-label {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="tracking-container">
+        <!-- Tracking Header -->
+        <div class="tracking-header">
+            <div class="tracking-icon">📦</div>
+            <h1 class="tracking-title">Track Your Order</h1>
+            <p class="tracking-subtitle">Enter your order ID or phone number to track your delivery</p>
+        </div>
+
+        <!-- Tracking Content -->
+        <div class="tracking-content">
+            <!-- Search Section -->
+            <div class="search-section">
+                <h3 class="search-title">Find Your Order</h3>
+                
+                <div class="search-form">
+                    <input type="text" id="searchInput" class="search-input" placeholder="Enter Order ID or Phone Number">
+                    <button id="searchBtn" class="search-btn" onclick="searchOrder()">
+                        <span>🔍</span>
+                        Track Order
+                    </button>
+                </div>
+                
+                <div class="search-help">
+                    <p>Enter your order ID (e.g., 68c3016b345a3ad80b62669e) or phone number (e.g., 0741219623)</p>
+                </div>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="error-message">
+                <span id="errorText"></span>
+            </div>
+
+            <!-- Loading -->
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Searching for your order...</p>
+            </div>
+
+            <!-- Order Details -->
+            <div id="orderDetails" class="order-details">
+                <!-- Order Summary -->
+                <div class="order-summary">
+                    <h3 class="summary-title">Order Summary</h3>
+                    
+                    <div class="order-detail-row">
+                        <span class="detail-label">Order Number:</span>
+                        <span class="detail-value" id="orderNumber">-</span>
+                    </div>
+                    
+                    <div class="order-detail-row">
+                        <span class="detail-label">Order Date:</span>
+                        <span class="detail-value" id="orderDate">-</span>
+                    </div>
+                    
+                    <div class="order-detail-row">
+                        <span class="detail-label">Total Amount:</span>
+                        <span class="detail-value" id="orderTotal">-</span>
+                    </div>
+                    
+                    <div class="order-detail-row">
+                        <span class="detail-label">Payment Method:</span>
+                        <span class="detail-value" id="paymentMethod">-</span>
+                    </div>
+                </div>
+
+                <!-- Progress Section -->
+                <div class="progress-section">
+                    <h4 class="progress-title">Delivery Progress</h4>
+                    
+                    <div class="progress-steps">
+                        <div class="progress-step">
+                            <div class="step-icon" id="step1">📝</div>
+                            <div class="step-label" id="label1">Order Placed</div>
+                        </div>
+                        <div class="progress-step">
+                            <div class="step-icon" id="step2">✅</div>
+                            <div class="step-label" id="label2">Confirmed</div>
+                        </div>
+                        <div class="progress-step">
+                            <div class="step-icon" id="step3">🏭</div>
+                            <div class="step-label" id="label3">Preparing</div>
+                        </div>
+                        <div class="progress-step">
+                            <div class="step-icon" id="step4">🚚</div>
+                            <div class="step-label" id="label4">Out for Delivery</div>
+                        </div>
+                        <div class="progress-step">
+                            <div class="step-icon" id="step5">🏠</div>
+                            <div class="step-label" id="label5">Delivered</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delivery Information -->
+                <div class="delivery-info">
+                    <h4 class="delivery-title">Delivery Information</h4>
+                    
+                    <div class="delivery-detail">
+                        <span class="delivery-label">Delivery Address:</span>
+                        <span class="delivery-value" id="deliveryAddress">-</span>
+                    </div>
+                    
+                    <div class="delivery-detail">
+                        <span class="delivery-label">Outlet:</span>
+                        <span class="delivery-value" id="deliveryOutlet">-</span>
+                    </div>
+                    
+                    <div class="delivery-detail">
+                        <span class="delivery-label">Estimated Delivery:</span>
+                        <span class="delivery-value" id="estimatedDelivery">-</span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <a href="index.html" class="btn btn-primary">
+                        <span>🛒</span>
+                        Continue Shopping
+                    </a>
+                    <button class="btn btn-secondary" onclick="refreshOrder()">
+                        <span>🔄</span>
+                        Refresh Status
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3001/api';
+        let currentOrderId = null;
+
+        // Get order ID from URL if present
+        function getOrderIdFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('orderId');
+        }
+
+        // Search for order
+        async function searchOrder() {
+            const searchInput = document.getElementById('searchInput').value.trim();
+            const searchBtn = document.getElementById('searchBtn');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('errorMessage');
+            const orderDetails = document.getElementById('orderDetails');
+
+            if (!searchInput) {
+                showError('Please enter an order ID or phone number');
+                return;
+            }
+
+            // Show loading
+            loading.style.display = 'block';
+            errorMessage.classList.remove('show');
+            orderDetails.classList.remove('show');
+            searchBtn.disabled = true;
+
+            try {
+                let orderData = null;
+
+                // Try to search by order ID first
+                if (searchInput.length > 10) {
+                    // Looks like an order ID
+                    const response = await fetch(`${API_BASE_URL}/orders/${searchInput}`);
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        orderData = result.data;
+                    }
+                }
+
+                // If not found by ID, try by phone number
+                if (!orderData) {
+                    const response = await fetch(`${API_BASE_URL}/orders/track/phone/${searchInput}`);
+                    const result = await response.json();
+                    
+                    if (result.success && result.data.length > 0) {
+                        // Show the most recent order
+                        orderData = result.data[0];
+                    }
+                }
+
+                if (orderData) {
+                    currentOrderId = orderData._id;
+                    displayOrderDetails(orderData);
+                    orderDetails.classList.add('show');
+                } else {
+                    showError('Order not found. Please check your order ID or phone number.');
+                }
+            } catch (error) {
+                console.error('Error searching for order:', error);
+                showError('Error searching for order. Please try again.');
+            } finally {
+                loading.style.display = 'none';
+                searchBtn.disabled = false;
+            }
+        }
+
+        // Display order details
+        function displayOrderDetails(orderData) {
+            // Basic order info
+            document.getElementById('orderNumber').textContent = orderData.orderNumber || orderData._id;
+            document.getElementById('orderDate').textContent = new Date(orderData.createdAt).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            document.getElementById('orderTotal').textContent = `Ksh ${orderData.totalAmount || orderData.total}`;
+            
+            // Format payment method
+            const paymentMethod = orderData.paymentMethod || 'Not specified';
+            const formattedPaymentMethod = paymentMethod === 'cash_on_delivery' ? 'Cash on Delivery' : 
+                                         paymentMethod === 'mpesa' ? 'M-Pesa' : 
+                                         paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1);
+            document.getElementById('paymentMethod').textContent = formattedPaymentMethod;
+
+            // Update progress steps
+            updateProgressSteps(orderData.status || 'pending');
+
+            // Delivery info
+            if (orderData.deliveryAddress) {
+                document.getElementById('deliveryAddress').textContent = orderData.deliveryAddress.address || 'Not specified';
+            }
+            
+            if (orderData.outlet && orderData.outlet.name) {
+                document.getElementById('deliveryOutlet').textContent = orderData.outlet.name;
+            } else {
+                document.getElementById('deliveryOutlet').textContent = 'Not specified';
+            }
+
+            // Estimated delivery
+            const orderDate = new Date(orderData.createdAt);
+            const estimatedDate = new Date(orderDate.getTime() + (2 * 24 * 60 * 60 * 1000)); // 2 days
+            document.getElementById('estimatedDelivery').textContent = estimatedDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // Update progress steps based on order status
+        function updateProgressSteps(status) {
+            const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
+            const labels = ['label1', 'label2', 'label3', 'label4', 'label5'];
+            
+            // Reset all steps
+            steps.forEach(step => {
+                document.getElementById(step).className = 'step-icon';
+            });
+            labels.forEach(label => {
+                document.getElementById(label).className = 'step-label';
+            });
+
+            // Map status to step index
+            const statusMap = {
+                'pending': 0,
+                'confirmed': 1,
+                'processing': 2,
+                'shipped': 3,
+                'delivered': 4
+            };
+
+            const currentStep = statusMap[status] || 0;
+
+            // Mark completed steps
+            for (let i = 0; i <= currentStep; i++) {
+                document.getElementById(steps[i]).classList.add('completed');
+                document.getElementById(labels[i]).classList.add('completed');
+            }
+
+            // Mark current step
+            if (currentStep < steps.length) {
+                document.getElementById(steps[currentStep]).classList.add('current');
+                document.getElementById(labels[currentStep]).classList.add('current');
+            }
+        }
+
+        // Refresh order status
+        async function refreshOrder() {
+            if (!currentOrderId) return;
+            
+            const searchInput = document.getElementById('searchInput');
+            searchInput.value = currentOrderId;
+            await searchOrder();
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            errorText.textContent = message;
+            errorMessage.classList.add('show');
+        }
+
+        // Handle Enter key in search input
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchOrder();
+            }
+        });
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if order ID is in URL
+            const orderId = getOrderIdFromUrl();
+            if (orderId) {
+                document.getElementById('searchInput').value = orderId;
+                searchOrder();
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
