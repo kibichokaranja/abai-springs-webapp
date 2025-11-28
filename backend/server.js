@@ -40,6 +40,9 @@ import staffRoutes from './routes/staff.js';
 import salesRoutes from './routes/sales.js';
 import driverRoutes from './routes/drivers.js';
 import stockMovementRoutes from './routes/stock-movements.js';
+import supplierRoutes from './routes/suppliers.js';
+import supplierOrderRoutes from './routes/supplierOrders.js';
+import warehouseInventoryRoutes from './routes/warehouseInventory.js';
 // import aiStockMonitor from './services/aiStockMonitor.js';
 import smartStockAlertService from './services/smartStockAlertService.js';
 
@@ -105,6 +108,10 @@ app.use(securityHeaders);
 // Staff Portal Routes (must come BEFORE static file serving)
 app.get('/staff-login', (req, res) => {
   res.sendFile(path.join(__dirname, '../staff-login.html'));
+});
+
+app.get('/manager-dashboard.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../manager-dashboard.html'));
 });
 
 app.get('/owner-dashboard', (req, res) => {
@@ -186,6 +193,12 @@ app.use('/api/drivers', driverRoutes); // Driver Management
 console.log('✅ Drivers route registered');
 app.use('/api/stock-movements', stockMovementRoutes); // Stock Movement Management
 console.log('✅ Stock movements route registered');
+app.use('/api/suppliers', supplierRoutes); // Supplier Management
+console.log('✅ Suppliers route registered');
+app.use('/api/supplier-orders', supplierOrderRoutes); // Supplier Orders Management
+console.log('✅ Supplier orders route registered');
+app.use('/api/warehouse-inventory', warehouseInventoryRoutes); // Warehouse Inventory Management
+console.log('✅ Warehouse inventory route registered');
 
 // Test route for stock alerts
 app.get('/api/test-stock-alerts', (req, res) => {

@@ -1351,9 +1351,7 @@
                                 <option value="">All Methods</option>
                                 <option value="mpesa">M-Pesa</option>
                                 <option value="airtel_money">Airtel Money</option>
-                                <option value="equitel">Equitel</option>
                                 <option value="cash">Cash</option>
-                                <option value="card">Card</option>
                                 <option value="bank_transfer">Bank Transfer</option>
                             </select>
                         </div>
@@ -1529,6 +1527,10 @@
                                 <input type="email" id="staffEmail" name="email" required placeholder="staff@abaisprings.com">
                             </div>
                             <div class="form-group">
+                                <label for="staffPassword">Password *</label>
+                                <input type="password" id="staffPassword" name="password" required placeholder="Enter password for staff login" minlength="6">
+                            </div>
+                            <div class="form-group">
                                 <label for="staffPhone">Phone Number *</label>
                                 <input type="tel" id="staffPhone" name="phone" required placeholder="+254 700 000 000">
                             </div>
@@ -1553,6 +1555,13 @@
                                     <option value="administration">Administration</option>
                                     <option value="finance">Finance</option>
                                 </select>
+                            </div>
+                            <div class="form-group" id="outletGroup" style="display: none;">
+                                <label for="staffOutlet">Assigned Outlet *</label>
+                                <select id="staffOutlet" name="outlet">
+                                    <option value="">Select Outlet</option>
+                                </select>
+                                <small style="color: #666; font-size: 0.85rem;">Required for drivers and sales staff</small>
                             </div>
                             <div class="form-group">
                                 <label for="staffStatus">Status</label>
@@ -1603,6 +1612,13 @@
                                     <option value="warehouse">Warehouse</option>
                                     <option value="manager">Manager</option>
                                 </select>
+                            </div>
+                            <div class="form-group" id="editOutletGroup" style="display: none;">
+                                <label for="editStaffOutlet">Assigned Outlet *</label>
+                                <select id="editStaffOutlet" name="outlet">
+                                    <option value="">Select Outlet</option>
+                                </select>
+                                <small style="color: #666; font-size: 0.85rem;">Required for drivers and sales staff</small>
                             </div>
                             <div class="form-group">
                                 <label for="editStaffDepartment">Department</label>
@@ -2345,8 +2361,215 @@
         </div>
     </div>
     
+    <!-- Admin Login Modal -->
+    <div id="adminLoginModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-lock"></i> Admin Login</h2>
+            </div>
+            <div class="modal-body">
+                <form id="adminLoginForm">
+                    <div class="form-group">
+                        <label for="adminEmail">Email Address *</label>
+                        <input type="email" id="adminEmail" name="email" required placeholder="admin@abaisprings.com" autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="adminPassword">Password *</label>
+                        <input type="password" id="adminPassword" name="password" required placeholder="Enter your password" autocomplete="current-password">
+                    </div>
+                    <div id="loginError" style="color: #d32f2f; margin-bottom: 1rem; display: none;"></div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
     <script>
         const API_BASE_URL = 'http://localhost:3001/api';
+        
+        // Helper function to get authentication token
+        function getAuthToken() {
+            // Check localStorage
+            const token = localStorage.getItem('token') || 
+                         localStorage.getItem('authToken') || 
+                         localStorage.getItem('adminToken');
+            
+            // Check sessionStorage if not found in localStorage
+            if (!token) {
+                return sessionStorage.getItem('token') || 
+                       sessionStorage.getItem('authToken') || 
+                       sessionStorage.getItem('adminToken');
+            }
+            
+            return token;
+        }
+        
+        // Helper function to get auth headers
+        function getAuthHeaders() {
+            const token = getAuthToken();
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            return headers;
+        }
+        
+        // Check authentication status
+        async function checkAuth() {
+            const token = getAuthToken();
+            if (!token) {
+                showLoginModal();
+                return false;
+            }
+            
+            try {
+                // Verify token by checking user profile
+                const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success && data.data) {
+                    const user = data.data;
+                    // Check if user has admin role
+                    if (user.role === 'admin') {
+                        hideLoginModal();
+                        return true;
+                    } else {
+                        showLoginError('Access denied. Admin privileges required.');
+                        return false;
+                    }
+                } else {
+                    // Token invalid or expired
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('adminToken');
+                    sessionStorage.removeItem('token');
+                    sessionStorage.removeItem('authToken');
+                    sessionStorage.removeItem('adminToken');
+                    showLoginModal();
+                    return false;
+                }
+            } catch (error) {
+                console.error('Auth check error:', error);
+                showLoginModal();
+                return false;
+            }
+        }
+        
+        // Show login modal
+        function showLoginModal() {
+            const modal = document.getElementById('adminLoginModal');
+            if (modal) {
+                modal.style.display = 'block';
+            }
+        }
+        
+        // Hide login modal
+        function hideLoginModal() {
+            const modal = document.getElementById('adminLoginModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        // Show login error
+        function showLoginError(message) {
+            const errorDiv = document.getElementById('loginError');
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+        }
+        
+        // Hide login error
+        function hideLoginError() {
+            const errorDiv = document.getElementById('loginError');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+        }
+        
+        // Handle admin login
+        async function handleAdminLogin(email, password) {
+            try {
+                hideLoginError();
+                
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success && data.data) {
+                    const { token, user } = data.data;
+                    
+                    // Check if user has admin role
+                    if (user.role !== 'admin') {
+                        showLoginError('Access denied. Admin privileges required.');
+                        return false;
+                    }
+                    
+                    // Store token
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('authToken', token);
+                    
+                    // Store user info
+                    localStorage.setItem('userRole', user.role);
+                    localStorage.setItem('userEmail', user.email);
+                    
+                    // Hide login modal
+                    hideLoginModal();
+                    
+                    // Reload page data
+                    await loadDashboardData();
+                    
+                    return true;
+                } else {
+                    showLoginError(data.error || data.message || 'Login failed. Please check your credentials.');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showLoginError('An error occurred during login. Please try again.');
+                return false;
+            }
+        }
+        
+        // Login form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('adminLoginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const email = document.getElementById('adminEmail').value;
+                    const password = document.getElementById('adminPassword').value;
+                    await handleAdminLogin(email, password);
+                });
+            }
+            
+            // Check authentication on page load
+            checkAuth().then(isAuthenticated => {
+                if (isAuthenticated) {
+                    // Load initial data
+                    loadDashboardData();
+                }
+            });
+        });
         
         // Navigation
         function showSection(sectionName) {
@@ -2424,7 +2647,10 @@
                     fetch(`${API_BASE_URL}/products`).then(r => r.json()),
                     fetch(`${API_BASE_URL}/outlets`).then(r => r.json()),
                     fetch(`${API_BASE_URL}/orders`).then(r => r.json()),
-                    fetch(`${API_BASE_URL}/auth/users`).then(r => r.json()).catch(() => ({success: true, data: []}))
+                    fetch(`${API_BASE_URL}/auth/users`, {
+                        method: 'GET',
+                        headers: getAuthHeaders()
+                    }).then(r => r.json()).catch(() => ({success: true, data: []}))
                 ]);
                 
                 console.log('API responses:', { products, outlets, orders, users });
@@ -3065,11 +3291,37 @@
         // Load users
         async function loadUsers() {
             try {
-                const response = await fetch(`${API_BASE_URL}/auth/users`);
+                const response = await fetch(`${API_BASE_URL}/auth/users`, {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                });
+                
                 const data = await response.json();
                 
                 const usersTable = document.getElementById('users-table');
-                if (data.success && data.data.length > 0) {
+                
+                // Check if request was unauthorized
+                if (response.status === 401) {
+                    usersTable.innerHTML = '<p style="color: #d32f2f;">Authentication required. Please log in as admin.</p>';
+                    console.error('Authentication error:', data);
+                    return;
+                }
+                
+                // Check if request was forbidden (not admin)
+                if (response.status === 403) {
+                    usersTable.innerHTML = '<p style="color: #d32f2f;">Access denied. Admin privileges required.</p>';
+                    console.error('Authorization error:', data);
+                    return;
+                }
+                
+                // Check for other errors
+                if (!response.ok) {
+                    usersTable.innerHTML = `<p style="color: #d32f2f;">Error: ${data.error || data.message || 'Failed to load users'}</p>`;
+                    console.error('Error loading users:', data);
+                    return;
+                }
+                
+                if (data.success && data.data && data.data.length > 0) {
                     usersTable.innerHTML = `
                         <table class="data-table">
                             <thead>
@@ -3102,7 +3354,10 @@
                 }
             } catch (error) {
                 console.error('Error loading users:', error);
-                document.getElementById('users-table').innerHTML = '<p>Error loading users</p>';
+                const usersTable = document.getElementById('users-table');
+                if (usersTable) {
+                    usersTable.innerHTML = '<p style="color: #d32f2f;">Error loading users. Please check your connection and try again.</p>';
+                }
             }
         }
         
@@ -4913,17 +5168,83 @@
         }
 
         // Staff Management Modal Functions
-        function showAddStaffModal() {
+        async function showAddStaffModal() {
             document.getElementById('addStaffModal').style.display = 'block';
             // Reset form
             document.getElementById('addStaffForm').reset();
+            // Load outlets
+            await loadOutletsForStaff();
+            // Hide outlet field initially
+            document.getElementById('outletGroup').style.display = 'none';
+        }
+        
+        // Load outlets for staff assignment
+        async function loadOutletsForStaff() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/outlets`);
+                const data = await response.json();
+                
+                const outletSelect = document.getElementById('staffOutlet');
+                const editOutletSelect = document.getElementById('editStaffOutlet');
+                
+                if (data.success && data.data) {
+                    // Clear existing options except first
+                    if (outletSelect) {
+                        outletSelect.innerHTML = '<option value="">Select Outlet</option>';
+                        data.data.forEach(outlet => {
+                            const option = document.createElement('option');
+                            option.value = outlet._id;
+                            option.textContent = outlet.name || outlet.address || 'Unnamed Outlet';
+                            outletSelect.appendChild(option);
+                        });
+                    }
+                    
+                    if (editOutletSelect) {
+                        editOutletSelect.innerHTML = '<option value="">Select Outlet</option>';
+                        data.data.forEach(outlet => {
+                            const option = document.createElement('option');
+                            option.value = outlet._id;
+                            option.textContent = outlet.name || outlet.address || 'Unnamed Outlet';
+                            editOutletSelect.appendChild(option);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading outlets:', error);
+            }
+        }
+        
+        // Show/hide outlet field based on role
+        function toggleOutletField(roleSelectId, outletGroupId) {
+            const roleSelect = document.getElementById(roleSelectId);
+            const outletGroup = document.getElementById(outletGroupId);
+            const outletSelect = outletGroupId === 'outletGroup' ? 
+                document.getElementById('staffOutlet') : 
+                document.getElementById('editStaffOutlet');
+            
+            if (roleSelect && outletGroup) {
+                const role = roleSelect.value;
+                if (role === 'driver' || role === 'sales') {
+                    outletGroup.style.display = 'block';
+                    if (outletSelect) outletSelect.required = true;
+                } else {
+                    outletGroup.style.display = 'none';
+                    if (outletSelect) {
+                        outletSelect.required = false;
+                        outletSelect.value = '';
+                    }
+                }
+            }
         }
 
         function closeAddStaffModal() {
             document.getElementById('addStaffModal').style.display = 'none';
         }
 
-        function showEditStaffModal(staffId, staffData) {
+        async function showEditStaffModal(staffId, staffData) {
+            // Load outlets first
+            await loadOutletsForStaff();
+            
             // Populate form with existing data
             document.getElementById('editStaffId').value = staffId;
             document.getElementById('editStaffName').value = staffData.name || '';
@@ -4932,6 +5253,14 @@
             document.getElementById('editStaffRole').value = staffData.role || '';
             document.getElementById('editStaffDepartment').value = staffData.department || '';
             document.getElementById('editStaffStatus').value = staffData.status || 'active';
+            
+            // Set outlet if exists
+            if (staffData.outlet) {
+                document.getElementById('editStaffOutlet').value = staffData.outlet._id || staffData.outlet;
+            }
+            
+            // Show/hide outlet field based on role
+            toggleOutletField('editStaffRole', 'editOutletGroup');
             
             // Show modal
             document.getElementById('editStaffModal').style.display = 'block';
@@ -4943,6 +5272,21 @@
 
         // Handle staff form submissions
         document.addEventListener('DOMContentLoaded', function() {
+            // Role change handlers for outlet field
+            const staffRoleSelect = document.getElementById('staffRole');
+            if (staffRoleSelect) {
+                staffRoleSelect.addEventListener('change', function() {
+                    toggleOutletField('staffRole', 'outletGroup');
+                });
+            }
+            
+            const editStaffRoleSelect = document.getElementById('editStaffRole');
+            if (editStaffRoleSelect) {
+                editStaffRoleSelect.addEventListener('change', function() {
+                    toggleOutletField('editStaffRole', 'editOutletGroup');
+                });
+            }
+            
             const addStaffForm = document.getElementById('addStaffForm');
             if (addStaffForm) {
                 addStaffForm.addEventListener('submit', function(e) {
@@ -4963,18 +5307,37 @@
         async function handleAddStaff() {
             try {
                 const formData = new FormData(document.getElementById('addStaffForm'));
+                const role = formData.get('role');
+                const outlet = formData.get('outlet');
+                
                 const staffData = {
                     name: formData.get('name'),
                     email: formData.get('email'),
+                    password: formData.get('password'),
                     phone: formData.get('phone'),
-                    role: formData.get('role'),
+                    role: role,
                     department: formData.get('department'),
                     status: formData.get('status')
                 };
+                
+                // Add outlet if role is driver or sales
+                if (role === 'driver' || role === 'sales') {
+                    if (!outlet) {
+                        alert('Outlet is required for drivers and sales staff!');
+                        return;
+                    }
+                    staffData.outlet = outlet;
+                }
 
                 // Validate required fields
-                if (!staffData.name || !staffData.email || !staffData.phone || !staffData.role) {
-                    alert('Name, Email, Phone, and Role are required fields!');
+                if (!staffData.name || !staffData.email || !staffData.password || !staffData.phone || !staffData.role) {
+                    alert('Name, Email, Password, Phone, and Role are required fields!');
+                    return;
+                }
+
+                // Validate password length
+                if (staffData.password.length < 6) {
+                    alert('Password must be at least 6 characters long!');
                     return;
                 }
 
@@ -4990,7 +5353,7 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    alert(`Staff Member ${staffData.name} added successfully!\n\nDetails:\nName: ${staffData.name}\nEmail: ${staffData.email}\nPhone: ${staffData.phone}\nRole: ${staffData.role}\nDepartment: ${staffData.department || 'Not assigned'}\nStatus: ${staffData.status}`);
+                    alert(`Staff Member ${staffData.name} added successfully!\n\nDetails:\nName: ${staffData.name}\nEmail: ${staffData.email}\nPhone: ${staffData.phone}\nRole: ${staffData.role}\nDepartment: ${staffData.department || 'Not assigned'}\nStatus: ${staffData.status}\n\nStaff can now log in using their email and password.`);
 
                     // Close modal
                     closeAddStaffModal();
@@ -5010,14 +5373,29 @@
         async function handleEditStaff() {
             try {
                 const formData = new FormData(document.getElementById('editStaffForm'));
+                const role = formData.get('role');
+                const outlet = formData.get('outlet');
+                
                 const staffData = {
                     name: formData.get('name'),
                     email: formData.get('email'),
                     phone: formData.get('phone'),
-                    role: formData.get('role'),
+                    role: role,
                     department: formData.get('department'),
                     status: formData.get('status')
                 };
+                
+                // Add outlet if role is driver or sales
+                if (role === 'driver' || role === 'sales') {
+                    if (!outlet) {
+                        alert('Outlet is required for drivers and sales staff!');
+                        return;
+                    }
+                    staffData.outlet = outlet;
+                } else {
+                    // Clear outlet for other roles
+                    staffData.outlet = null;
+                }
 
                 const staffId = formData.get('id');
 

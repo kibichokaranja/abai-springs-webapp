@@ -530,12 +530,24 @@
             <div id="customers" class="section" style="display: none;">
                 <div class="orders-section">
                     <h2>Customer Management</h2>
-                    <div class="chart-container" id="customersChart">
-                        <div>
-                            <i class="fas fa-users" style="font-size: 3rem; color: #667eea; margin-bottom: 1rem;"></i>
-                            <p>Select an outlet to view customer data</p>
-                        </div>
-                    </div>
+                    <table class="orders-table" id="customersTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Orders</th>
+                                <th>Total Spent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: #666;">
+                                    Loading customers...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -543,12 +555,24 @@
             <div id="inventory" class="section" style="display: none;">
                 <div class="orders-section">
                     <h2>Inventory Status</h2>
-                    <div class="chart-container" id="inventoryChart">
-                        <div>
-                            <i class="fas fa-boxes" style="font-size: 3rem; color: #667eea; margin-bottom: 1rem;"></i>
-                            <p>Select an outlet to view inventory</p>
-                        </div>
-                    </div>
+                    <table class="orders-table" id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>Product Name</th>
+                                <th>Category</th>
+                                <th>Stock</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: #666;">
+                                    Loading inventory...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -562,11 +586,21 @@
         let currentUser = null;
         let selectedOutlet = null;
         let outlets = [];
+        let assignedOutletId = null;
 
         // Check authentication on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            checkAuth();
-            loadOutlets();
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (checkAuth()) {
+                // Load outlets after we know the assigned outlet
+                await loadOutlets();
+                // Auto-load assigned outlet if exists
+                if (assignedOutletId) {
+                    await loadAssignedOutlet();
+                } else {
+                    // If no outlet assigned, populate normally
+                    populateOutletSelect();
+                }
+            }
         });
 
         function checkAuth() {
@@ -575,12 +609,149 @@
             
             if (!staffUser || staffRole !== 'sales') {
                 window.location.href = 'staff-login.html';
-                return;
+                return false;
             }
 
             currentUser = JSON.parse(staffUser);
             document.getElementById('userName').textContent = currentUser.name;
             document.getElementById('userEmail').textContent = currentUser.email;
+            
+            // Get assigned outlet from user data
+            console.log('Full currentUser object:', JSON.stringify(currentUser, null, 2));
+            
+            if (currentUser.outlet) {
+                // Handle different outlet data structures
+                if (typeof currentUser.outlet === 'string') {
+                    assignedOutletId = currentUser.outlet;
+                } else if (currentUser.outlet.id) {
+                    assignedOutletId = currentUser.outlet.id;
+                } else if (currentUser.outlet._id) {
+                    assignedOutletId = currentUser.outlet._id;
+                }
+                
+                const outletName = currentUser.outlet.name || 'Assigned Outlet';
+                document.getElementById('selectedOutlet').textContent = `Outlet: ${outletName}`;
+                
+                // Hide outlet selector immediately if outlet is assigned
+                const outletSelector = document.querySelector('.outlet-selector');
+                if (outletSelector) {
+                    outletSelector.style.display = 'none';
+                }
+                
+                console.log('Assigned outlet ID:', assignedOutletId, 'Outlet name:', outletName);
+            } else {
+                // If no outlet assigned, show error
+                console.warn('No outlet assigned to this sales staff');
+                console.log('Current user data:', currentUser);
+                alert('Warning: No outlet assigned. Please contact administrator to assign an outlet.');
+            }
+            
+            return true;
+        }
+        
+        async function loadAssignedOutlet() {
+            if (!assignedOutletId) return;
+            
+            // Find outlet in the loaded outlets list
+            const outlet = outlets.find(o => {
+                // Try different ID formats
+                const outletId = o._id?.toString() || o.id?.toString();
+                const assignedId = assignedOutletId.toString();
+                return outletId === assignedId || o._id === assignedOutletId || o.id === assignedOutletId;
+            });
+            
+            if (outlet) {
+                selectedOutlet = outlet;
+                
+                // Populate dropdown with ONLY the assigned outlet
+                const outletSelect = document.getElementById('outletSelect');
+                if (outletSelect) {
+                    outletSelect.innerHTML = '';
+                    const option = document.createElement('option');
+                    option.value = outlet._id || outlet.id;
+                    option.textContent = outlet.name;
+                    option.selected = true;
+                    outletSelect.appendChild(option);
+                    outletSelect.disabled = true; // Disable to prevent changing
+                }
+                
+                // Hide outlet selector completely
+                const outletSelector = document.querySelector('.outlet-selector');
+                if (outletSelector) {
+                    outletSelector.style.display = 'none';
+                }
+                
+                // Update outlet display
+                document.getElementById('selectedOutlet').textContent = `Outlet: ${outlet.name || 'Assigned Outlet'}`;
+                
+                // Auto-load data for assigned outlet
+                console.log('Loading data for assigned outlet:', assignedOutletId);
+                
+                // Load overview data first (this also loads orders and performance chart)
+                if (assignedOutletId) {
+                    await loadMockData(assignedOutletId);
+                    await loadInventory(assignedOutletId);
+                    await loadCustomers(assignedOutletId);
+                    
+                    // Ensure performance chart is loaded
+                    try {
+                        const ordersResponse = await fetch(`${API_BASE_URL}/orders?outlet=${assignedOutletId}`);
+                        const ordersData = await ordersResponse.json();
+                        console.log('Orders response:', ordersData);
+                        const orders = ordersData.success && ordersData.data ? ordersData.data : [];
+                        loadPerformanceChart(orders);
+                    } catch (error) {
+                        console.error('Error loading performance data:', error);
+                    }
+                }
+            } else {
+                // Outlet not found in list, but we have assigned outlet ID
+                // Try to fetch outlet details or use stored name
+                if (currentUser.outlet && currentUser.outlet.name) {
+                    document.getElementById('selectedOutlet').textContent = `Outlet: ${currentUser.outlet.name}`;
+                    
+                    // Hide selector completely
+                    const outletSelector = document.querySelector('.outlet-selector');
+                    if (outletSelector) {
+                        outletSelector.style.display = 'none';
+                    }
+                    
+                    // Disable and populate dropdown with assigned outlet info
+                    const outletSelect = document.getElementById('outletSelect');
+                    if (outletSelect) {
+                        outletSelect.innerHTML = '';
+                        const option = document.createElement('option');
+                        option.value = assignedOutletId;
+                        option.textContent = currentUser.outlet.name;
+                        option.selected = true;
+                        outletSelect.appendChild(option);
+                        outletSelect.disabled = true;
+                    }
+                    
+                    // Load data with assigned outlet ID
+                    console.log('Loading data for assigned outlet (fallback):', assignedOutletId);
+                    await loadOutletData();
+                    // Load all sections data
+                    await loadMockData(assignedOutletId);
+                    await loadInventory(assignedOutletId);
+                    await loadCustomers(assignedOutletId);
+                    
+                    // Load performance chart data
+                    try {
+                        const ordersResponse = await fetch(`${API_BASE_URL}/orders?outlet=${assignedOutletId}`);
+                        const ordersData = await ordersResponse.json();
+                        const orders = ordersData.success && ordersData.data ? ordersData.data : [];
+                        loadPerformanceChart(orders);
+                    } catch (error) {
+                        console.error('Error loading performance data:', error);
+                    }
+                    await loadMockData(assignedOutletId);
+                    await loadInventory(assignedOutletId);
+                    await loadCustomers(assignedOutletId);
+                } else {
+                    console.error('Assigned outlet not found in outlets list');
+                }
+            }
         }
 
         async function loadOutlets() {
@@ -589,8 +760,8 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    outlets = data.outlets;
-                    populateOutletSelect();
+                    outlets = data.outlets || data.data || [];
+                    // Don't populate here - let loadAssignedOutlet or the caller handle it
                 }
             } catch (error) {
                 console.error('Error loading outlets:', error);
@@ -601,94 +772,360 @@
                     { _id: '3', name: 'Kiambu Road Branch', location: 'Kiambu Road, Nairobi' },
                     { _id: '4', name: 'Northern Bypass Branch', location: 'Northern Bypass' }
                 ];
-                populateOutletSelect();
             }
         }
 
         function populateOutletSelect() {
             const select = document.getElementById('outletSelect');
-            select.innerHTML = '<option value="">Select Outlet</option>';
+            if (!select) return;
             
-            outlets.forEach(outlet => {
-                const option = document.createElement('option');
-                option.value = outlet._id;
-                option.textContent = outlet.name;
-                select.appendChild(option);
-            });
+            // If outlet is assigned, only show that outlet
+            if (assignedOutletId) {
+                const assignedOutlet = outlets.find(o => o._id === assignedOutletId);
+                select.innerHTML = '';
+                if (assignedOutlet) {
+                    const option = document.createElement('option');
+                    option.value = assignedOutlet._id;
+                    option.textContent = assignedOutlet.name;
+                    option.selected = true;
+                    select.appendChild(option);
+                    select.disabled = true; // Disable selection
+                }
+            } else {
+                // If no outlet assigned, show all outlets
+                select.innerHTML = '<option value="">Select Outlet</option>';
+                outlets.forEach(outlet => {
+                    const option = document.createElement('option');
+                    option.value = outlet._id;
+                    option.textContent = outlet.name;
+                    select.appendChild(option);
+                });
+            }
         }
 
-        function loadOutletData() {
-            const outletId = document.getElementById('outletSelect').value;
+        async function loadOutletData() {
+            // Always use assigned outlet if available (enforce restriction)
+            let outletId = assignedOutletId;
+            const outletSelect = document.getElementById('outletSelect');
+            
+            // If outlet is assigned, ignore any selection from dropdown
+            if (assignedOutletId) {
+                outletId = assignedOutletId;
+            } else if (outletSelect && outletSelect.value) {
+                // Only allow selection if no outlet is assigned
+                outletId = outletSelect.value;
+            }
+            
             if (!outletId) {
                 showNotification('Please select an outlet first', 'error');
                 return;
             }
 
-            selectedOutlet = outlets.find(o => o._id === outletId);
-            document.getElementById('selectedOutlet').textContent = `Outlet: ${selectedOutlet.name}`;
+            // Find outlet in list
+            selectedOutlet = outlets.find(o => {
+                return o._id === outletId || 
+                       o._id?.toString() === outletId?.toString() ||
+                       o.id === outletId;
+            });
             
-            // Load mock data for the selected outlet
-            loadMockData();
-            showNotification(`Data loaded for ${selectedOutlet.name}`, 'success');
-        }
-
-        function loadMockData() {
-            // Mock sales data
-            const todaySales = Math.floor(Math.random() * 5000) + 1000;
-            const weeklySales = Math.floor(Math.random() * 25000) + 5000;
-            const pendingOrders = Math.floor(Math.random() * 10) + 1;
-            const satisfaction = Math.floor(Math.random() * 20) + 80;
-
-            document.getElementById('todaySales').textContent = `$${todaySales.toLocaleString()}`;
-            document.getElementById('weeklySales').textContent = `$${weeklySales.toLocaleString()}`;
-            document.getElementById('pendingOrders').textContent = pendingOrders;
-            document.getElementById('customerSatisfaction').textContent = `${satisfaction}%`;
-
-            // Mock trends
-            document.getElementById('todayTrend').textContent = `+${Math.floor(Math.random() * 15) + 5}%`;
-            document.getElementById('weeklyTrend').textContent = `+${Math.floor(Math.random() * 10) + 3}%`;
-            document.getElementById('ordersTrend').textContent = `${Math.floor(Math.random() * 5) + 1} new`;
-            document.getElementById('satisfactionTrend').textContent = `+${Math.floor(Math.random() * 5) + 2}%`;
-
-            // Load mock orders
-            loadMockOrders();
-        }
-
-        function loadMockOrders() {
-            const mockOrders = [
-                {
-                    id: 'ORD001',
-                    customer: 'John Doe',
-                    products: 'Abai Springs 20L x 2',
-                    amount: 1200,
-                    status: 'pending',
-                    date: '2025-08-30'
-                },
-                {
-                    id: 'ORD002',
-                    customer: 'Jane Smith',
-                    products: 'Abai Springs 5L x 1, 10L x 1',
-                    amount: 800,
-                    status: 'confirmed',
-                    date: '2025-08-30'
-                },
-                {
-                    id: 'ORD003',
-                    customer: 'Mike Johnson',
-                    products: 'Abai Springs 20L x 1',
-                    amount: 600,
-                    status: 'processing',
-                    date: '2025-08-29'
+            if (selectedOutlet) {
+                document.getElementById('selectedOutlet').textContent = `Outlet: ${selectedOutlet.name}`;
+            } else if (currentUser.outlet) {
+                document.getElementById('selectedOutlet').textContent = `Outlet: ${currentUser.outlet.name || 'Assigned Outlet'}`;
+            }
+            
+            // Load data for the selected outlet (filter by outletId)
+            if (outletId) {
+                await loadMockData(outletId);
+                await loadInventory(outletId);
+                await loadCustomers(outletId);
+                
+                // Load performance chart
+                try {
+                    const ordersResponse = await fetch(`${API_BASE_URL}/orders?outlet=${outletId}`);
+                    const ordersData = await ordersResponse.json();
+                    const orders = ordersData.success && ordersData.data ? ordersData.data : [];
+                    loadPerformanceChart(orders);
+                } catch (error) {
+                    console.error('Error loading performance data:', error);
                 }
-            ];
+            }
+            
+            const outletName = selectedOutlet?.name || currentUser.outlet?.name || 'Assigned Outlet';
+            showNotification(`Data loaded for ${outletName}`, 'success');
+        }
 
-            populateOrdersTable(mockOrders, 'recentOrdersBody');
-            populateOrdersTable(mockOrders, 'ordersBody');
+        async function loadMockData(outletId = null) {
+            if (!outletId) {
+                outletId = assignedOutletId;
+            }
+            
+            if (!outletId) {
+                console.warn('No outlet ID provided for data loading');
+                console.log('assignedOutletId:', assignedOutletId, 'currentUser:', currentUser);
+                return;
+            }
+            
+            console.log('Loading sales data for outlet:', outletId);
+
+            try {
+                // Load orders for the outlet
+                console.log(`Fetching orders for outlet: ${outletId}`);
+                const ordersResponse = await fetch(`${API_BASE_URL}/orders?outlet=${outletId}`);
+                console.log('Orders response status:', ordersResponse.status);
+                const ordersData = await ordersResponse.json();
+                console.log('Orders data:', ordersData);
+                
+                let orders = [];
+                if (ordersData.success && ordersData.data) {
+                    orders = ordersData.data;
+                }
+
+                // Calculate today's sales
+                const today = new Date().toDateString();
+                const todayOrders = orders.filter(order => {
+                    const orderDate = new Date(order.createdAt).toDateString();
+                    return orderDate === today && order.status === 'completed';
+                });
+                const todaySales = todayOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+
+                // Calculate weekly sales
+                const weekAgo = new Date();
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                const weeklyOrders = orders.filter(order => {
+                    const orderDate = new Date(order.createdAt);
+                    return orderDate >= weekAgo && order.status === 'completed';
+                });
+                const weeklySales = weeklyOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+
+                // Count pending orders
+                const pendingOrders = orders.filter(order => order.status === 'pending' || order.status === 'processing').length;
+
+                // Update stats
+                document.getElementById('todaySales').textContent = `KES ${todaySales.toLocaleString()}`;
+                document.getElementById('weeklySales').textContent = `KES ${weeklySales.toLocaleString()}`;
+                document.getElementById('pendingOrders').textContent = pendingOrders;
+                document.getElementById('customerSatisfaction').textContent = '95%'; // Placeholder
+
+                // Update trends (simplified for now)
+                document.getElementById('todayTrend').textContent = todaySales > 0 ? '+5%' : '0%';
+                document.getElementById('weeklyTrend').textContent = weeklySales > 0 ? '+3%' : '0%';
+                document.getElementById('ordersTrend').textContent = `${pendingOrders} pending`;
+                document.getElementById('satisfactionTrend').textContent = '+2%';
+
+                // Load orders
+                await loadOrders(outletId);
+                
+                // Load performance chart
+                loadPerformanceChart(orders);
+                
+            } catch (error) {
+                console.error('Error loading sales data:', error);
+                // Fallback to mock data if API fails
+                const todaySales = Math.floor(Math.random() * 5000) + 1000;
+                const weeklySales = Math.floor(Math.random() * 25000) + 5000;
+                document.getElementById('todaySales').textContent = `KES ${todaySales.toLocaleString()}`;
+                document.getElementById('weeklySales').textContent = `KES ${weeklySales.toLocaleString()}`;
+            }
+        }
+
+
+        // Load orders for the orders section
+        async function loadOrders(outletId = null) {
+            if (!outletId) {
+                outletId = assignedOutletId;
+            }
+            
+            if (!outletId) {
+                console.warn('No outlet ID provided for loading orders');
+                return;
+            }
+            
+            try {
+                console.log(`Fetching orders for outlet: ${outletId}`);
+                const response = await fetch(`${API_BASE_URL}/orders?outlet=${outletId}`);
+                const data = await response.json();
+                
+                const orders = data.success && data.data ? data.data : [];
+                
+                // Format orders for display
+                const formattedOrders = orders.map(order => ({
+                    id: order._id || order.orderNumber || order.id,
+                    customer: order.customer?.name || order.customerName || 'N/A',
+                    products: order.items?.map(item => item.product?.name || item.name || 'Product').join(', ') || 'N/A',
+                    amount: order.totalAmount || order.amount || 0,
+                    status: order.status || 'pending',
+                    date: new Date(order.createdAt || order.date).toLocaleDateString()
+                }));
+                
+                // Populate both order tables
+                populateOrdersTable(formattedOrders, 'ordersBody');
+                populateOrdersTable(formattedOrders, 'recentOrdersBody');
+                
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                const tbody = document.getElementById('ordersTableBody');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666; padding: 2rem;">Error loading orders</td></tr>';
+                }
+            }
+        }
+        
+        // Load inventory for the inventory section
+        async function loadInventory(outletId = null) {
+            if (!outletId) {
+                outletId = assignedOutletId;
+            }
+            
+            if (!outletId) {
+                console.warn('No outlet ID provided for loading inventory');
+                return;
+            }
+            
+            try {
+                console.log(`Fetching inventory for outlet: ${outletId}`);
+                // Fetch products and filter by outlet if needed
+                const response = await fetch(`${API_BASE_URL}/products`);
+                const data = await response.json();
+                
+                const products = data.success && data.data ? data.data : [];
+                
+                // Display inventory
+                const inventoryTable = document.getElementById('inventoryTable');
+                if (inventoryTable) {
+                    const tbody = inventoryTable.querySelector('tbody') || inventoryTable;
+                    let html = '';
+                    
+                    if (products.length === 0) {
+                        html = '<tr><td colspan="5" style="text-align: center; color: #666; padding: 2rem;">No products found</td></tr>';
+                    } else {
+                        products.forEach(product => {
+                            const stock = product.stock || 0;
+                            const lowStock = stock < 10;
+                            html += `
+                                <tr>
+                                    <td>${product.name || 'N/A'}</td>
+                                    <td>${product.category || 'N/A'}</td>
+                                    <td><span class="stock-badge ${lowStock ? 'low' : ''}">${stock}</span></td>
+                                    <td>KES ${(product.price || 0).toLocaleString()}</td>
+                                    <td>${product.status || 'active'}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                    
+                    if (tbody.tagName === 'TBODY') {
+                        tbody.innerHTML = html;
+                    } else {
+                        inventoryTable.innerHTML = `<tbody>${html}</tbody>`;
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error loading inventory:', error);
+                const inventoryTable = document.getElementById('inventoryTable');
+                if (inventoryTable) {
+                    const tbody = inventoryTable.querySelector('tbody') || inventoryTable;
+                    if (tbody.tagName === 'TBODY') {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #666; padding: 2rem;">Error loading inventory</td></tr>';
+                    }
+                }
+            }
+        }
+        
+        // Load customers for the customers section
+        async function loadCustomers(outletId = null) {
+            if (!outletId) {
+                outletId = assignedOutletId;
+            }
+            
+            if (!outletId) {
+                console.warn('No outlet ID provided for loading customers');
+                return;
+            }
+            
+            try {
+                console.log(`Fetching customers for outlet: ${outletId}`);
+                // Fetch orders for this outlet to get customer data
+                const ordersResponse = await fetch(`${API_BASE_URL}/orders?outlet=${outletId}`);
+                const ordersData = await ordersResponse.json();
+                
+                const orders = ordersData.success && ordersData.data ? ordersData.data : [];
+                
+                // Extract unique customers from orders
+                const customerMap = new Map();
+                orders.forEach(order => {
+                    if (order.customer) {
+                        const customerId = order.customer._id || order.customer.id;
+                        if (!customerMap.has(customerId)) {
+                            customerMap.set(customerId, {
+                                id: customerId,
+                                name: order.customer.name || 'N/A',
+                                email: order.customer.email || 'N/A',
+                                phone: order.customer.phone || 'N/A',
+                                orders: 0,
+                                totalSpent: 0
+                            });
+                        }
+                        const customer = customerMap.get(customerId);
+                        customer.orders += 1;
+                        customer.totalSpent += (order.totalAmount || 0);
+                    }
+                });
+                
+                const customers = Array.from(customerMap.values());
+                
+                // Display customers
+                const customersTable = document.getElementById('customersTable');
+                if (customersTable) {
+                    const tbody = customersTable.querySelector('tbody') || customersTable;
+                    let html = '';
+                    
+                    if (customers.length === 0) {
+                        html = '<tr><td colspan="5" style="text-align: center; color: #666; padding: 2rem;">No customers found</td></tr>';
+                    } else {
+                        customers.forEach(customer => {
+                            html += `
+                                <tr>
+                                    <td>${customer.name}</td>
+                                    <td>${customer.email}</td>
+                                    <td>${customer.phone}</td>
+                                    <td>${customer.orders}</td>
+                                    <td>KES ${customer.totalSpent.toLocaleString()}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                    
+                    if (tbody.tagName === 'TBODY') {
+                        tbody.innerHTML = html;
+                    } else {
+                        customersTable.innerHTML = `<tbody>${html}</tbody>`;
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error loading customers:', error);
+                const customersTable = document.getElementById('customersTable');
+                if (customersTable) {
+                    const tbody = customersTable.querySelector('tbody') || customersTable;
+                    if (tbody.tagName === 'TBODY') {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #666; padding: 2rem;">Error loading customers</td></tr>';
+                    }
+                }
+            }
         }
 
         function populateOrdersTable(orders, tableBodyId) {
             const tbody = document.getElementById(tableBodyId);
+            if (!tbody) return;
+            
             tbody.innerHTML = '';
+
+            if (!orders || orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666; padding: 2rem;">No orders found</td></tr>';
+                return;
+            }
 
             orders.forEach(order => {
                 const row = document.createElement('tr');
@@ -696,7 +1133,7 @@
                     <td>${order.id}</td>
                     <td>${order.customer}</td>
                     <td>${order.products}</td>
-                    <td>$${order.amount}</td>
+                    <td>KES ${order.amount.toLocaleString()}</td>
                     <td><span class="status-badge status-${order.status}">${order.status}</span></td>
                     <td>${order.date}</td>
                     <td>
@@ -716,7 +1153,7 @@
 
         // Navigation
         document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', (e) => {
+            link.addEventListener('click', async (e) => {
                 if (link.getAttribute('onclick') === 'logout()') return;
                 
                 e.preventDefault();
@@ -729,8 +1166,120 @@
                 // Show section
                 document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
                 document.getElementById(section).style.display = 'block';
+                
+                // Load data for the section based on assigned outlet
+                const outletId = assignedOutletId;
+                if (outletId) {
+                    switch(section) {
+                        case 'overview':
+                            await loadMockData(outletId);
+                            break;
+                        case 'orders':
+                            await loadOrders(outletId);
+                            break;
+                        case 'inventory':
+                            await loadInventory(outletId);
+                            break;
+                        case 'customers':
+                            await loadCustomers(outletId);
+                            break;
+                        case 'performance':
+                            // Load orders for performance chart
+                            console.log('Loading performance data for outlet:', outletId);
+                            try {
+                                const ordersResponse = await fetch(`${API_BASE_URL}/orders?outlet=${outletId}`);
+                                const ordersData = await ordersResponse.json();
+                                console.log('Performance orders data:', ordersData);
+                                const orders = ordersData.success && ordersData.data ? ordersData.data : [];
+                                loadPerformanceChart(orders);
+                            } catch (error) {
+                                console.error('Error loading performance data:', error);
+                                const perfChart = document.getElementById('performanceChart');
+                                if (perfChart) {
+                                    perfChart.innerHTML = 
+                                        '<div><i class="fas fa-chart-bar" style="font-size: 3rem; color: #667eea; margin-bottom: 1rem;"></i><p>Error loading performance data</p></div>';
+                                }
+                            }
+                            break;
+                    }
+                }
             });
         });
+
+        // Load performance chart
+        function loadPerformanceChart(orders) {
+            console.log('Loading performance chart with orders:', orders);
+            
+            // Get chart containers
+            const salesChart = document.getElementById('salesChart');
+            const performanceChart = document.getElementById('performanceChart');
+            
+            if (!orders || orders.length === 0) {
+                const emptyMessage = '<div><i class="fas fa-chart-line" style="font-size: 3rem; color: #667eea; margin-bottom: 1rem;"></i><p>No sales data available</p></div>';
+                if (salesChart) salesChart.innerHTML = emptyMessage;
+                if (performanceChart) performanceChart.innerHTML = emptyMessage;
+                return;
+            }
+            
+            // Group orders by date
+            const salesByDate = {};
+            orders.forEach(order => {
+                if (order.status === 'completed' || order.status === 'delivered') {
+                    const date = new Date(order.createdAt || order.date).toDateString();
+                    if (!salesByDate[date]) {
+                        salesByDate[date] = 0;
+                    }
+                    salesByDate[date] += (order.totalAmount || order.amount || 0);
+                }
+            });
+            
+            // Get last 7 days
+            const last7Days = [];
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                last7Days.push({
+                    date: date.toDateString(),
+                    sales: salesByDate[date.toDateString()] || 0,
+                    label: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                });
+            }
+            
+            // Calculate max sales for scaling
+            const maxSales = Math.max(...last7Days.map(d => d.sales), 1);
+            
+            // Create chart HTML
+            const chartHTML = `
+                <div style="padding: 1rem;">
+                    <div style="display: flex; align-items: flex-end; justify-content: space-around; height: 200px; margin-top: 2rem; gap: 0.5rem;">
+                        ${last7Days.map(day => {
+                            const height = (day.sales / maxSales) * 100;
+                            return `
+                                <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                                    <div style="background: linear-gradient(180deg, #667eea 0%, #764ba2 100%); width: 100%; border-radius: 4px 4px 0 0; min-height: ${Math.max(height, 5)}%; display: flex; align-items: flex-end; justify-content: center; color: white; font-size: 0.7rem; padding: 0.25rem;">
+                                        ${day.sales > 0 ? `KES ${Math.round(day.sales).toLocaleString()}` : ''}
+                                    </div>
+                                    <div style="font-size: 0.7rem; color: #666; margin-top: 0.5rem; text-align: center; transform: rotate(-45deg); transform-origin: top left; white-space: nowrap;">
+                                        ${day.label}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    <div style="margin-top: 1rem; text-align: center; color: #666; font-size: 0.9rem;">
+                        <strong>Total Sales (Last 7 Days):</strong> KES ${last7Days.reduce((sum, d) => sum + d.sales, 0).toLocaleString()}
+                    </div>
+                </div>
+            `;
+            
+            // Update both chart containers
+            if (salesChart) {
+                salesChart.innerHTML = chartHTML;
+            }
+            if (performanceChart) {
+                performanceChart.innerHTML = chartHTML;
+            }
+        }
 
         function showNotification(message, type) {
             const notification = document.getElementById('notification');

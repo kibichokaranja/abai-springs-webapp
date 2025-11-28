@@ -411,14 +411,14 @@
                     <span class="delivery-value" id="deliveryAddress">Loading...</span>
                 </div>
                 
-                <div class="delivery-detail">
+                <div class="delivery-detail" id="outletRow" style="display: none;">
                     <span class="delivery-label">Outlet:</span>
                     <span class="delivery-value" id="deliveryOutlet">Loading...</span>
                 </div>
                 
                 <div class="delivery-detail">
                     <span class="delivery-label">Estimated Delivery:</span>
-                    <span class="delivery-value">2-3 business days</span>
+                    <span class="delivery-value" id="estimatedDelivery">Loading...</span>
                 </div>
                 
                 <div class="delivery-detail">
@@ -443,8 +443,8 @@
             <div class="contact-info">
                 <h4 class="contact-title">Need Help?</h4>
                 <div class="contact-details">
-                    <p>📞 Call us: +254 700 123 456</p>
-                    <p>📧 Email: support@abaisprings.com</p>
+                    <p>📞 Call us: +254 723 945 475</p>
+                    <p>📧 Email: abaispringsinfo@gmail.com</p>
                     <p>🕒 Mon-Fri: 8AM-6PM, Sat: 9AM-4PM</p>
                 </div>
             </div>
@@ -536,16 +536,28 @@
                 document.getElementById('deliveryAddress').textContent = orderData.deliveryAddress.address || 'Not specified';
             }
             
+            // Only show outlet row if outlet exists
+            const outletRow = document.getElementById('outletRow');
             if (orderData.outlet && orderData.outlet.name) {
+                outletRow.style.display = 'block';
                 document.getElementById('deliveryOutlet').textContent = orderData.outlet.name;
             } else {
-                document.getElementById('deliveryOutlet').textContent = 'Not specified';
+                outletRow.style.display = 'none';
             }
 
             // Delivery instructions
             if (orderData.deliveryInstructions) {
                 document.getElementById('deliveryInstructions').textContent = orderData.deliveryInstructions;
             }
+
+            // Estimated delivery - use the same logic as email confirmation
+            // Use the selected delivery slot if available, otherwise fall back to ETA or default
+            const estimatedDelivery = orderData.deliverySlot 
+                ? orderData.deliverySlot
+                : (orderData.delivery?.etaMin 
+                    ? `~${orderData.delivery.etaMin} minutes` 
+                    : orderData.estimatedDelivery || '2-3 business days');
+            document.getElementById('estimatedDelivery').textContent = estimatedDelivery;
 
             // Order items - Fix the [object Object] issue
             const orderItemsContainer = document.getElementById('orderItems');

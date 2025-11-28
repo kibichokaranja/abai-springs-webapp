@@ -592,11 +592,21 @@
         let currentUser = null;
         let selectedOutlet = null;
         let outlets = [];
+        let assignedOutletId = null;
 
         // Check authentication on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            checkAuth();
-            loadOutlets();
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (checkAuth()) {
+                // Load outlets after we know the assigned outlet
+                await loadOutlets();
+                // Auto-load assigned outlet if exists
+                if (assignedOutletId) {
+                    await loadAssignedOutlet();
+                } else {
+                    // If no outlet assigned, populate normally
+                    populateOutletSelect();
+                }
+            }
         });
 
         function checkAuth() {
@@ -605,12 +615,107 @@
             
             if (!staffUser || staffRole !== 'driver') {
                 window.location.href = 'staff-login.html';
-                return;
+                return false;
             }
 
             currentUser = JSON.parse(staffUser);
             document.getElementById('userName').textContent = currentUser.name;
             document.getElementById('userEmail').textContent = currentUser.email;
+            
+            // Get assigned outlet from user data
+            if (currentUser.outlet) {
+                // Handle different outlet data structures
+                if (typeof currentUser.outlet === 'string') {
+                    assignedOutletId = currentUser.outlet;
+                } else if (currentUser.outlet.id) {
+                    assignedOutletId = currentUser.outlet.id;
+                } else if (currentUser.outlet._id) {
+                    assignedOutletId = currentUser.outlet._id;
+                }
+                
+                const outletName = currentUser.outlet.name || 'Assigned Outlet';
+                document.getElementById('selectedOutlet').textContent = `Outlet: ${outletName}`;
+                
+                // Hide outlet selector immediately if outlet is assigned
+                const outletSelector = document.querySelector('.outlet-selector');
+                if (outletSelector) {
+                    outletSelector.style.display = 'none';
+                }
+            } else {
+                // If no outlet assigned, show error
+                console.warn('No outlet assigned to this driver');
+            }
+            
+            return true;
+        }
+        
+        async function loadAssignedOutlet() {
+            if (!assignedOutletId) return;
+            
+            // Find outlet in the loaded outlets list
+            const outlet = outlets.find(o => {
+                // Try different ID formats
+                const outletId = o._id?.toString() || o.id?.toString();
+                const assignedId = assignedOutletId.toString();
+                return outletId === assignedId || o._id === assignedOutletId || o.id === assignedOutletId;
+            });
+            
+            if (outlet) {
+                selectedOutlet = outlet;
+                
+                // Populate dropdown with ONLY the assigned outlet
+                const outletSelect = document.getElementById('outletSelect');
+                if (outletSelect) {
+                    outletSelect.innerHTML = '';
+                    const option = document.createElement('option');
+                    option.value = outlet._id || outlet.id;
+                    option.textContent = outlet.name;
+                    option.selected = true;
+                    outletSelect.appendChild(option);
+                    outletSelect.disabled = true; // Disable to prevent changing
+                }
+                
+                // Hide outlet selector completely
+                const outletSelector = document.querySelector('.outlet-selector');
+                if (outletSelector) {
+                    outletSelector.style.display = 'none';
+                }
+                
+                // Update outlet display
+                document.getElementById('selectedOutlet').textContent = `Outlet: ${outlet.name || 'Assigned Outlet'}`;
+                
+                // Auto-load data for assigned outlet
+                await loadOutletData();
+            } else {
+                // Outlet not found in list, but we have assigned outlet ID
+                // Try to fetch outlet details or use stored name
+                if (currentUser.outlet && currentUser.outlet.name) {
+                    document.getElementById('selectedOutlet').textContent = `Outlet: ${currentUser.outlet.name}`;
+                    
+                    // Hide selector completely
+                    const outletSelector = document.querySelector('.outlet-selector');
+                    if (outletSelector) {
+                        outletSelector.style.display = 'none';
+                    }
+                    
+                    // Disable and populate dropdown with assigned outlet info
+                    const outletSelect = document.getElementById('outletSelect');
+                    if (outletSelect) {
+                        outletSelect.innerHTML = '';
+                        const option = document.createElement('option');
+                        option.value = assignedOutletId;
+                        option.textContent = currentUser.outlet.name;
+                        option.selected = true;
+                        outletSelect.appendChild(option);
+                        outletSelect.disabled = true;
+                    }
+                    
+                    // Load data with assigned outlet ID
+                    await loadOutletData();
+                } else {
+                    console.error('Assigned outlet not found in outlets list');
+                }
+            }
         }
 
         async function loadOutlets() {
@@ -619,8 +724,8 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    outlets = data.outlets;
-                    populateOutletSelect();
+                    outlets = data.outlets || data.data || [];
+                    // Don't populate here - let loadAssignedOutlet or the caller handle it
                 }
             } catch (error) {
                 console.error('Error loading outlets:', error);
@@ -631,35 +736,72 @@
                     { _id: '3', name: 'Kiambu Road Branch', location: 'Kiambu Road, Nairobi' },
                     { _id: '4', name: 'Northern Bypass Branch', location: 'Northern Bypass' }
                 ];
-                populateOutletSelect();
             }
         }
 
         function populateOutletSelect() {
             const select = document.getElementById('outletSelect');
-            select.innerHTML = '<option value="">Select Outlet</option>';
+            if (!select) return;
             
-            outlets.forEach(outlet => {
-                const option = document.createElement('option');
-                option.value = outlet._id;
-                option.textContent = outlet.name;
-                select.appendChild(option);
-            });
+            // If outlet is assigned, only show that outlet
+            if (assignedOutletId) {
+                const assignedOutlet = outlets.find(o => o._id === assignedOutletId);
+                select.innerHTML = '';
+                if (assignedOutlet) {
+                    const option = document.createElement('option');
+                    option.value = assignedOutlet._id;
+                    option.textContent = assignedOutlet.name;
+                    option.selected = true;
+                    select.appendChild(option);
+                    select.disabled = true; // Disable selection
+                }
+            } else {
+                // If no outlet assigned, show all outlets
+                select.innerHTML = '<option value="">Select Outlet</option>';
+                outlets.forEach(outlet => {
+                    const option = document.createElement('option');
+                    option.value = outlet._id;
+                    option.textContent = outlet.name;
+                    select.appendChild(option);
+                });
+            }
         }
 
-        function loadOutletData() {
-            const outletId = document.getElementById('outletSelect').value;
+        async function loadOutletData() {
+            // Always use assigned outlet if available (enforce restriction)
+            let outletId = assignedOutletId;
+            const outletSelect = document.getElementById('outletSelect');
+            
+            // If outlet is assigned, ignore any selection from dropdown
+            if (assignedOutletId) {
+                outletId = assignedOutletId;
+            } else if (outletSelect && outletSelect.value) {
+                // Only allow selection if no outlet is assigned
+                outletId = outletSelect.value;
+            }
+            
             if (!outletId) {
                 showNotification('Please select an outlet first', 'error');
                 return;
             }
 
-            selectedOutlet = outlets.find(o => o._id === outletId);
-            document.getElementById('selectedOutlet').textContent = `Outlet: ${selectedOutlet.name}`;
+            // Find outlet in list
+            selectedOutlet = outlets.find(o => {
+                return o._id === outletId || 
+                       o._id?.toString() === outletId?.toString() ||
+                       o.id === outletId;
+            });
             
-            // Load mock data for the selected outlet
-            loadMockData();
-            showNotification(`Data loaded for ${selectedOutlet.name}`, 'success');
+            if (selectedOutlet) {
+                document.getElementById('selectedOutlet').textContent = `Outlet: ${selectedOutlet.name}`;
+            } else if (currentUser.outlet) {
+                document.getElementById('selectedOutlet').textContent = `Outlet: ${currentUser.outlet.name || 'Assigned Outlet'}`;
+            }
+            
+            // Load data for the selected outlet (filter by outletId)
+            loadMockData(outletId);
+            const outletName = selectedOutlet?.name || currentUser.outlet?.name || 'Assigned Outlet';
+            showNotification(`Data loaded for ${outletName}`, 'success');
         }
 
         function loadMockData() {

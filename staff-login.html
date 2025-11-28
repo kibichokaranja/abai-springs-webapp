@@ -84,50 +84,6 @@
             border-color: #667eea;
         }
 
-        .role-selector {
-            margin-bottom: 1.5rem;
-        }
-        
-        .role-selector label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .role-selector label::after {
-            content: " *";
-            color: #e74c3c;
-            font-weight: bold;
-        }
-
-        .role-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 0.5rem;
-        }
-
-        .role-option {
-            padding: 10px;
-            border: 2px solid #e1e5e9;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            font-size: 0.9rem;
-        }
-
-        .role-option:hover {
-            border-color: #667eea;
-            background-color: #f8f9ff;
-        }
-
-        .role-option.selected {
-            border-color: #667eea;
-            background-color: #667eea;
-            color: white;
-        }
-
         .login-btn {
             width: 100%;
             padding: 12px;
@@ -202,6 +158,7 @@
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="config.js"></script>
 </head>
 <body>
     <div class="login-container">
@@ -224,30 +181,8 @@
                 <input type="password" id="password" name="password" required placeholder="Enter your password">
             </div>
 
-            <div class="form-group role-selector">
-                <label>Select Your Role</label>
-                <div class="role-options">
-                    <div class="role-option" data-role="owner">
-                        <i class="fas fa-crown"></i><br>
-                        Owner
-                    </div>
-                    <div class="role-option" data-role="sales">
-                        <i class="fas fa-chart-line"></i><br>
-                        Sales
-                    </div>
-                    <div class="role-option" data-role="driver">
-                        <i class="fas fa-truck"></i><br>
-                        Driver
-                    </div>
-                    <div class="role-option" data-role="warehouse">
-                        <i class="fas fa-warehouse"></i><br>
-                        Warehouse
-                    </div>
-                </div>
-            </div>
-
-            <button type="submit" class="login-btn" id="loginBtn" disabled>
-                <span>Select Role to Login</span>
+            <button type="submit" class="login-btn" id="loginBtn">
+                <span>Login</span>
                 <span class="loading">
                     <div class="spinner"></div>
                 </span>
@@ -263,23 +198,7 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'http://localhost:3001/api';
-        let selectedRole = null;
-
-        // Role selection
-        document.querySelectorAll('.role-option').forEach(option => {
-            option.addEventListener('click', () => {
-                document.querySelectorAll('.role-option').forEach(opt => opt.classList.remove('selected'));
-                option.classList.add('selected');
-                selectedRole = option.dataset.role;
-                
-                // Enable login button when role is selected
-                const loginBtn = document.getElementById('loginBtn');
-                const btnText = loginBtn.querySelector('span:first-child');
-                loginBtn.disabled = false;
-                btnText.textContent = 'Login to Dashboard';
-            });
-        });
+        const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001/api';
 
         // Form submission
         document.getElementById('staffLoginForm').addEventListener('submit', async (e) => {
@@ -287,11 +206,6 @@
             
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            
-            if (!selectedRole) {
-                showError('Please select your role');
-                return;
-            }
 
             // Show loading state
             const loginBtn = document.getElementById('loginBtn');
@@ -303,36 +217,63 @@
             btnText.textContent = 'Logging in...';
             
             try {
-                // Mock authentication (since we don't have a server running)
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-                
-                // Check credentials
-                const validCredentials = {
-                    'admin@abaisprings.com': { password: 'password123', role: 'owner', name: 'Business Owner' },
-                    'sales@abaisprings.com': { password: 'sales123', role: 'sales', name: 'Sales Manager' },
-                    'driver@abaisprings.com': { password: 'driver123', role: 'driver', name: 'Delivery Driver' },
-                    'warehouse@abaisprings.com': { password: 'warehouse123', role: 'warehouse', name: 'Warehouse Manager' }
-                };
+                // Call API to authenticate staff
+                const response = await fetch(`${API_BASE_URL}/auth/staff/staff-login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
 
-                const userCreds = validCredentials[email];
+                const result = await response.json();
                 
-                if (userCreds && userCreds.password === password && userCreds.role === selectedRole) {
+                console.log('Login response:', { 
+                    status: response.status, 
+                    statusText: response.statusText,
+                    result 
+                });
+                
+                if (!response.ok) {
+                    let errorMessage = result.message || `Login failed: ${response.status} ${response.statusText}`;
+                    if (result.error) {
+                        errorMessage += ` (${result.error})`;
+                        console.error('Server error details:', result.error);
+                    }
+                    if (result.details) {
+                        console.error('Error stack:', result.details);
+                    }
+                    showError(errorMessage);
+                    return;
+                }
+                
+                if (result.success && result.user) {
+                    const selectedRole = result.user.role;
+                    
                     // Success
-                    showSuccess(`Welcome, ${userCreds.name}! Redirecting to dashboard...`);
+                    showSuccess(`Welcome, ${result.user.name}! Redirecting to dashboard...`);
                     
                     // Store staff session
-                    localStorage.setItem('staffToken', 'mock-jwt-token-' + Date.now());
+                    localStorage.setItem('staffToken', result.token);
                     localStorage.setItem('staffUser', JSON.stringify({
-                        email: email,
+                        id: result.user.id,
+                        email: result.user.email,
                         role: selectedRole,
-                        name: userCreds.name
+                        name: result.user.name,
+                        department: result.user.department,
+                        outlet: result.user.outlet || null
                     }));
                     localStorage.setItem('staffRole', selectedRole);
                     
                     // Redirect to role-specific dashboard
                     setTimeout(() => {
-                        if (selectedRole === 'owner') {
+                        if (selectedRole === 'admin' || selectedRole === 'owner') {
                             window.location.href = '/admin';
+                        } else if (selectedRole === 'manager') {
+                            window.location.href = '/manager-dashboard.html';
                         } else if (selectedRole === 'sales') {
                             window.location.href = 'sales-dashboard.html';
                         } else if (selectedRole === 'driver') {
@@ -340,13 +281,13 @@
                         } else if (selectedRole === 'warehouse') {
                             window.location.href = 'warehouse-dashboard.html';
                         } else {
-                            alert(`${userCreds.name} dashboard coming soon!`);
+                            alert(`${result.user.name} dashboard coming soon!`);
                         }
                     }, 2000);
                     
                 } else {
                     // Error
-                    showError('Invalid credentials. Please check your email, password, and role selection.');
+                    showError(result.message || 'Invalid credentials. Please check your email and password.');
                 }
                 
             } catch (error) {
@@ -356,7 +297,7 @@
                 // Reset button state
                 loginBtn.disabled = false;
                 loading.style.display = 'none';
-                btnText.textContent = 'Login to Dashboard';
+                btnText.textContent = 'Login';
             }
         });
 
@@ -374,12 +315,8 @@
             document.getElementById('errorMessage').style.display = 'none';
         }
 
-        // Sample login credentials for testing
-        console.log('Sample Staff Login Credentials:');
-        console.log('Owner: admin@abaisprings.com / password123');
-        console.log('Sales: sales@abaisprings.com / sales123');
-        console.log('Driver: driver@abaisprings.com / driver123');
-        console.log('Warehouse: warehouse@abaisprings.com / warehouse123');
+        // Note: Staff members must be created through the admin dashboard
+        // They can then log in using their email and password
     </script>
 </body>
 </html>

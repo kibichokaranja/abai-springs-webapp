@@ -385,11 +385,66 @@ This alert was sent based on your consumption patterns.
       `;
     }).join('');
 
-    // Extract delivery information
-    const deliveryAddress = order.deliveryAddress || order.address || 'Not specified';
-    const outletName = order.outlet?.name || order.outletName || 'Not specified';
-    const estimatedDelivery = order.estimatedDelivery || '2-3 business days';
-    const deliveryInstructions = order.deliveryInstructions || 'Standard delivery';
+    // Extract delivery information - parse address object properly
+    let deliveryAddressText = 'Not specified';
+    let deliveryCity = '';
+    let deliveryPostalCode = '';
+    let hasCoordinates = false;
+    let mapLink = '';
+    
+    // Check delivery.formattedAddress first (from checkout)
+    if (order.delivery?.formattedAddress) {
+      deliveryAddressText = order.delivery.formattedAddress;
+      deliveryCity = order.delivery.city || '';
+    } else if (order.deliveryAddress) {
+      if (typeof order.deliveryAddress === 'string') {
+        deliveryAddressText = order.deliveryAddress;
+      } else if (order.deliveryAddress.address) {
+        deliveryAddressText = order.deliveryAddress.address;
+        // Extract city and postal code if address contains them
+        const addressParts = deliveryAddressText.split(',').map(s => s.trim());
+        if (addressParts.length >= 2) {
+          deliveryAddressText = addressParts[0]; // Street address
+          deliveryCity = addressParts[1] || '';
+          deliveryPostalCode = addressParts[2] || '';
+        }
+      }
+    } else if (order.address) {
+      deliveryAddressText = order.address;
+    }
+    
+    // Check for coordinates in delivery object or deliveryAddress
+    const coords = order.delivery?.lat && order.delivery?.lng 
+      ? { lat: order.delivery.lat, lng: order.delivery.lng }
+      : order.deliveryAddress?.coordinates;
+    
+    if (coords && coords.lat && coords.lng) {
+      hasCoordinates = true;
+      mapLink = `https://www.google.com/maps?q=${coords.lat},${coords.lng}`;
+    }
+    
+    // Format full address nicely
+    const formattedAddress = [
+      deliveryAddressText,
+      deliveryCity,
+      deliveryPostalCode
+    ].filter(Boolean).join(', ') || 'Not specified';
+    
+    // Only show outlet if it exists and is a valid name (not null, undefined, empty, or "Not specified")
+    const rawOutletName = order.outlet?.name || order.outletName;
+    const outletName = rawOutletName && 
+                       rawOutletName !== 'Not specified' && 
+                       rawOutletName !== 'not specified' &&
+                       rawOutletName.trim() !== '' 
+                       ? rawOutletName 
+                       : null;
+    // Use the selected delivery slot if available, otherwise fall back to ETA or default
+    const estimatedDelivery = order.deliverySlot 
+      ? order.deliverySlot
+      : (order.delivery?.etaMin 
+        ? `~${order.delivery.etaMin} minutes` 
+        : order.estimatedDelivery || '2-3 business days');
+    const deliveryInstructions = order.deliveryInstructions || order.orderNotes || 'Standard delivery';
     const orderStatus = order.status || 'Pending';
 
     const htmlContent = `
@@ -738,22 +793,27 @@ This alert was sent based on your consumption patterns.
               </div>
               
               <div class="delivery-section">
-                <div class="section-title">Delivery Information</div>
+                <div class="section-title">🚚 Delivery Information</div>
                 <div class="delivery-grid">
-                  <div class="info-item">
-                    <div class="info-label">Address:</div>
-                    <div class="info-value">${deliveryAddress}</div>
+                  <div class="info-item" style="grid-column: 1 / -1;">
+                    <div class="info-label">📍 Address:</div>
+                    <div class="info-value">${formattedAddress}</div>
+                    ${hasCoordinates ? `<div style="margin-top: 8px;"><a href="${mapLink}" target="_blank" style="color: #1976d2; text-decoration: none; font-size: 14px; font-weight: 500;">🗺️ View on Google Maps</a></div>` : ''}
                   </div>
+                  ${outletName ? `
                   <div class="info-item">
-                    <div class="info-label">Outlet:</div>
+                    <div class="info-label">🏪 Outlet:</div>
                     <div class="info-value">${outletName}</div>
                   </div>
+                  ` : ''}
+                  ${deliveryInstructions && deliveryInstructions !== 'Standard delivery' ? `
                   <div class="info-item">
-                    <div class="info-label">Instructions:</div>
+                    <div class="info-label">📝 Instructions:</div>
                     <div class="info-value">${deliveryInstructions}</div>
                   </div>
+                  ` : ''}
                   <div class="info-item">
-                    <div class="info-label">Delivery Time:</div>
+                    <div class="info-label">⏱️ Delivery Time:</div>
                     <div class="info-value">${estimatedDelivery}</div>
                   </div>
                 </div>
@@ -795,10 +855,9 @@ This alert was sent based on your consumption patterns.
       ${order.items.map(item => `- ${item.name || item.product?.name || 'Product'} - Qty: ${item.quantity || item.qty} - Ksh ${item.price || item.product?.price || 0}`).join('\n')}
       
       DELIVERY INFORMATION:
-      - Delivery Address: ${deliveryAddress}
-      - Outlet: ${outletName}
-      - Estimated Delivery: ${estimatedDelivery}
-      - Delivery Instructions: ${deliveryInstructions}
+      - Delivery Address: ${formattedAddress}
+      ${outletName ? `- Outlet: ${outletName}\n` : ''}${hasCoordinates ? `- Map: ${mapLink}\n` : ''}- Estimated Delivery: ${estimatedDelivery}
+      ${deliveryInstructions && deliveryInstructions !== 'Standard delivery' ? `- Delivery Instructions: ${deliveryInstructions}\n` : ''}
       
       Total Amount: Ksh ${order.totalAmount || order.total || 0}
       
@@ -1115,6 +1174,759 @@ Based on your consumption patterns, we recommend ordering now to ensure uninterr
 This alert was sent based on your personal consumption patterns.
 
 © 2024 Abai Springs. Premium Drinking Water.`;
+  }
+
+  // ============== STAFF ROLE EMAIL NOTIFICATIONS ==============
+
+  // Send daily business insights to Owner
+  async sendOwnerDailyInsights(insights) {
+    try {
+      const { ownerEmail } = insights;
+      if (!ownerEmail) {
+        logger.warn('Owner email not provided for daily insights');
+        return { success: false, error: 'Owner email not provided' };
+      }
+
+      const emailContent = this.generateOwnerDailyInsightsEmail(insights);
+      const result = await this.sendEmail(
+        ownerEmail,
+        emailContent.subject,
+        emailContent.htmlContent,
+        emailContent.textContent
+      );
+
+      logger.info('Owner daily insights email sent', { ownerEmail, result });
+      return result;
+    } catch (error) {
+      logger.error('Error sending owner daily insights:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Send delivery assignment to Driver
+  async sendDriverDeliveryAssignment(deliveryData) {
+    try {
+      const { driverEmail, driverName } = deliveryData;
+      if (!driverEmail) {
+        logger.warn('Driver email not provided for delivery assignment');
+        return { success: false, error: 'Driver email not provided' };
+      }
+
+      const emailContent = this.generateDriverDeliveryAssignmentEmail(deliveryData);
+      const result = await this.sendEmail(
+        driverEmail,
+        emailContent.subject,
+        emailContent.htmlContent,
+        emailContent.textContent
+      );
+
+      logger.info('Driver delivery assignment email sent', { driverEmail, driverName, result });
+      return result;
+    } catch (error) {
+      logger.error('Error sending driver delivery assignment:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Send sales lead notification to Salesperson
+  async sendSalesLeadNotification(leadData) {
+    try {
+      const { salespersonEmail, salespersonName } = leadData;
+      if (!salespersonEmail) {
+        logger.warn('Salesperson email not provided for lead notification');
+        return { success: false, error: 'Salesperson email not provided' };
+      }
+
+      const emailContent = this.generateSalesLeadNotificationEmail(leadData);
+      const result = await this.sendEmail(
+        salespersonEmail,
+        emailContent.subject,
+        emailContent.htmlContent,
+        emailContent.textContent
+      );
+
+      logger.info('Sales lead notification email sent', { salespersonEmail, salespersonName, result });
+      return result;
+    } catch (error) {
+      logger.error('Error sending sales lead notification:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Send warehouse inventory alert
+  async sendWarehouseInventoryAlert(alertData) {
+    try {
+      const { warehouseEmail, warehouseStaff } = alertData;
+      if (!warehouseEmail) {
+        logger.warn('Warehouse email not provided for inventory alert');
+        return { success: false, error: 'Warehouse email not provided' };
+      }
+
+      const emailContent = this.generateWarehouseInventoryAlertEmail(alertData);
+      const result = await this.sendEmail(
+        warehouseEmail,
+        emailContent.subject,
+        emailContent.htmlContent,
+        emailContent.textContent
+      );
+
+      logger.info('Warehouse inventory alert email sent', { warehouseEmail, warehouseStaff, result });
+      return result;
+    } catch (error) {
+      logger.error('Error sending warehouse inventory alert:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Generate Owner Daily Insights Email
+  generateOwnerDailyInsightsEmail(insights) {
+    const {
+      ownerName = 'Business Owner',
+      totalRevenue,
+      totalOrders,
+      topProducts,
+      lowStockItems,
+      customerGrowth,
+      driverPerformance,
+      salesPerformance,
+      warehouseEfficiency,
+      date = new Date().toLocaleDateString()
+    } = insights;
+
+    const subject = `📊 Daily Business Insights - ${date}`;
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background: #f5f7fa; }
+          .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.1); }
+          .header { background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); color: white; padding: 40px; text-align: center; }
+          .header h1 { margin: 0; font-size: 32px; font-weight: 700; }
+          .header p { margin: 10px 0 0; opacity: 0.9; font-size: 18px; }
+          .content { padding: 40px; }
+          .greeting { font-size: 24px; font-weight: 600; color: #2c3e50; margin-bottom: 30px; }
+          .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 30px 0; }
+          .metric-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 15px; text-align: center; }
+          .metric-value { font-size: 28px; font-weight: 700; margin-bottom: 5px; }
+          .metric-label { font-size: 14px; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; }
+          .section { margin: 30px 0; padding: 25px; background: #f8f9fa; border-radius: 15px; border-left: 5px solid #3498db; }
+          .section h3 { color: #2c3e50; margin-bottom: 20px; font-size: 20px; }
+          .alert-item { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin: 10px 0; }
+          .alert-urgent { background: #f8d7da; border-color: #f5c6cb; }
+          .performance-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: white; border-radius: 8px; margin: 10px 0; }
+          .performance-name { font-weight: 600; color: #2c3e50; }
+          .performance-value { color: #27ae60; font-weight: 600; }
+          .cta-section { text-align: center; margin: 30px 0; }
+          .cta-button { display: inline-block; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; }
+          .footer { background: #2c3e50; color: white; padding: 30px; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>💧 Abai Springs</h1>
+            <p>Daily Business Intelligence Report</p>
+          </div>
+          <div class="content">
+            <div class="greeting">Hello ${ownerName}! 👋</div>
+            <p>Here's your comprehensive daily business insights for ${date}. Key metrics and actionable insights to drive your business forward.</p>
+            
+            <div class="metrics-grid">
+              <div class="metric-card">
+                <div class="metric-value">Ksh ${totalRevenue?.toLocaleString() || '0'}</div>
+                <div class="metric-label">Total Revenue</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value">${totalOrders || '0'}</div>
+                <div class="metric-label">Orders Processed</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value">+${customerGrowth || '0'}%</div>
+                <div class="metric-label">Customer Growth</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value">${warehouseEfficiency || '0'}%</div>
+                <div class="metric-label">Warehouse Efficiency</div>
+              </div>
+            </div>
+
+            <div class="section">
+              <h3>🔥 Top Performing Products</h3>
+              ${topProducts?.map(product => `
+                <div class="performance-item">
+                  <span class="performance-name">${product.name}</span>
+                  <span class="performance-value">${product.sales} units sold</span>
+                </div>
+              `).join('') || '<p>No product data available</p>'}
+            </div>
+
+            <div class="section">
+              <h3>⚠️ Inventory Alerts</h3>
+              ${lowStockItems?.map(item => `
+                <div class="alert-item ${item.urgency === 'critical' ? 'alert-urgent' : ''}">
+                  <strong>${item.name}</strong> - Only ${item.quantity} units left (${item.urgency} alert)
+                </div>
+              `).join('') || '<p>All inventory levels are healthy</p>'}
+            </div>
+
+            <div class="section">
+              <h3>🚚 Driver Performance Summary</h3>
+              ${driverPerformance?.map(driver => `
+                <div class="performance-item">
+                  <span class="performance-name">${driver.name}</span>
+                  <span class="performance-value">${driver.deliveries} deliveries | ${driver.rating}⭐</span>
+                </div>
+              `).join('') || '<p>No driver data available</p>'}
+            </div>
+
+            <div class="section">
+              <h3>💰 Sales Performance Overview</h3>
+              ${salesPerformance?.map(sales => `
+                <div class="performance-item">
+                  <span class="performance-name">${sales.name}</span>
+                  <span class="performance-value">${sales.achievement}% of target</span>
+                </div>
+              `).join('') || '<p>No sales data available</p>'}
+            </div>
+
+            <div class="cta-section">
+              <a href="http://localhost:3001/owner-dashboard.html" class="cta-button">View Full Dashboard</a>
+            </div>
+          </div>
+          <div class="footer">
+            <p>© 2024 Abai Springs. Premium Drinking Water.</p>
+            <p>Generated on ${new Date().toLocaleString()}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const textContent = `
+      Daily Business Insights - ${date}
+      
+      Hello ${ownerName}!
+      
+      Here's your comprehensive daily business insights for ${date}:
+      
+      KEY METRICS:
+      - Total Revenue: Ksh ${totalRevenue?.toLocaleString() || '0'}
+      - Total Orders: ${totalOrders || '0'}
+      - Customer Growth: +${customerGrowth || '0'}%
+      - Warehouse Efficiency: ${warehouseEfficiency || '0'}%
+      
+      TOP PERFORMING PRODUCTS:
+      ${topProducts?.map(product => `- ${product.name}: ${product.sales} units sold`).join('\n') || 'No product data available'}
+      
+      INVENTORY ALERTS:
+      ${lowStockItems?.map(item => `- ${item.name}: Only ${item.quantity} units left (${item.urgency} alert)`).join('\n') || 'All inventory levels are healthy'}
+      
+      DRIVER PERFORMANCE:
+      ${driverPerformance?.map(driver => `- ${driver.name}: ${driver.deliveries} deliveries | ${driver.rating}⭐`).join('\n') || 'No driver data available'}
+      
+      SALES PERFORMANCE:
+      ${salesPerformance?.map(sales => `- ${sales.name}: ${sales.achievement}% of target`).join('\n') || 'No sales data available'}
+      
+      View full dashboard: http://localhost:3001/owner-dashboard.html
+      
+      © 2024 Abai Springs. Premium Drinking Water.
+    `;
+
+    return { subject, htmlContent, textContent };
+  }
+
+  // Generate Driver Delivery Assignment Email
+  generateDriverDeliveryAssignmentEmail(deliveryData) {
+    const {
+      driverName = 'Driver',
+      orderNumber,
+      customerName,
+      deliveryAddress,
+      deliveryTime,
+      items,
+      specialInstructions,
+      estimatedDuration,
+      routeOptimization
+    } = deliveryData;
+
+    const subject = `🚚 New Delivery Assignment - Order #${orderNumber}`;
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background: #f5f7fa; }
+          .container { max-width: 700px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.1); }
+          .header { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white; padding: 40px; text-align: center; }
+          .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
+          .header p { margin: 10px 0 0; opacity: 0.9; }
+          .content { padding: 40px; }
+          .greeting { font-size: 24px; font-weight: 600; color: #27ae60; margin-bottom: 20px; }
+          .delivery-card { background: #f8f9fa; border-radius: 15px; padding: 25px; margin: 20px 0; border-left: 5px solid #27ae60; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+          .info-item { padding: 15px; background: white; border-radius: 10px; }
+          .info-label { font-weight: 600; color: #666; font-size: 14px; text-transform: uppercase; margin-bottom: 5px; }
+          .info-value { color: #333; font-size: 16px; }
+          .items-list { background: #e8f5e8; border-radius: 10px; padding: 20px; margin: 20px 0; }
+          .item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #d4edda; }
+          .instructions { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 10px; padding: 20px; margin: 20px 0; }
+          .route-info { background: #e3f2fd; border-radius: 10px; padding: 20px; margin: 20px 0; }
+          .cta-section { text-align: center; margin: 30px 0; }
+          .cta-button { display: inline-block; background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; }
+          .footer { background: #27ae60; color: white; padding: 30px; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🚚 Delivery Assignment</h1>
+            <p>Order #${orderNumber}</p>
+          </div>
+          <div class="content">
+            <div class="greeting">Hello ${driverName}! 👋</div>
+            <p>You have a new delivery assignment. Please review the details below and confirm receipt.</p>
+            
+            <div class="delivery-card">
+              <div class="info-grid">
+                <div class="info-item">
+                  <div class="info-label">Customer</div>
+                  <div class="info-value">${customerName}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Order Number</div>
+                  <div class="info-value">#${orderNumber}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Delivery Time</div>
+                  <div class="info-value">${deliveryTime}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Estimated Duration</div>
+                  <div class="info-value">${estimatedDuration || '30-45 minutes'}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="delivery-card">
+              <h3 style="color: #27ae60; margin-top: 0;">📍 Delivery Address</h3>
+              <p style="font-size: 16px; line-height: 1.8;">${deliveryAddress}</p>
+            </div>
+
+            <div class="items-list">
+              <h3 style="color: #27ae60; margin-top: 0;">📦 Items to Deliver</h3>
+              ${items?.map(item => `
+                <div class="item">
+                  <span>${item.name}</span>
+                  <span><strong>Qty: ${item.quantity}</strong></span>
+                </div>
+              `).join('') || '<p>No items specified</p>'}
+            </div>
+
+            ${specialInstructions ? `
+            <div class="instructions">
+              <h3 style="color: #856404; margin-top: 0;">📝 Special Instructions</h3>
+              <p>${specialInstructions}</p>
+            </div>
+            ` : ''}
+
+            <div class="route-info">
+              <h3 style="color: #1976d2; margin-top: 0;">🗺️ Route Information</h3>
+              <p><strong>Optimization:</strong> ${routeOptimization || 'Standard route'}</p>
+              <p><strong>Traffic Alert:</strong> Check real-time traffic updates before departure</p>
+              <p><strong>Weather:</strong> Sunny, good driving conditions</p>
+            </div>
+
+            <div class="cta-section">
+              <a href="http://localhost:3001/driver-dashboard.html" class="cta-button">View Delivery Details</a>
+            </div>
+          </div>
+          <div class="footer">
+            <p>© 2024 Abai Springs. Safe driving! 🚗</p>
+            <p>Generated on ${new Date().toLocaleString()}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const textContent = `
+      New Delivery Assignment - Order #${orderNumber}
+      
+      Hello ${driverName}!
+      
+      You have a new delivery assignment:
+      
+      DELIVERY DETAILS:
+      - Customer: ${customerName}
+      - Order Number: #${orderNumber}
+      - Delivery Time: ${deliveryTime}
+      - Estimated Duration: ${estimatedDuration || '30-45 minutes'}
+      
+      DELIVERY ADDRESS:
+      ${deliveryAddress}
+      
+      ITEMS TO DELIVER:
+      ${items?.map(item => `- ${item.name} - Qty: ${item.quantity}`).join('\n') || 'No items specified'}
+      
+      ${specialInstructions ? `SPECIAL INSTRUCTIONS:\n${specialInstructions}\n` : ''}
+      
+      ROUTE INFORMATION:
+      - Optimization: ${routeOptimization || 'Standard route'}
+      - Traffic Alert: Check real-time traffic updates before departure
+      - Weather: Sunny, good driving conditions
+      
+      View delivery details: http://localhost:3001/driver-dashboard.html
+      
+      Safe driving! 🚗
+      © 2024 Abai Springs.
+    `;
+
+    return { subject, htmlContent, textContent };
+  }
+
+  // Generate Sales Lead Notification Email
+  generateSalesLeadNotificationEmail(leadData) {
+    const {
+      salespersonName = 'Sales Team Member',
+      leadName,
+      leadEmail,
+      leadPhone,
+      leadSource,
+      leadScore,
+      interestLevel,
+      estimatedValue,
+      territory,
+      followUpDate,
+      notes
+    } = leadData;
+
+    const subject = `🎯 New Sales Lead - ${leadName} (${leadScore}% match)`;
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background: #f5f7fa; }
+          .container { max-width: 700px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.1); }
+          .header { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 40px; text-align: center; }
+          .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
+          .header p { margin: 10px 0 0; opacity: 0.9; }
+          .content { padding: 40px; }
+          .greeting { font-size: 24px; font-weight: 600; color: #e74c3c; margin-bottom: 20px; }
+          .lead-card { background: #f8f9fa; border-radius: 15px; padding: 25px; margin: 20px 0; border-left: 5px solid #e74c3c; }
+          .lead-score { display: inline-block; background: ${leadScore >= 80 ? '#27ae60' : leadScore >= 60 ? '#f39c12' : '#e74c3c'}; color: white; padding: 10px 20px; border-radius: 25px; font-weight: 600; margin: 10px 0; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+          .info-item { padding: 15px; background: white; border-radius: 10px; }
+          .info-label { font-weight: 600; color: #666; font-size: 14px; text-transform: uppercase; margin-bottom: 5px; }
+          .info-value { color: #333; font-size: 16px; }
+          .contact-info { background: #e8f4fd; border-radius: 10px; padding: 20px; margin: 20px 0; }
+          .interest-indicator { display: flex; align-items: center; gap: 10px; margin: 15px 0; }
+          .interest-bar { flex: 1; height: 20px; background: #ecf0f1; border-radius: 10px; overflow: hidden; }
+          .interest-fill { height: 100%; background: linear-gradient(90deg, #e74c3c 0%, #f39c12 50%, #27ae60 100%); border-radius: 10px; }
+          .action-items { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 10px; padding: 20px; margin: 20px 0; }
+          .cta-section { text-align: center; margin: 30px 0; }
+          .cta-button { display: inline-block; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; }
+          .footer { background: #e74c3c; color: white; padding: 30px; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🎯 New Sales Lead</h1>
+            <p>High-Quality Prospect Alert</p>
+          </div>
+          <div class="content">
+            <div class="greeting">Hello ${salespersonName}! 👋</div>
+            <p>Great news! You have a new high-quality sales lead in your territory. This prospect shows strong potential for conversion.</p>
+            
+            <div class="lead-card">
+              <h2 style="color: #e74c3c; margin-top: 0;">${leadName}</h2>
+              <div class="lead-score">Lead Score: ${leadScore}%</div>
+              
+              <div class="info-grid">
+                <div class="info-item">
+                  <div class="info-label">Lead Source</div>
+                  <div class="info-value">${leadSource}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Territory</div>
+                  <div class="info-value">${territory}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Estimated Value</div>
+                  <div class="info-value">Ksh ${estimatedValue?.toLocaleString() || 'Not specified'}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Follow-up Date</div>
+                  <div class="info-value">${followUpDate}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="contact-info">
+              <h3 style="color: #1976d2; margin-top: 0;">📞 Contact Information</h3>
+              <p><strong>Email:</strong> ${leadEmail}</p>
+              <p><strong>Phone:</strong> ${leadPhone}</p>
+            </div>
+
+            <div class="interest-indicator">
+              <span style="font-weight: 600;">Interest Level:</span>
+              <div class="interest-bar">
+                <div class="interest-fill" style="width: ${interestLevel || 75}%;"></div>
+              </div>
+              <span style="font-weight: 600;">${interestLevel || 75}%</span>
+            </div>
+
+            ${notes ? `
+            <div class="action-items">
+              <h3 style="color: #856404; margin-top: 0;">📝 Lead Notes</h3>
+              <p>${notes}</p>
+            </div>
+            ` : ''}
+
+            <div class="action-items">
+              <h3 style="color: #856404; margin-top: 0;">🎯 Recommended Actions</h3>
+              <ul style="margin: 15px 0; padding-left: 20px;">
+                <li>Contact within 24 hours for maximum conversion rate</li>
+                <li>Prepare personalized product recommendations</li>
+                <li>Schedule a product demonstration if interested</li>
+                <li>Follow up with email sequence</li>
+                <li>Update CRM with interaction notes</li>
+              </ul>
+            </div>
+
+            <div class="cta-section">
+              <a href="http://localhost:3001/sales-dashboard.html" class="cta-button">View Lead Details</a>
+            </div>
+          </div>
+          <div class="footer">
+            <p>© 2024 Abai Springs. Close that deal! 💰</p>
+            <p>Generated on ${new Date().toLocaleString()}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const textContent = `
+      New Sales Lead - ${leadName} (${leadScore}% match)
+      
+      Hello ${salespersonName}!
+      
+      Great news! You have a new high-quality sales lead in your territory.
+      
+      LEAD DETAILS:
+      - Name: ${leadName}
+      - Lead Score: ${leadScore}%
+      - Lead Source: ${leadSource}
+      - Territory: ${territory}
+      - Estimated Value: Ksh ${estimatedValue?.toLocaleString() || 'Not specified'}
+      - Follow-up Date: ${followUpDate}
+      
+      CONTACT INFORMATION:
+      - Email: ${leadEmail}
+      - Phone: ${leadPhone}
+      
+      INTEREST LEVEL: ${interestLevel || 75}%
+      
+      ${notes ? `LEAD NOTES:\n${notes}\n` : ''}
+      
+      RECOMMENDED ACTIONS:
+      - Contact within 24 hours for maximum conversion rate
+      - Prepare personalized product recommendations
+      - Schedule a product demonstration if interested
+      - Follow up with email sequence
+      - Update CRM with interaction notes
+      
+      View lead details: http://localhost:3001/sales-dashboard.html
+      
+      Close that deal! 💰
+      © 2024 Abai Springs.
+    `;
+
+    return { subject, htmlContent, textContent };
+  }
+
+  // Generate Warehouse Inventory Alert Email
+  generateWarehouseInventoryAlertEmail(alertData) {
+    const {
+      warehouseStaff = 'Warehouse Team',
+      alertType,
+      items,
+      priority,
+      actionRequired,
+      estimatedImpact,
+      recommendations,
+      supplierInfo
+    } = alertData;
+
+    const priorityColors = {
+      'low': '#f39c12',
+      'medium': '#e67e22',
+      'high': '#e74c3c',
+      'critical': '#c0392b'
+    };
+
+    const priorityEmojis = {
+      'low': '📢',
+      'medium': '⚠️',
+      'high': '🚨',
+      'critical': '🔥'
+    };
+
+    const subject = `${priorityEmojis[priority]} Warehouse Alert - ${alertType}`;
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background: #f5f7fa; }
+          .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.1); }
+          .header { background: linear-gradient(135deg, ${priorityColors[priority]} 0%, ${priorityColors[priority]}dd 100%); color: white; padding: 40px; text-align: center; }
+          .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
+          .header p { margin: 10px 0 0; opacity: 0.9; }
+          .content { padding: 40px; }
+          .greeting { font-size: 24px; font-weight: 600; color: ${priorityColors[priority]}; margin-bottom: 20px; }
+          .priority-badge { display: inline-block; background: ${priorityColors[priority]}; color: white; padding: 10px 20px; border-radius: 25px; font-weight: 600; margin: 10px 0; text-transform: uppercase; }
+          .alert-summary { background: #f8f9fa; border-radius: 15px; padding: 25px; margin: 20px 0; border-left: 5px solid ${priorityColors[priority]}; }
+          .items-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 20px 0; }
+          .item-card { background: white; border-radius: 10px; padding: 20px; border: 1px solid #e0e0e0; }
+          .item-name { font-weight: 600; color: #333; font-size: 16px; margin-bottom: 10px; }
+          .item-details { color: #666; font-size: 14px; }
+          .critical-item { border-color: #e74c3c; background: #fdf2f2; }
+          .action-section { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 10px; padding: 20px; margin: 20px 0; }
+          .recommendation { background: #e8f5e8; border-radius: 10px; padding: 20px; margin: 20px 0; }
+          .supplier-info { background: #e3f2fd; border-radius: 10px; padding: 20px; margin: 20px 0; }
+          .cta-section { text-align: center; margin: 30px 0; }
+          .cta-button { display: inline-block; background: linear-gradient(135deg, ${priorityColors[priority]} 0%, ${priorityColors[priority]}dd 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; }
+          .footer { background: ${priorityColors[priority]}; color: white; padding: 30px; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🏭 Warehouse Alert</h1>
+            <p>${alertType}</p>
+          </div>
+          <div class="content">
+            <div class="greeting">Hello ${warehouseStaff}! 👋</div>
+            <div class="priority-badge">${priority} Priority</div>
+            <p>Attention required for warehouse operations. Please review the details below and take appropriate action.</p>
+            
+            <div class="alert-summary">
+              <h3 style="color: ${priorityColors[priority]}; margin-top: 0;">Alert Summary</h3>
+              <p><strong>Type:</strong> ${alertType}</p>
+              <p><strong>Priority:</strong> ${priority.toUpperCase()}</p>
+              <p><strong>Action Required:</strong> ${actionRequired}</p>
+              <p><strong>Estimated Impact:</strong> ${estimatedImpact}</p>
+            </div>
+
+            <div class="items-grid">
+              <h3 style="color: #333; width: 100%;">📦 Affected Items</h3>
+              ${items?.map(item => `
+                <div class="item-card ${item.critical ? 'critical-item' : ''}">
+                  <div class="item-name">${item.name}</div>
+                  <div class="item-details">
+                    <p><strong>Current Stock:</strong> ${item.currentStock}</p>
+                    <p><strong>Minimum Required:</strong> ${item.minimumRequired}</p>
+                    <p><strong>Status:</strong> ${item.status}</p>
+                    ${item.estimatedDaysLeft ? `<p><strong>Days Left:</strong> ${item.estimatedDaysLeft}</p>` : ''}
+                  </div>
+                </div>
+              `).join('') || '<p>No specific items affected</p>'}
+            </div>
+
+            <div class="action-section">
+              <h3 style="color: #856404; margin-top: 0;">⚡ Immediate Actions Required</h3>
+              <ul style="margin: 15px 0; padding-left: 20px;">
+                <li>Review current inventory levels</li>
+                <li>Contact suppliers for urgent restocking</li>
+                <li>Update inventory management system</li>
+                <li>Notify sales team of potential shortages</li>
+                <li>Prepare alternative product recommendations</li>
+              </ul>
+            </div>
+
+            <div class="recommendation">
+              <h3 style="color: #27ae60; margin-top: 0;">💡 Recommendations</h3>
+              <p>${recommendations || 'Monitor inventory levels closely and maintain safety stock for critical items.'}</p>
+            </div>
+
+            ${supplierInfo ? `
+            <div class="supplier-info">
+              <h3 style="color: #1976d2; margin-top: 0;">🏢 Supplier Information</h3>
+              <p><strong>Primary Supplier:</strong> ${supplierInfo.name}</p>
+              <p><strong>Contact:</strong> ${supplierInfo.contact}</p>
+              <p><strong>Lead Time:</strong> ${supplierInfo.leadTime}</p>
+              <p><strong>Minimum Order:</strong> ${supplierInfo.minimumOrder}</p>
+            </div>
+            ` : ''}
+
+            <div class="cta-section">
+              <a href="http://localhost:3001/warehouse-dashboard.html" class="cta-button">View Warehouse Dashboard</a>
+            </div>
+          </div>
+          <div class="footer">
+            <p>© 2024 Abai Springs. Keep the supply flowing! 📦</p>
+            <p>Generated on ${new Date().toLocaleString()}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const textContent = `
+      Warehouse Alert - ${alertType}
+      
+      Hello ${warehouseStaff}!
+      
+      ${priorityEmojis[priority]} ${priority.toUpperCase()} PRIORITY ALERT
+      
+      ALERT SUMMARY:
+      - Type: ${alertType}
+      - Priority: ${priority.toUpperCase()}
+      - Action Required: ${actionRequired}
+      - Estimated Impact: ${estimatedImpact}
+      
+      AFFECTED ITEMS:
+      ${items?.map(item => `
+      - ${item.name}
+        Current Stock: ${item.currentStock}
+        Minimum Required: ${item.minimumRequired}
+        Status: ${item.status}
+        ${item.estimatedDaysLeft ? `Days Left: ${item.estimatedDaysLeft}` : ''}
+      `).join('\n') || 'No specific items affected'}
+      
+      IMMEDIATE ACTIONS REQUIRED:
+      - Review current inventory levels
+      - Contact suppliers for urgent restocking
+      - Update inventory management system
+      - Notify sales team of potential shortages
+      - Prepare alternative product recommendations
+      
+      RECOMMENDATIONS:
+      ${recommendations || 'Monitor inventory levels closely and maintain safety stock for critical items.'}
+      
+      ${supplierInfo ? `
+      SUPPLIER INFORMATION:
+      - Primary Supplier: ${supplierInfo.name}
+      - Contact: ${supplierInfo.contact}
+      - Lead Time: ${supplierInfo.leadTime}
+      - Minimum Order: ${supplierInfo.minimumOrder}
+      ` : ''}
+      
+      View warehouse dashboard: http://localhost:3001/warehouse-dashboard.html
+      
+      Keep the supply flowing! 📦
+      © 2024 Abai Springs.
+    `;
+
+    return { subject, htmlContent, textContent };
   }
 }
 

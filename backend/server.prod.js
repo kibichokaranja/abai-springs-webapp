@@ -118,10 +118,10 @@ if (cluster.isPrimary && process.env.NODE_ENV === 'production') {
   // CORS configuration for production
   const corsOptions = {
     origin: process.env.NODE_ENV === 'production' 
-      ? [process.env.CORS_ORIGIN]
-      : ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3000'],
+      ? (process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['*'])
+      : ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3001'],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     exposedHeaders: ['X-Total-Count', 'X-Rate-Limit-Limit', 'X-Rate-Limit-Remaining'],
     maxAge: 86400 // 24 hours

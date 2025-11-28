@@ -2,7 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { body } from 'express-validator';
+import { body, validationResult } from 'express-validator';
 import User from '../models/User.js';
 import { 
   authenticate, 
@@ -73,6 +73,17 @@ router.post('/register',
       .withMessage('Please enter a valid Kenyan phone number')
   ],
   asyncHandler(async (req, res) => {
+    // Check validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const errorMessages = errors.array().map(error => ({
+        field: error.path,
+        message: error.msg,
+        value: error.value
+      }));
+      return sendValidationError(res, errorMessages, 'Validation failed');
+    }
+    
     const { name, email, password, phone } = req.body;
 
     // Check if user already exists

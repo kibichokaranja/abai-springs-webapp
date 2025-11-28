@@ -343,7 +343,6 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-fill-color: transparent;
   margin: 2rem auto 2.5rem auto;
   text-align: center;
   display: block;
@@ -356,7 +355,6 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-fill-color: transparent;
 }
 @keyframes hero-title-in {
   0% { opacity: 0; transform: translateY(40px) scale(0.95); }
@@ -472,7 +470,6 @@ body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    text-fill-color: transparent;
   }
   .hero-bottle {
     width: 70px;
@@ -1825,17 +1822,39 @@ input[type="email"]:focus, input[type="text"]:focus, select:focus {
 }
 .login-modal-close {
   position: absolute;
-  top: 1.1rem;
-  right: 1.1rem;
-  background: none;
-  border: none;
-  font-size: 2rem;
+  top: 1.2rem;
+  right: 1.2rem;
+  background: linear-gradient(135deg, #f8fbff 0%, #e3f0ff 100%);
+  border: 1px solid rgba(79, 195, 247, 0.2);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1.4rem;
   color: #1976d2;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
 }
 .login-modal-close:hover {
-  color: #4fc3f7;
+  color: #fff;
+  background: linear-gradient(135deg, #4fc3f7 0%, #1976d2 100%);
+  transform: scale(1.1) rotate(90deg);
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+}
+
+.login-modal h2 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #1976d2 0%, #4fc3f7 50%, #25d366 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 2rem 0;
+  text-align: center;
+  letter-spacing: 0.02em;
 }
 .login-form label {
   margin-top: 1rem;
@@ -1862,18 +1881,25 @@ input[type="email"]:focus, input[type="text"]:focus, select:focus {
   width: 100%;
 }
 .login-modal-links {
-  margin-top: 1.2rem;
+  margin-top: 1.5rem;
   text-align: center;
   font-size: 1rem;
+  padding: 1rem 0;
 }
 .login-modal-links a {
   color: #1976d2;
-  text-decoration: underline;
-  margin: 0 0.2em;
-  transition: color 0.2s;
+  text-decoration: none;
+  margin: 0 0.5em;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  font-weight: 600;
 }
 .login-modal-links a:hover {
-  color: #4fc3f7;
+  color: #fff;
+  background: linear-gradient(135deg, #4fc3f7 0%, #1976d2 100%);
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+  transform: translateY(-2px);
 }
 @media (max-width: 600px) {
   .login-modal-content {
@@ -1957,16 +1983,32 @@ input[type="email"]:focus, input[type="text"]:focus, select:focus {
 }
 /* Modernize login modal appearance */
 .login-modal-content {
-  background: #fff;
-  border-radius: 22px;
-  box-shadow: 0 8px 40px #1976d244, 0 2px 8px #4fc3f733;
-  padding: 2.7rem 2.7rem 1.7rem 2.7rem;
-  min-width: 340px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 50%, #e3f0ff 100%);
+  border-radius: 20px;
+  box-shadow:
+    0 20px 60px rgba(25, 118, 210, 0.25),
+    0 8px 32px rgba(79, 195, 247, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  padding: 2.5rem 2rem 2rem 2rem;
+  min-width: 360px;
   max-width: 95vw;
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  border: 1px solid rgba(79, 195, 247, 0.2);
+  overflow: hidden;
+}
+
+.login-modal-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #1976d2 0%, #4fc3f7 100%);
+  border-radius: 20px 20px 0 0;
 }
 .login-modal .login-submit-btn {
   margin-top: 1.2rem;
@@ -2048,6 +2090,80 @@ input[type="email"]:focus, input[type="text"]:focus, select:focus {
   opacity: 0.7;
   cursor: not-allowed;
   transform: none;
+}
+
+/* Password Requirements Styles */
+.password-requirements {
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: #f8fbff;
+  border-radius: 8px;
+  border: 1px solid #e3f0ff;
+  font-size: 0.85rem;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.password-req-title {
+  font-weight: 600;
+  color: #1976d2;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.password-req-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+  color: #666;
+  transition: color 0.2s ease;
+}
+
+.password-req-item:last-child {
+  margin-bottom: 0;
+}
+
+.password-req-item i {
+  font-size: 0.6rem;
+  transition: all 0.2s ease;
+}
+
+.password-req-item.valid {
+  color: #25d366;
+}
+
+.password-req-item.valid i {
+  color: #25d366;
+}
+
+.password-req-item.valid i::before {
+  content: "\f00c"; /* Font Awesome check icon */
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+}
+
+.password-req-item.invalid {
+  color: #dc3545;
+}
+
+.password-req-item.invalid i {
+  color: #dc3545;
+}
+
+.password-req-item span {
+  flex: 1;
 }
 
 .btn-loading {
@@ -2706,6 +2822,7 @@ input[type="email"]:focus, input[type="text"]:focus, select:focus {
   background-size: 200% auto;
   color: #1976d2;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: shimmer 2.5s linear infinite;
   font-weight: 900;
@@ -2922,6 +3039,7 @@ body.scrolled .main-header {
   background: linear-gradient(90deg, #fff 30%, #4fc3f7 60%, #1976d2 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 @keyframes abai-move-glow {
@@ -2964,6 +3082,7 @@ body.scrolled .main-header {
   background: linear-gradient(90deg, #fff 10%, #4fc3f7 50%, #1976d2 90%);
   background-size: 300% auto;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   text-shadow: 0 0 24px #4fc3f7, 0 0 48px #1976d2, 0 2px 8px #1976d2cc;
   animation: abai-move-glow 4s ease-in-out infinite alternate;
@@ -3072,6 +3191,7 @@ body.scrolled .main-header {
   background: linear-gradient(90deg, #fff 30%, #4fc3f7 60%, #1976d2 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   color: #1976d2;
   letter-spacing: 0.08em;
@@ -3112,7 +3232,6 @@ body.scrolled .main-header {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-fill-color: transparent;
   text-shadow: 0 4px 32px #1976d244, 0 2px 8px #00336688;
   letter-spacing: 0.04em;
   animation: premium-water-glow 2.5s infinite alternate cubic-bezier(.68,-0.3,.32,1.3);
@@ -5019,6 +5138,274 @@ body.scrolled .main-header {
   }
 
   .orders-icon {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+/* Edit Profile Modal Styles */
+.edit-profile-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(25, 118, 210, 0.4);
+  backdrop-filter: blur(8px);
+  z-index: 10001;
+  padding: 20px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.edit-profile-modal.show {
+  opacity: 1;
+}
+
+.edit-profile-modal-content {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 50%, #e3f0ff 100%);
+  border-radius: 20px;
+  box-shadow:
+    0 20px 60px rgba(25, 118, 210, 0.25),
+    0 8px 32px rgba(79, 195, 247, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  padding: 2.5rem 2rem 2rem 2rem;
+  width: 90vw;
+  max-width: 500px;
+  max-height: 90vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transform: scale(0.9) translateY(20px);
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  border: 1px solid rgba(79, 195, 247, 0.2);
+  overflow-y: auto;
+  margin: 20px;
+}
+
+.edit-profile-modal.show .edit-profile-modal-content {
+  transform: scale(1) translateY(0);
+}
+
+.edit-profile-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(25, 118, 210, 0.1);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.5rem;
+  color: #1976d2;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+.edit-profile-modal-close:hover {
+  background: rgba(25, 118, 210, 0.2);
+  transform: scale(1.1);
+}
+
+.edit-profile-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.edit-profile-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #1976d2 0%, #4fc3f7 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  color: white;
+  box-shadow: 0 8px 32px rgba(25, 118, 210, 0.3);
+}
+
+.edit-profile-header h2 {
+  color: #1976d2;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.edit-profile-header p {
+  color: #666;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.edit-profile-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.edit-profile-field {
+  text-align: left;
+  width: 100%;
+}
+
+.edit-field-label {
+  display: block;
+  color: #1976d2;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.edit-profile-input {
+  width: 100%;
+  padding: 1rem 1.2rem;
+  border: 2px solid rgba(25, 118, 210, 0.2);
+  border-radius: 12px;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.edit-profile-input:focus {
+  outline: none;
+  border-color: #1976d2;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+  transform: translateY(-1px);
+}
+
+.edit-profile-input::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+.edit-profile-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.edit-profile-btn {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 120px;
+  position: relative;
+}
+
+.edit-profile-btn.primary {
+  background: linear-gradient(135deg, #1976d2 0%, #4fc3f7 100%);
+  color: white;
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.3);
+}
+
+.edit-profile-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(25, 118, 210, 0.4);
+}
+
+.edit-profile-btn.secondary {
+  background: rgba(25, 118, 210, 0.1);
+  color: #1976d2;
+  border: 2px solid rgba(25, 118, 210, 0.3);
+}
+
+.edit-profile-btn.secondary:hover {
+  background: rgba(25, 118, 210, 0.2);
+  transform: translateY(-1px);
+}
+
+.edit-profile-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.edit-profile-footer {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.edit-profile-footer p {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.water-icon {
+  color: #4fc3f7;
+  font-size: 1.1rem;
+}
+
+/* Responsive Design for Edit Profile Modal */
+@media (max-width: 768px) {
+  .edit-profile-modal {
+    padding: 10px;
+  }
+  
+  .edit-profile-modal-content {
+    width: 95vw;
+    max-width: none;
+    padding: 2rem 1.5rem 1.5rem 1.5rem;
+    margin: 10px;
+  }
+
+  .edit-profile-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .edit-profile-header p {
+    font-size: 0.9rem;
+  }
+
+  .edit-profile-actions {
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .edit-profile-btn {
+    width: 100%;
+    padding: 0.8rem 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .edit-profile-modal-content {
+    width: 98vw;
+    padding: 1.5rem 1rem 1rem 1rem;
+    margin: 5px;
+  }
+
+  .edit-profile-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .edit-profile-icon {
     width: 60px;
     height: 60px;
   }

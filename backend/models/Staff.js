@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const staffSchema = new mongoose.Schema({
   name: {
@@ -15,11 +16,17 @@ const staffSchema = new mongoose.Schema({
     trim: true,
     match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
   },
+  password: {
+    type: String,
+    required: [true, 'Password is required'],
+    minlength: [6, 'Password must be at least 6 characters long'],
+    select: false // Don't include password in queries by default
+  },
   phone: {
     type: String,
     required: [true, 'Phone number is required'],
-    trim: true,
-    match: [/^(\+254|0)[17]\d{8}$/, 'Please enter a valid Kenyan phone number']
+    trim: true
+    // Phone validation regex removed to allow flexibility - can be added back if needed
   },
   role: {
     type: String,
@@ -49,6 +56,14 @@ const staffSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Staff'
   },
+  outlet: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Outlet',
+    required: function() {
+      // Required only for drivers and sales staff
+      return ['driver', 'sales'].includes(this.role);
+    }
+  },
   permissions: [{
     type: String,
     enum: ['read', 'write', 'delete', 'admin']
@@ -71,6 +86,7 @@ staffSchema.index({ email: 1 });
 staffSchema.index({ role: 1 });
 staffSchema.index({ department: 1 });
 staffSchema.index({ status: 1 });
+staffSchema.index({ outlet: 1 });
 
 // Virtual for full name
 staffSchema.virtual('fullName').get(function() {
@@ -83,13 +99,25 @@ staffSchema.virtual('isActive').get(function() {
 });
 
 // Pre-save middleware
-staffSchema.pre('save', function(next) {
+staffSchema.pre('save', async function(next) {
   // Ensure email is lowercase
   if (this.email) {
     this.email = this.email.toLowerCase();
   }
+  
+  // Hash password if it's been modified
+  if (this.isModified('password')) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+  }
+  
   next();
 });
+
+// Method to compare password
+staffSchema.methods.comparePassword = async function(candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
 
 // Static method to get active staff count
 staffSchema.statics.getActiveCount = function() {
@@ -104,6 +132,40 @@ staffSchema.statics.getByRole = function(role) {
 const Staff = mongoose.model('Staff', staffSchema);
 
 export default Staff;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

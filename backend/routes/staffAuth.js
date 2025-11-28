@@ -1,84 +1,102 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import mongoose from 'mongoose';
+import Staff from '../models/Staff.js';
 
 const router = express.Router();
-
-// Sample staff users (in production, these would be in the database)
-const STAFF_USERS = [
-    {
-        id: '1',
-        name: 'Business Owner',
-        email: 'admin@abaisprings.com',
-        password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password123
-        role: 'owner',
-        isActive: true
-    },
-    {
-        id: '2',
-        name: 'Sales Manager',
-        email: 'sales@abaisprings.com',
-        password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password123
-        role: 'sales',
-        isActive: true
-    },
-    {
-        id: '3',
-        name: 'Delivery Driver',
-        email: 'driver@abaisprings.com',
-        password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password123
-        role: 'driver',
-        isActive: true
-    },
-    {
-        id: '4',
-        name: 'Warehouse Manager',
-        email: 'warehouse@abaisprings.com',
-        password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password123
-        role: 'warehouse',
-        isActive: true
-    }
-];
 
 // Staff Login
 router.post('/staff-login', async (req, res) => {
     try {
-        const { email, password, role } = req.body;
+        const { email, password } = req.body;
 
         // Validate input
-        if (!email || !password || !role) {
+        if (!email || !password) {
             return res.status(400).json({
                 success: false,
-                message: 'Email, password, and role are required'
+                message: 'Email and password are required'
             });
         }
 
-        // Find staff user
-        const staffUser = STAFF_USERS.find(user => 
-            user.email === email && user.role === role && user.isActive
-        );
+        // Normalize email
+        const normalizedEmail = email.toLowerCase().trim();
+
+        console.log('Staff login attempt:', { email: normalizedEmail, hasPassword: !!password });
+
+        // Check MongoDB connection
+        if (mongoose.connection.readyState !== 1) {
+            console.error('MongoDB not connected. ReadyState:', mongoose.connection.readyState);
+            return res.status(503).json({
+                success: false,
+                message: 'Database connection not available. Please try again later.'
+            });
+        }
+
+        // Find staff user in database (include password field and populate outlet)
+        const staffUser = await Staff.findOne({ email: normalizedEmail }).select('+password').populate('outlet', 'name address');
 
         if (!staffUser) {
+            console.log('Staff not found for email:', normalizedEmail);
             return res.status(401).json({
                 success: false,
-                message: 'Invalid credentials or role'
+                message: 'Invalid email or password'
             });
         }
 
-        // Verify password
-        const isValidPassword = await bcrypt.compare(password, staffUser.password);
+        console.log('Staff found:', { 
+            name: staffUser.name, 
+            email: staffUser.email, 
+            role: staffUser.role, 
+            status: staffUser.status,
+            hasPassword: !!staffUser.password 
+        });
+
+        // Check if staff is active
+        if (staffUser.status !== 'active') {
+            return res.status(401).json({
+                success: false,
+                message: 'Account is not active. Please contact administrator.'
+            });
+        }
+
+        // Check if password exists
+        if (!staffUser.password) {
+            console.error('Staff user found but password field is missing');
+            return res.status(500).json({
+                success: false,
+                message: 'Account configuration error. Please contact administrator.'
+            });
+        }
+
+        // Verify password using the model method
+        let isValidPassword;
+        try {
+            isValidPassword = await staffUser.comparePassword(password);
+            console.log('Password validation result:', isValidPassword);
+        } catch (compareError) {
+            console.error('Password comparison error:', compareError);
+            return res.status(500).json({
+                success: false,
+                message: 'Authentication error. Please try again.'
+            });
+        }
+        
         if (!isValidPassword) {
             return res.status(401).json({
                 success: false,
-                message: 'Invalid credentials'
+                message: 'Invalid email or password'
             });
         }
+
+        // Update last login
+        staffUser.lastLogin = new Date();
+        await staffUser.save({ validateBeforeSave: false });
 
         // Generate JWT token
         const token = jwt.sign(
             { 
-                userId: staffUser.id, 
+                userId: staffUser._id.toString(), 
                 email: staffUser.email, 
                 role: staffUser.role 
             },
@@ -86,24 +104,36 @@ router.post('/staff-login', async (req, res) => {
             { expiresIn: '24h' }
         );
 
+        // Populate outlet if exists
+        await staffUser.populate('outlet', 'name address');
+        
         // Return success response
         res.json({
             success: true,
             message: 'Staff login successful',
             token,
             user: {
-                id: staffUser.id,
+                id: staffUser._id.toString(),
                 name: staffUser.name,
                 email: staffUser.email,
-                role: staffUser.role
+                role: staffUser.role,
+                department: staffUser.department,
+                outlet: staffUser.outlet ? {
+                    id: staffUser.outlet._id.toString(),
+                    name: staffUser.outlet.name,
+                    address: staffUser.outlet.address
+                } : null
             }
         });
 
     } catch (error) {
         console.error('Staff login error:', error);
+        console.error('Error stack:', error.stack);
         res.status(500).json({
             success: false,
-            message: 'Internal server error'
+            message: 'Internal server error',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 });
@@ -122,23 +152,24 @@ router.get('/verify-staff', async (req, res) => {
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
         
-        // Find staff user
-        const staffUser = STAFF_USERS.find(user => user.id === decoded.userId);
+        // Find staff user in database
+        const staffUser = await Staff.findById(decoded.userId);
         
-        if (!staffUser || !staffUser.isActive) {
+        if (!staffUser || staffUser.status !== 'active') {
             return res.status(401).json({
                 success: false,
-                message: 'Invalid token'
+                message: 'Invalid token or account not active'
             });
         }
 
         res.json({
             success: true,
             user: {
-                id: staffUser.id,
+                id: staffUser._id.toString(),
                 name: staffUser.name,
                 email: staffUser.email,
-                role: staffUser.role
+                role: staffUser.role,
+                department: staffUser.department
             }
         });
 
@@ -164,7 +195,7 @@ router.get('/staff-profile', async (req, res) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-        const staffUser = STAFF_USERS.find(user => user.id === decoded.userId);
+        const staffUser = await Staff.findById(decoded.userId);
         
         if (!staffUser) {
             return res.status(404).json({
@@ -176,10 +207,13 @@ router.get('/staff-profile', async (req, res) => {
         res.json({
             success: true,
             user: {
-                id: staffUser.id,
+                id: staffUser._id.toString(),
                 name: staffUser.name,
                 email: staffUser.email,
-                role: staffUser.role
+                role: staffUser.role,
+                department: staffUser.department,
+                phone: staffUser.phone,
+                status: staffUser.status
             }
         });
 
@@ -202,6 +236,40 @@ router.post('/staff-logout', (req, res) => {
 });
 
 export default router;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

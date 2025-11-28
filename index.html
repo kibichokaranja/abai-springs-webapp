@@ -33,6 +33,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   
   <!-- Scripts -->
+  <script src="config.js"></script>
   <script defer src="script.js"></script>
   <script defer src="chatbot.js"></script>
   <script defer src="pwa-install.js"></script>
@@ -79,12 +80,6 @@
             <button class="products-dropdown-btn" onclick="showBrandProducts('sprinkle')">Sprinkle</button>
           </div>
         </li>
-        <li class="nav-outlet-dropdown">
-          <a id="nav-outlet-link" class="nav-link ripple-link" onclick="toggleNavOutletDropdown(event)">Outlets <span style="font-size:0.8em;">▼</span></a>
-          <div id="nav-outlet-dropdown-menu" class="nav-outlet-dropdown-menu" style="display:none;">
-            <!-- Outlets will be loaded dynamically -->
-          </div>
-        </li>
         <li><a href="#" class="nav-link ripple-link" onclick="openWhatsAppPopup(); return false;">Contact</a></li>
         <li id="auth-nav-item">
           <a href="#" class="nav-link ripple-link" id="login-link" onclick="toggleLoginModal(); return false;">
@@ -118,6 +113,14 @@
     </div>
   </header>
   
+  <!-- Location Banner (hidden on frontend; location handled in checkout) -->
+  <div id="location-banner" class="location-banner" style="display:none;align-items:center;justify-content:center;gap:12px;padding:10px 14px;background:linear-gradient(90deg,#e6f2ff,#f3f8ff);border-bottom:1px solid rgba(25,118,210,0.15);">
+    <div id="location-banner-text" style="font-weight:600;color:#0b3b78;">Delivering to: Not set</div>
+    <button id="set-location-btn" onclick="openLocationModal()" style="background:#1976d2;color:#fff;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;">Set location</button>
+    <div id="location-banner-quote" style="color:#0b3b78;font-weight:600;"></div>
+  </div>
+  <!-- End Location Banner -->
+  
   <!-- Discount Message -->
   <div class="hero-discount">
     <span class="discount-badge">10% OFF</span>
@@ -144,16 +147,6 @@
 
   <!-- Products Section -->
   <section class="products-section" id="products">
-    <div class="outlet-selector-bar" id="outlet-selector-bar">
-      <label for="outlet-selector"><strong>Select Outlet:</strong></label>
-      <select id="outlet-selector" class="modern-outlet-dropdown" required onchange="onOutletChange()">
-        <option value="" disabled selected>Select an outlet</option>
-        <!-- Outlets will be loaded dynamically -->
-      </select>
-      <button id="refresh-data-btn" onclick="manualRefresh()" class="refresh-btn">
-        <i class="fas fa-sync-alt"></i> Refresh Data
-      </button>
-    </div>
     <h2 class="products-main-title" id="products-title">Our Products</h2>
     
     <!-- Brand Selection Dropdown -->
@@ -439,7 +432,6 @@
           <ul>
             <li><a href="#about">About</a></li>
             <li><a href="#products">Products</a></li>
-            <li><a href="#outlet-selector-bar">Outlets</a></li>
             <li><a href="#" onclick="openWhatsAppPopup(); return false;">Contact</a></li>
           </ul>
         </div>
@@ -481,6 +473,41 @@
       <span>&copy; 2025 Abai Springs. All rights reserved.</span>
     </div>
   </footer>
+  
+  <!-- Simple Location Modal (placeholder; to be replaced by Google/Geo integration) -->
+  <div id="location-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:1000;">
+    <div style="max-width:520px;margin:8% auto;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.15);overflow:hidden;">
+      <div style="padding:16px 18px;border-bottom:1px solid #eef3f9;display:flex;align-items:center;justify-content:space-between;">
+        <h3 style="margin:0;color:#0b3b78;">Set Delivery Location</h3>
+        <button onclick="closeLocationModal()" style="background:transparent;border:none;font-size:22px;cursor:pointer;color:#466;line-height:1;">&times;</button>
+      </div>
+      <form onsubmit="saveLocationFromForm(event)" style="padding:18px">
+        <label style="font-weight:600;color:#0b3b78;display:block;margin-bottom:6px;">Address</label>
+        <input id="loc-address" type="text" placeholder="e.g., Riverside Drive, Apartment 5B" required
+               style="width:100%;padding:10px 12px;border:1px solid #cfe2ff;border-radius:8px;outline:none;margin-bottom:12px;">
+        <button type="button" onclick="geolocateAndReverse()"
+                style="margin-bottom:12px;background:#0b8457;color:#fff;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;">
+          Use my location
+        </button>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <div style="flex:1">
+            <label style="font-weight:600;color:#0b3b78;display:block;margin-bottom:6px;">City</label>
+            <input id="loc-city" type="text" placeholder="e.g., Nairobi" required
+                   style="width:100%;padding:10px 12px;border:1px solid #cfe2ff;border-radius:8px;outline:none;">
+          </div>
+          <div style="flex:1">
+            <label style="font-weight:600;color:#0b3b78;display:block;margin-bottom:6px;">Notes (optional)</label>
+            <input id="loc-notes" type="text" placeholder="Gate code / landmark"
+                   style="width:100%;padding:10px 12px;border:1px solid #cfe2ff;border-radius:8px;outline:none;">
+          </div>
+        </div>
+        <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:10px;">
+          <button type="button" onclick="closeLocationModal()" style="background:#eef3f9;color:#0b3b78;border:none;border-radius:8px;padding:10px 14px;cursor:pointer;">Cancel</button>
+          <button type="submit" style="background:#1976d2;color:#fff;border:none;border-radius:8px;padding:10px 14px;cursor:pointer;">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <audio id="shop-now-sound" src="sounds/splash.mp3" preload="auto"></audio>
   <audio id="proceed-sound" src="sounds/cash.mp3" preload="auto"></audio>
@@ -495,6 +522,15 @@
     </div>
     <div id="cart-sidebar-items" class="cart-sidebar-items">
       <!-- Cart items will be dynamically inserted here -->
+    </div>
+    <div style="display:none;padding:10px 16px;border-top:1px dashed rgba(25,118,210,0.2);border-bottom:1px dashed rgba(25,118,210,0.2);background:#f8fbff;">
+      <small style="color:#0b3b78;font-weight:600;">Delivering to:</small>
+      <div id="cart-location-line" style="color:#0b3b78;">Not set</div>
+      <button onclick="openLocationModal()" style="margin-top:8px;background:#1976d2;color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;">Change location</button>
+      <div style="margin-top:8px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <div id="cart-fee-line" style="color:#0b3b78;">Delivery fee est.: --</div>
+        <div id="cart-eta-line" style="color:#0b3b78;">ETA: --</div>
+      </div>
     </div>
     <div class="cart-sidebar-footer">
       <div class="cart-sidebar-subtotal">
@@ -514,10 +550,261 @@
     <div class="spinner"></div>
   </div>
 
+  <!-- Location banner script (temporary until Google/Geolocation integration) -->
+  <script>
+    // --- Configurable delivery settings (adjust anytime) ---
+    window.ABAI_DELIVERY = {
+      hubs: [
+        { id: 'nairobi', name: 'Nairobi Hub', lat: -1.286389, lng: 36.817223, radiusKm: 15, baseFee: 150, freeThreshold: 1500 },
+        { id: 'kirinyaga', name: 'Kirinyaga Hub', lat: -0.498900, lng: 37.280300, radiusKm: 12, baseFee: 200, freeThreshold: 2000 }
+      ],
+      surcharge: { kmThreshold: 15, perKm: 10 }, // applied rarely if we manually allow beyond threshold
+      eta: [
+        { maxKm: 5, minutes: 45 },
+        { maxKm: 10, minutes: 75 },
+        { maxKm: 15, minutes: 110 },
+        { maxKm: Infinity, minutes: 150 }
+      ]
+    };
+    function toRad(deg){return deg*Math.PI/180;}
+    function haversineKm(aLat,aLng,bLat,bLng){
+      const R=6371;
+      const dLat=toRad(bLat-aLat), dLng=toRad(bLng-aLng);
+      const s1=Math.sin(dLat/2), s2=Math.sin(dLng/2);
+      const q=s1*s1+Math.cos(toRad(aLat))*Math.cos(toRad(bLat))*s2*s2;
+      return 2*R*Math.asin(Math.sqrt(q));
+    }
+    function nearestHub(lat,lng){
+      const hubs = (window.ABAI_DELIVERY && window.ABAI_DELIVERY.hubs) || [];
+      let best=null;
+      for(const h of hubs){
+        const d = haversineKm(lat,lng,h.lat,h.lng);
+        if(!best || d<best.distanceKm) best={...h, distanceKm:d};
+      }
+      return best;
+    }
+    function estimateFeeAndEta(loc, subtotal){
+      const settings = window.ABAI_DELIVERY;
+      let zone = null, distanceKm = null;
+      if(loc && typeof loc.lat==='number' && typeof loc.lng==='number'){
+        zone = nearestHub(loc.lat, loc.lng);
+        distanceKm = zone ? zone.distanceKm : null;
+      } else {
+        // Fallback by city keyword
+        const city = (loc && (loc.city || loc.formattedAddress || '') || '').toLowerCase();
+        zone = city.includes('nairobi') ? settings.hubs.find(h=>h.id==='nairobi')
+             : city.includes('kirinyaga') || city.includes('kerugoya') ? settings.hubs.find(h=>h.id==='kirinyaga')
+             : settings.hubs[0];
+        distanceKm = null;
+      }
+      const baseFee = zone.baseFee;
+      const threshold = zone.freeThreshold;
+      const isFree = typeof subtotal==='number' && subtotal>=threshold;
+      let fee = isFree ? 0 : baseFee;
+      let surchargeApplied = false;
+      const inRadius = distanceKm==null ? true : distanceKm <= zone.radiusKm;
+      if(distanceKm!=null && distanceKm>settings.surcharge.kmThreshold && !isFree){
+        const extraKm = Math.max(0, distanceKm-settings.surcharge.kmThreshold);
+        fee += Math.ceil(extraKm)*settings.surcharge.perKm;
+        surchargeApplied = true;
+      }
+      // ETA bucket
+      let etaMin = settings.eta[settings.eta.length-1].minutes;
+      if(distanceKm!=null){
+        for(const bucket of settings.eta){
+          if(distanceKm<=bucket.maxKm){ etaMin = bucket.minutes; break; }
+        }
+      } else {
+        etaMin = 90; // generic
+      }
+      return { fee, etaMin, zoneName: zone.name, distanceKm, surchargeApplied, freeThreshold: threshold, inRadius, radiusKm: zone.radiusKm };
+    }
+    // --- Google Maps JS API loader (Places + Geocoding) ---
+    (function loadGoogleMaps() {
+      const existing = document.getElementById('gmaps-loader');
+      if (existing) return;
+      const key = window.ABAI_GOOGLE_MAPS_KEY || 'YOUR_GOOGLE_MAPS_API_KEY';
+      const script = document.createElement('script');
+      script.id = 'gmaps-loader';
+      script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key) + '&libraries=places';
+      script.async = true;
+      script.defer = true;
+      script.onload = function() {
+        // Initialize autocomplete if modal already open
+        initPlacesAutocomplete();
+      };
+      document.head.appendChild(script);
+    })();
+
+    function getStoredLocation() {
+      try {
+        const raw = localStorage.getItem('abai.deliveryAddress');
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+    function setStoredLocation(loc) {
+      localStorage.setItem('abai.deliveryAddress', JSON.stringify(loc));
+    }
+    function initPlacesAutocomplete() {
+      if (!window.google || !google.maps || !google.maps.places) return;
+      const input = document.getElementById('loc-address');
+      if (!input) return;
+      if (input._autocompleteBound) return;
+      const autocomplete = new google.maps.places.Autocomplete(input, {
+        fields: ['formatted_address','geometry','address_components','name'],
+        componentRestrictions: { country: ['ke'] }
+      });
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (!place || !place.geometry) return;
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        const formatted = place.formatted_address || place.name;
+        const cityComp = (place.address_components || []).find(c => c.types.includes('locality')) 
+                      || (place.address_components || []).find(c => c.types.includes('administrative_area_level_2'));
+        const city = cityComp ? cityComp.long_name : '';
+        document.getElementById('loc-city').value = city || document.getElementById('loc-city').value;
+        setStoredLocation({
+          addressLine: input.value,
+          city: document.getElementById('loc-city').value,
+          notes: document.getElementById('loc-notes').value,
+          formattedAddress: formatted,
+          lat, lng, provider: 'google'
+        });
+        renderLocationBanner();
+      });
+      input._autocompleteBound = true;
+    }
+    function reverseGeocodeGoogle(lat, lng) {
+      return new Promise((resolve, reject) => {
+        if (!window.google || !google.maps || !google.maps.Geocoder) {
+          return reject(new Error('Google Maps not loaded'));
+        }
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+          if (status === 'OK' && results && results[0]) {
+            resolve(results[0]);
+          } else {
+            reject(new Error('Reverse geocode failed: ' + status));
+          }
+        });
+      });
+    }
+    async function geolocateAndReverse() {
+      try {
+        await new Promise((res, rej) => {
+          if (!navigator.geolocation) return rej(new Error('Geolocation not supported'));
+          navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 10000 });
+        }).then(async pos => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          try {
+            const result = await reverseGeocodeGoogle(lat, lng);
+            const formatted = result.formatted_address;
+            const cityComp = (result.address_components || []).find(c => c.types.includes('locality')) 
+                          || (result.address_components || []).find(c => c.types.includes('administrative_area_level_2'));
+            const city = cityComp ? cityComp.long_name : '';
+            document.getElementById('loc-address').value = formatted;
+            document.getElementById('loc-city').value = city;
+            setStoredLocation({
+              addressLine: formatted,
+              city,
+              notes: document.getElementById('loc-notes').value,
+              formattedAddress: formatted,
+              lat, lng, provider: 'google'
+            });
+            renderLocationBanner();
+          } catch (e) {
+            // fallback: store coords only
+            setStoredLocation({ formattedAddress: 'My location', lat, lng });
+            renderLocationBanner();
+          }
+        });
+      } catch (e) {
+        alert('Unable to fetch your location. Please enter your address manually.');
+      }
+    }
+    function renderLocationBanner() {
+      const loc = getStoredLocation();
+      const bannerText = document.getElementById('location-banner-text');
+      const setBtn = document.getElementById('set-location-btn');
+      const cartLine = document.getElementById('cart-location-line');
+      const bannerQuote = document.getElementById('location-banner-quote');
+      const cartFee = document.getElementById('cart-fee-line');
+      const cartEta = document.getElementById('cart-eta-line');
+      // Create or select out-of-radius warning in cart area
+      let cartWarn = document.getElementById('cart-radius-warning');
+      if(!cartWarn){
+        const parent = document.querySelector('#cart-sidebar .cart-sidebar-footer')?.previousElementSibling;
+        if (parent) {
+          cartWarn = document.createElement('div');
+          cartWarn.id = 'cart-radius-warning';
+          cartWarn.style.cssText = 'padding:10px 16px;color:#9a031e;background:#fff4f4;border-top:1px solid #ffd6d6;border-bottom:1px solid #ffd6d6;display:none;';
+          cartWarn.textContent = 'Address appears outside our delivery radius. Please contact support.';
+          parent.insertAdjacentElement('afterend', cartWarn);
+        }
+      }
+      if (!bannerText || !setBtn) return;
+      if (loc && loc.formattedAddress) {
+        bannerText.textContent = 'Delivering to: ' + loc.formattedAddress;
+        setBtn.textContent = 'Change location';
+        if (cartLine) cartLine.textContent = loc.formattedAddress;
+      } else {
+        bannerText.textContent = 'Delivering to: Not set';
+        setBtn.textContent = 'Set location';
+        if (cartLine) cartLine.textContent = 'Not set';
+      }
+      // Try read subtotal if available
+      let subtotal = undefined;
+      try {
+        const el = document.getElementById('cart-sidebar-subtotal');
+        if (el && el.textContent) {
+          const n = parseFloat(el.textContent.replace(/[^\d.]/g,''));
+          if (!isNaN(n)) subtotal = n;
+        }
+      } catch(e){}
+      const quote = estimateFeeAndEta(loc, subtotal);
+      localStorage.setItem('abai.deliveryQuote', JSON.stringify(quote));
+      if (bannerQuote) {
+        const feeText = quote.fee===0 ? 'Free delivery' : 'Fee est.: KES ' + quote.fee;
+        bannerQuote.textContent = '— ' + feeText + ' • ETA ~ ' + quote.etaMin + ' min';
+      }
+      if (cartFee) cartFee.textContent = 'Delivery fee est.: ' + (quote.fee===0 ? 'Free' : 'Ksh ' + quote.fee);
+      if (cartEta) cartEta.textContent = 'ETA: ~ ' + quote.etaMin + ' min';
+      if (cartWarn) cartWarn.style.display = quote.inRadius ? 'none' : 'block';
+    }
+    function openLocationModal() {
+      document.getElementById('location-modal').style.display = 'block';
+      const loc = getStoredLocation();
+      if (loc) {
+        document.getElementById('loc-address').value = loc.addressLine || '';
+        document.getElementById('loc-city').value = loc.city || '';
+        document.getElementById('loc-notes').value = loc.notes || '';
+      }
+      // Ensure autocomplete attaches when modal opens
+      setTimeout(initPlacesAutocomplete, 0);
+    }
+    function closeLocationModal() {
+      document.getElementById('location-modal').style.display = 'none';
+    }
+    function saveLocationFromForm(event) {
+      event.preventDefault();
+      const addressLine = document.getElementById('loc-address').value.trim();
+      const city = document.getElementById('loc-city').value.trim();
+      const notes = document.getElementById('loc-notes').value.trim();
+      const formattedAddress = addressLine + (city ? ', ' + city : '');
+      setStoredLocation({ addressLine, city, notes, formattedAddress });
+      closeLocationModal();
+      renderLocationBanner();
+    }
+    document.addEventListener('DOMContentLoaded', renderLocationBanner);
+  </script>
   <!-- Login Modal -->
   <div id="login-modal" class="login-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="login-modal-title">
     <div class="login-modal-content">
-      <button class="login-modal-close" onclick="toggleLoginModal()" aria-label="Close login">&times;</button>
+      <button class="login-modal-close" onclick="toggleLoginModal(true)" aria-label="Close login">&times;</button>
       <h2 id="login-modal-title">Login to Your Account</h2>
       
       <!-- Login Form -->
@@ -556,6 +843,24 @@
         <div class="floating-label-group">
           <input type="password" id="register-password" name="password" required placeholder=" " />
           <label for="register-password" class="floating-label">Password</label>
+        </div>
+        <div id="password-requirements" class="password-requirements" style="display: none;">
+          <div class="password-req-title">Password must contain:</div>
+          <div class="password-req-item" id="req-length">
+            <i class="fas fa-circle"></i> <span>At least 8 characters</span>
+          </div>
+          <div class="password-req-item" id="req-uppercase">
+            <i class="fas fa-circle"></i> <span>One uppercase letter (A-Z)</span>
+          </div>
+          <div class="password-req-item" id="req-lowercase">
+            <i class="fas fa-circle"></i> <span>One lowercase letter (a-z)</span>
+          </div>
+          <div class="password-req-item" id="req-number">
+            <i class="fas fa-circle"></i> <span>One number (0-9)</span>
+          </div>
+          <div class="password-req-item" id="req-special">
+            <i class="fas fa-circle"></i> <span>One special character (!@#$%^&*...)</span>
+          </div>
         </div>
         <div class="floating-label-group">
           <input type="password" id="register-confirm-password" name="confirmPassword" required placeholder=" " />
@@ -710,10 +1015,51 @@
       </div>
       <div class="profile-actions">
         <button class="profile-btn primary" onclick="closeProfileModal()">Close</button>
+        <button class="profile-btn secondary" onclick="updateProfile(); closeProfileModal();">Edit Profile</button>
         <button class="profile-btn secondary" onclick="openOrdersModal(); closeProfileModal();">View Orders</button>
       </div>
       <div class="profile-footer">
         <p>Stay hydrated with Abai Springs! <span class="water-icon">💧</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Profile Modal -->
+  <div id="edit-profile-modal" class="edit-profile-modal">
+    <div class="edit-profile-modal-content">
+      <button class="edit-profile-modal-close" onclick="closeEditProfileModal()" aria-label="Close edit profile popup">&times;</button>
+      <div class="edit-profile-header">
+        <div class="edit-profile-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </div>
+        <h2>Edit Profile</h2>
+        <p>Update your account information</p>
+      </div>
+      <form class="edit-profile-form" id="edit-profile-form">
+        <div class="edit-profile-field">
+          <label for="edit-profile-name" class="edit-field-label">Full Name:</label>
+          <input type="text" id="edit-profile-name" class="edit-profile-input" placeholder="Enter your full name" required>
+        </div>
+        <div class="edit-profile-field">
+          <label for="edit-profile-phone" class="edit-field-label">Phone Number:</label>
+          <input type="tel" id="edit-profile-phone" class="edit-profile-input" placeholder="Enter your phone number" required>
+        </div>
+        <div class="edit-profile-actions">
+          <button type="button" class="edit-profile-btn secondary" onclick="closeEditProfileModal()">Cancel</button>
+          <button type="submit" class="edit-profile-btn primary">
+            <span class="btn-text">Save Changes</span>
+            <span class="btn-loading" style="display: none;">
+              <div class="spinner"></div>
+              Saving...
+            </span>
+          </button>
+        </div>
+      </form>
+      <div class="edit-profile-footer">
+        <p>Keep your information up to date! <span class="water-icon">💧</span></p>
       </div>
     </div>
   </div>

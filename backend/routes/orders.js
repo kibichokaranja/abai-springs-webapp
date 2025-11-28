@@ -45,6 +45,7 @@ const validateOrderData = [
     .isLength({ min: 5, max: 200 })
     .withMessage('Address must be between 5 and 200 characters'),
   body('city')
+    .optional()
     .trim()
     .isLength({ min: 2, max: 50 })
     .withMessage('City must be between 2 and 50 characters'),
@@ -93,11 +94,16 @@ const validateQueryParams = [
 // @route   GET /api/orders
 // @access  Public (temporarily for dashboard testing)
 router.get('/', validateQueryParams, cacheOrders, asyncHandler(async (req, res) => {
-  const { page = 1, limit = 20, status } = req.query;
+  const { page = 1, limit = 20, status, outlet } = req.query;
   
   const query = {};
   if (status) {
     query.status = status;
+  }
+  
+  // Filter by outlet if provided
+  if (outlet) {
+    query.outlet = outlet;
   }
 
   const skip = (page - 1) * limit;
@@ -144,12 +150,18 @@ router.post('/', orderRateLimit, validateOrderData, validate, asyncHandler(async
     city,
     postalCode,
     deliveryOption,
+    deliverySlot,
     paymentMethod,
     orderNotes,
     items,
     totalAmount,
-    outletId
+    outletId,
+    delivery
   } = req.body;
+
+  // Extract city from delivery object if not provided, or use default
+  const resolvedCity = city || delivery?.zoneName || delivery?.city || 'Nairobi';
+  const resolvedPostalCode = postalCode || delivery?.postalCode || '';
 
   // Verify outlet exists if provided
   let outlet = null;
@@ -187,17 +199,20 @@ router.post('/', orderRateLimit, validateOrderData, validate, asyncHandler(async
     }
   }
 
-  // Calculate delivery fee based on option
-  let deliveryFee = 0;
-  switch (deliveryOption) {
-    case 'express':
-      deliveryFee = 500;
-      break;
-    case 'same-day':
-      deliveryFee = 1000;
-      break;
-    default:
-      deliveryFee = 0;
+  // Use deliveryFee from request body if provided, otherwise calculate based on option
+  let deliveryFee = req.body.deliveryFee;
+  if (deliveryFee === undefined || deliveryFee === null) {
+    // Fallback: Calculate delivery fee based on option
+    switch (deliveryOption) {
+      case 'express':
+        deliveryFee = 500;
+        break;
+      case 'same-day':
+        deliveryFee = 1000;
+        break;
+      default:
+        deliveryFee = 0;
+    }
   }
 
   // Validate items array
@@ -233,9 +248,12 @@ router.post('/', orderRateLimit, validateOrderData, validate, asyncHandler(async
       paymentTiming: req.body.paymentTiming || 'now', // Add payment timing
       deliveryAddress: {
         type: 'home',
-        address: `${address}, ${city}, ${postalCode}`
+        address: resolvedPostalCode 
+          ? `${address}, ${resolvedCity}, ${resolvedPostalCode}`
+          : `${address}, ${resolvedCity}`
       },
       deliveryInstructions: orderNotes || '',
+      deliverySlot: deliverySlot || null, // Store the selected delivery time slot
       notes: `Customer: ${customerName}, Email: ${email || 'Not provided'}, Phone: ${phone}`
     };
 
@@ -384,7 +402,7 @@ router.get('/track/phone/:phone', asyncHandler(async (req, res) => {
 // @route   PUT /api/orders/:id/status
 // @access  Public (temporarily for testing)
 router.put('/:id/status', validateOrderId, asyncHandler(async (req, res) => {
-  const { status } = req.body;
+  const { status, paymentStatus, paymentMethod, paymentReference, paymentDate } = req.body;
   
   if (!status) {
     return res.status(400).json({
@@ -401,12 +419,22 @@ router.put('/:id/status', validateOrderId, asyncHandler(async (req, res) => {
     });
   }
 
+  const updateData = { 
+    status,
+    updatedAt: new Date()
+  };
+
+  // If payment confirmation is included, update payment status
+  if (paymentStatus) {
+    updateData.paymentStatus = paymentStatus;
+    if (paymentMethod) updateData.paymentMethod = paymentMethod;
+    if (paymentReference) updateData.paymentReference = paymentReference;
+    if (paymentDate) updateData.paymentDate = new Date(paymentDate);
+  }
+
   const order = await Order.findByIdAndUpdate(
     req.params.id,
-    { 
-      status,
-      updatedAt: new Date()
-    },
+    updateData,
     { new: true, runValidators: true }
   )
   .populate('items.product')

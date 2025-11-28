@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Staff from '../models/Staff.js';
 
 const router = express.Router();
@@ -6,7 +7,7 @@ const router = express.Router();
 // GET all staff members
 router.get('/', async (req, res) => {
   try {
-    const staff = await Staff.find().sort({ createdAt: -1 });
+    const staff = await Staff.find().populate('outlet', 'name address').sort({ createdAt: -1 });
     res.json({
       success: true,
       data: staff,
@@ -25,7 +26,7 @@ router.get('/', async (req, res) => {
 // GET staff member by ID
 router.get('/:id', async (req, res) => {
   try {
-    const staff = await Staff.findById(req.params.id);
+    const staff = await Staff.findById(req.params.id).populate('outlet', 'name address');
     if (!staff) {
       return res.status(404).json({
         success: false,
@@ -51,6 +52,11 @@ router.post('/', async (req, res) => {
   try {
     const staffData = req.body;
     
+    // Normalize email to lowercase
+    if (staffData.email) {
+      staffData.email = staffData.email.toLowerCase().trim();
+    }
+    
     // Check if email already exists
     const existingStaff = await Staff.findOne({ email: staffData.email });
     if (existingStaff) {
@@ -60,13 +66,49 @@ router.post('/', async (req, res) => {
       });
     }
 
+    // Ensure password is provided
+    if (!staffData.password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password is required'
+      });
+    }
+
+    console.log('Creating staff member:', { 
+      name: staffData.name, 
+      email: staffData.email, 
+      role: staffData.role,
+      hasPassword: !!staffData.password,
+      passwordLength: staffData.password ? staffData.password.length : 0
+    });
+
+    // Check MongoDB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.error('MongoDB not connected. ReadyState:', mongoose.connection.readyState);
+      return res.status(503).json({
+        success: false,
+        message: 'Database connection not available. Please try again later.'
+      });
+    }
+
     const newStaff = new Staff(staffData);
     const savedStaff = await newStaff.save();
+    
+    console.log('Staff member saved successfully:', {
+      id: savedStaff._id,
+      email: savedStaff.email,
+      role: savedStaff.role,
+      hasPassword: !!savedStaff.password
+    });
+
+    // Remove password from response
+    const staffResponse = savedStaff.toObject();
+    delete staffResponse.password;
 
     res.status(201).json({
       success: true,
       message: 'Staff member created successfully',
-      data: savedStaff
+      data: staffResponse
     });
   } catch (error) {
     console.error('Error creating staff member:', error);
@@ -238,6 +280,40 @@ router.get('/department/:department', async (req, res) => {
 });
 
 export default router;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

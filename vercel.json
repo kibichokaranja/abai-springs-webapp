@@ -1,10 +1,7 @@
 {
   "version": 2,
+  "buildCommand": "node vercel-build.js",
   "builds": [
-    {
-      "src": "backend/server.js",
-      "use": "@vercel/node"
-    },
     {
       "src": "*.html",
       "use": "@vercel/static"
@@ -28,12 +25,34 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "backend/server.js"
-    },
-    {
       "src": "/(.*)",
       "dest": "/$1"
     }
   ]
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

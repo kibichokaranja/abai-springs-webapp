@@ -112,6 +112,10 @@ const orderSchema = new mongoose.Schema({
     type: String,
     maxlength: [200, 'Delivery instructions cannot exceed 200 characters']
   },
+  deliverySlot: {
+    type: String,
+    maxlength: [100, 'Delivery slot cannot exceed 100 characters']
+  },
   estimatedDeliveryTime: {
     type: Date
   },

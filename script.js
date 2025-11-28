@@ -29,8 +29,8 @@ let outlets = [];
 let products = [];
 let selectedOutlet = null;
 
-// API Base URL
-const API_BASE_URL = 'http://localhost:3001/api';
+// API Base URL - Load from config.js or use default
+const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001/api';
 
 // Add to Cart function is now defined later in the file with proper brand support
 
@@ -480,11 +480,6 @@ function updateCartCount() {
   if (cartCount) cartCount.textContent = cart.reduce((sum, i) => sum + i.qty, 0);
 }
 function addToCart(name, price, brand) {
-  const outlet = document.getElementById('outlet-selector').value;
-  if (!outlet) {
-    showToast('Please select an outlet before adding to cart.');
-    return;
-  }
   let cart = getCartItems();
   // Find image for product
   let img = '';
@@ -504,13 +499,13 @@ function addToCart(name, price, brand) {
   };
   if (brand === 'Sprinkle') img = sprinkleImgs[name];
   else img = abaiImgs[name];
-  // Add or update
-  let idx = cart.findIndex(i => i.name === name && i.outlet === outlet && i.brand === brand);
+  // Add or update (merge by name + brand only; outlet no longer used)
+  let idx = cart.findIndex(i => i.name === name && i.brand === brand);
   if (idx > -1) {
     cart[idx].qty += 1;
     showToast('Increased quantity in cart.');
   } else {
-    cart.push({ name, price, qty: 1, img, outlet, brand });
+    cart.push({ name, price, qty: 1, img, brand });
     showToast('Added to cart!');
   }
   setCartItems(cart);
@@ -573,10 +568,13 @@ if (contactNavLink) {
 function toggleLoginModal(forceClose = false) {
   const modal = document.getElementById('login-modal');
   if (!modal) return;
-  if (modal.style.display === 'flex' || (!forceClose && modal.style.display === 'block')) {
+  
+  if (forceClose || modal.style.display === 'flex' || modal.style.display === 'block') {
+    // Close the modal
     modal.style.display = 'none';
     document.body.style.overflow = '';
   } else {
+    // Open the modal
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     setTimeout(() => {
@@ -758,12 +756,25 @@ function switchBrand(brand) {
 }
 
 // --- User Registration/Login: Connect to Backend ---
-const loginForm = document.querySelector('.login-form');
-if (loginForm) {
-  loginForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
+
+// Handle login form submission
+async function handleLogin(event) {
+  event.preventDefault();
+  
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  
+  // Show loading state
+  const submitBtn = event.target.querySelector('button[type="submit"]');
+  const btnText = submitBtn.querySelector('.btn-text');
+  const btnLoading = submitBtn.querySelector('.btn-loading');
+  
+  if (btnText && btnLoading) {
+    btnText.style.display = 'none';
+    btnLoading.style.display = 'flex';
+  }
+  
+  try {
     // For demo: try login first, if fails, try register
     let res = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
@@ -771,24 +782,248 @@ if (loginForm) {
       body: JSON.stringify({ email, password })
     });
     let data = await res.json();
+    
     if (!data.success) {
-      // Try register
-      res = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name: email.split('@')[0], phone: '0700000000' })
-      });
-      data = await res.json();
+      // Show message that account doesn't exist and suggest registration
+      showToast('Account not found. Please use the "Create Account" option to register.');
+      
+      // Reset button state
+      if (btnText && btnLoading) {
+        btnText.style.display = 'block';
+        btnLoading.style.display = 'none';
+      }
+      return;
     }
+    
     if (data.success && data.data && data.data.token) {
       localStorage.setItem('token', data.data.token);
+      localStorage.setItem('user', JSON.stringify(data.data.user));
       showToast('Login successful!');
+      
+      // Close modal immediately
       toggleLoginModal(true);
+      
+      // Update the UI to show logged in state
+      checkAuthStatus();
+      
+      // Reset form
+      event.target.reset();
     } else {
       showToast(data.message || 'Login/Registration failed');
     }
-  });
+  } catch (error) {
+    console.error('Login error:', error);
+    showToast('Login failed. Please try again.');
+  } finally {
+    // Reset button state
+    if (btnText && btnLoading) {
+      btnText.style.display = 'block';
+      btnLoading.style.display = 'none';
+    }
+  }
 }
+
+// Handle register form submission
+async function handleRegister(event) {
+  event.preventDefault();
+  
+  const name = document.getElementById('register-name').value;
+  const email = document.getElementById('register-email').value;
+  const phone = document.getElementById('register-phone').value;
+  const password = document.getElementById('register-password').value;
+  const confirmPassword = document.getElementById('register-confirm-password').value;
+  
+  // Validate passwords match
+  if (password !== confirmPassword) {
+    showToast('Passwords do not match');
+    return;
+  }
+  
+  // Show loading state
+  const submitBtn = event.target.querySelector('button[type="submit"]');
+  const btnText = submitBtn.querySelector('.btn-text');
+  const btnLoading = submitBtn.querySelector('.btn-loading');
+  
+  if (btnText && btnLoading) {
+    btnText.style.display = 'none';
+    btnLoading.style.display = 'flex';
+  }
+  
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, phone, password })
+    });
+    
+    const data = await res.json();
+    
+    // Check if response is successful
+    if (res.ok && data.success && data.data && data.data.token) {
+      localStorage.setItem('token', data.data.token);
+      localStorage.setItem('user', JSON.stringify(data.data.user));
+      showToast('Account created successfully!');
+      
+      // Close modal immediately
+      toggleLoginModal(true);
+      
+      // Update the UI to show logged in state
+      checkAuthStatus();
+      
+      // Reset form
+      event.target.reset();
+    } else {
+      // Handle error response
+      let errorMessage = 'Registration failed';
+      
+      if (data.message) {
+        errorMessage = data.message;
+      } else if (data.error) {
+        errorMessage = data.error;
+      } else if (data.details) {
+        // Handle validation errors
+        if (data.details.errors && Array.isArray(data.details.errors)) {
+          errorMessage = data.details.errors.map(e => {
+            if (typeof e === 'string') return e;
+            if (e.message) return e.message;
+            if (e.field && e.message) return `${e.field}: ${e.message}`;
+            return JSON.stringify(e);
+          }).join(', ');
+        } else if (typeof data.details === 'string') {
+          errorMessage = data.details;
+        }
+      } else if (data.code === 'VALIDATION_ERROR') {
+        errorMessage = 'Please check your input and try again';
+      }
+      
+      console.error('Registration failed:', data);
+      showToast(errorMessage);
+    }
+  } catch (error) {
+    console.error('Registration error:', error);
+    showToast('Network error. Please check your connection and try again.');
+  } finally {
+    // Reset button state
+    if (btnText && btnLoading) {
+      btnText.style.display = 'block';
+      btnLoading.style.display = 'none';
+    }
+  }
+}
+
+// Toggle between login and register forms
+function toggleRegisterForm() {
+  const loginForm = document.getElementById('login-form');
+  const registerForm = document.getElementById('register-form');
+  const toggleLink = document.getElementById('toggle-register');
+  const passwordRequirements = document.getElementById('password-requirements');
+  
+  if (loginForm && registerForm && toggleLink) {
+    if (loginForm.style.display === 'none') {
+      // Show login form
+      loginForm.style.display = 'block';
+      registerForm.style.display = 'none';
+      toggleLink.textContent = 'Create Account';
+      // Hide password requirements when showing login form
+      if (passwordRequirements) {
+        passwordRequirements.style.display = 'none';
+      }
+    } else {
+      // Show register form
+      loginForm.style.display = 'none';
+      registerForm.style.display = 'block';
+      toggleLink.textContent = 'Login';
+      // Show password requirements if password field has value
+      const passwordInput = document.getElementById('register-password');
+      if (passwordRequirements && passwordInput && passwordInput.value) {
+        passwordRequirements.style.display = 'block';
+        validatePasswordRealtime(passwordInput.value);
+      }
+    }
+  }
+}
+
+// Real-time password validation
+function validatePasswordRealtime(password) {
+  const requirements = {
+    length: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /\d/.test(password),
+    special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+  };
+
+  // Update requirement indicators
+  const reqLength = document.getElementById('req-length');
+  const reqUppercase = document.getElementById('req-uppercase');
+  const reqLowercase = document.getElementById('req-lowercase');
+  const reqNumber = document.getElementById('req-number');
+  const reqSpecial = document.getElementById('req-special');
+
+  if (reqLength) {
+    reqLength.className = `password-req-item ${requirements.length ? 'valid' : 'invalid'}`;
+  }
+  if (reqUppercase) {
+    reqUppercase.className = `password-req-item ${requirements.uppercase ? 'valid' : 'invalid'}`;
+  }
+  if (reqLowercase) {
+    reqLowercase.className = `password-req-item ${requirements.lowercase ? 'valid' : 'invalid'}`;
+  }
+  if (reqNumber) {
+    reqNumber.className = `password-req-item ${requirements.number ? 'valid' : 'invalid'}`;
+  }
+  if (reqSpecial) {
+    reqSpecial.className = `password-req-item ${requirements.special ? 'valid' : 'invalid'}`;
+  }
+
+  return Object.values(requirements).every(req => req);
+}
+
+// Add event listener for toggle register link
+document.addEventListener('DOMContentLoaded', function() {
+  const toggleRegisterLink = document.getElementById('toggle-register');
+  if (toggleRegisterLink) {
+    toggleRegisterLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      toggleRegisterForm();
+    });
+  }
+
+  // Add real-time password validation
+  const passwordInput = document.getElementById('register-password');
+  const passwordRequirements = document.getElementById('password-requirements');
+  
+  if (passwordInput && passwordRequirements) {
+    // Show requirements when password field is focused
+    passwordInput.addEventListener('focus', function() {
+      passwordRequirements.style.display = 'block';
+    });
+
+    // Hide requirements when password field is empty and not focused
+    passwordInput.addEventListener('blur', function() {
+      if (!passwordInput.value) {
+        passwordRequirements.style.display = 'none';
+      }
+    });
+
+    // Real-time validation as user types
+    passwordInput.addEventListener('input', function() {
+      const password = passwordInput.value;
+      if (password) {
+        passwordRequirements.style.display = 'block';
+        validatePasswordRealtime(password);
+      } else {
+        // Reset all requirements to invalid when empty
+        const reqItems = passwordRequirements.querySelectorAll('.password-req-item');
+        reqItems.forEach(item => {
+          item.className = 'password-req-item invalid';
+        });
+      }
+    });
+  }
+});
+
+// Note: Event listener is handled by HTML onsubmit attribute
 
 // Products dropdown logic
 function toggleProductsDropdown(event) {
@@ -922,36 +1157,11 @@ if (viewCartBtn && navCartIcon) {
 }
 
 window.addEventListener('DOMContentLoaded', function() {
-  // Disable all Add to Cart buttons initially
+  // Always enable Add to Cart buttons (no outlet required)
   document.querySelectorAll('.modern-add-to-cart').forEach(btn => {
-    btn.disabled = true;
-    btn.classList.add('disabled-add-to-cart');
+    btn.disabled = false;
+    btn.classList.remove('disabled-add-to-cart');
   });
-  // Enable Add to Cart buttons when a valid outlet is selected
-  const outletSelector = document.getElementById('outlet-selector');
-  if (outletSelector) {
-    outletSelector.addEventListener('change', function() {
-      if (outletSelector.value) {
-        document.querySelectorAll('.modern-add-to-cart').forEach(btn => {
-          btn.disabled = false;
-          btn.classList.remove('disabled-add-to-cart');
-        });
-      } else {
-        document.querySelectorAll('.modern-add-to-cart').forEach(btn => {
-          btn.disabled = true;
-          btn.classList.add('disabled-add-to-cart');
-        });
-      }
-    });
-  }
-  // Ensure the default option is always disabled and selected
-  if (outletSelector) {
-    const defaultOption = outletSelector.querySelector('option[value=""]');
-    if (defaultOption) {
-      defaultOption.disabled = true;
-      defaultOption.selected = true;
-    }
-  }
 });
 
 // Authentication Functions
@@ -1002,10 +1212,34 @@ document.addEventListener('click', function(event) {
 });
 
 // Show user profile
-function showProfile() {
+async function showProfile() {
   const user = localStorage.getItem('user');
-  if (user) {
-    const userData = JSON.parse(user);
+  const token = localStorage.getItem('token');
+  
+  if (user && token) {
+    let userData = JSON.parse(user);
+    
+    try {
+      // Fetch fresh user data from backend
+      const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const profileData = await response.json();
+        if (profileData.success && profileData.data) {
+          // Update localStorage with fresh data
+          localStorage.setItem('user', JSON.stringify(profileData.data));
+          userData = profileData.data;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      // Continue with cached data if fetch fails
+    }
     
     // Populate profile modal with user data
     document.getElementById('profile-name').textContent = userData.name || 'Not provided';
@@ -1015,6 +1249,136 @@ function showProfile() {
     // Show the profile modal
     openProfileModal();
   }
+}
+
+// Open edit profile modal
+function openEditProfileModal() {
+  const token = localStorage.getItem('token');
+  const user = localStorage.getItem('user');
+  
+  if (!token || !user) {
+    showToast('Please log in to update your profile');
+    return;
+  }
+  
+  const userData = JSON.parse(user);
+  
+  // Populate the edit form with current data
+  document.getElementById('edit-profile-name').value = userData.name || '';
+  document.getElementById('edit-profile-phone').value = userData.phone || '';
+  
+  // Show the edit modal
+  const modal = document.getElementById('edit-profile-modal');
+  if (!modal) return;
+
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+
+  // Add fade-in animation
+  setTimeout(() => {
+    modal.classList.add('show');
+  }, 10);
+}
+
+// Close edit profile modal
+function closeEditProfileModal() {
+  const modal = document.getElementById('edit-profile-modal');
+  if (!modal) return;
+
+  modal.classList.remove('show');
+  setTimeout(() => {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }, 300);
+}
+
+// Handle edit profile form submission
+async function handleEditProfileSubmit(event) {
+  event.preventDefault();
+  
+  const token = localStorage.getItem('token');
+  const user = localStorage.getItem('user');
+  
+  if (!token || !user) {
+    showToast('Please log in to update your profile');
+    return;
+  }
+  
+  const newName = document.getElementById('edit-profile-name').value.trim();
+  const newPhone = document.getElementById('edit-profile-phone').value.trim();
+  
+  if (!newName || !newPhone) {
+    showToast('Please fill in all fields');
+    return;
+  }
+  
+  // Show loading state
+  const submitBtn = event.target.querySelector('button[type="submit"]');
+  const btnText = submitBtn.querySelector('.btn-text');
+  const btnLoading = submitBtn.querySelector('.btn-loading');
+  
+  if (btnText && btnLoading) {
+    btnText.style.display = 'none';
+    btnLoading.style.display = 'flex';
+  }
+  
+  submitBtn.disabled = true;
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: newName,
+        phone: newPhone
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Update localStorage with new data
+      const userData = JSON.parse(user);
+      const updatedUserData = {
+        ...userData,
+        name: newName,
+        phone: newPhone
+      };
+      localStorage.setItem('user', JSON.stringify(updatedUserData));
+      
+      // Update UI
+      checkAuthStatus();
+      showToast('Profile updated successfully!');
+      
+      // Close edit modal
+      closeEditProfileModal();
+      
+      // Refresh profile modal if it's open
+      if (document.getElementById('profile-modal').style.display === 'flex') {
+        showProfile();
+      }
+    } else {
+      showToast(data.message || 'Failed to update profile');
+    }
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    showToast('Failed to update profile. Please try again.');
+  } finally {
+    // Reset button state
+    if (btnText && btnLoading) {
+      btnText.style.display = 'flex';
+      btnLoading.style.display = 'none';
+    }
+    submitBtn.disabled = false;
+  }
+}
+
+// Update user profile (legacy function - now opens the edit modal)
+function updateProfile() {
+  openEditProfileModal();
 }
 
 // Open profile modal
@@ -1378,6 +1742,30 @@ document.addEventListener('DOMContentLoaded', function() {
         closeProfileModal();
       }
     });
+  }
+
+  // Add event listeners for edit profile modal
+  const editProfileModal = document.getElementById('edit-profile-modal');
+  const editProfileForm = document.getElementById('edit-profile-form');
+  
+  if (editProfileModal) {
+    // Close modal when clicking on overlay
+    editProfileModal.addEventListener('click', function(event) {
+      if (event.target === editProfileModal) {
+        closeEditProfileModal();
+      }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape' && editProfileModal.style.display === 'flex') {
+        closeEditProfileModal();
+      }
+    });
+  }
+
+  if (editProfileForm) {
+    editProfileForm.addEventListener('submit', handleEditProfileSubmit);
   }
 
   // Add event listeners for orders modal

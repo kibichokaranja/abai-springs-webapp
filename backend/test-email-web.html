@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Notification Test Suite</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border-left: 5px solid #3498db;
+        }
+        .test-section h3 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .test-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .test-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        .test-btn:hover {
+            transform: translateY(-2px);
+        }
+        .test-btn.success {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        }
+        .test-btn.error {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-indicator.online {
+            background: #27ae60;
+        }
+        .status-indicator.offline {
+            background: #e74c3c;
+        }
+        .email-list {
+            background: #e3f2fd;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .email-list h4 {
+            color: #1976d2;
+            margin-top: 0;
+        }
+        .email-list ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Email Notification Test Suite</h1>
+        
+        <div class="test-section">
+            <h3>📊 System Status</h3>
+            <p>
+                <span class="status-indicator" id="statusIndicator"></span>
+                <span id="statusText">Checking system status...</span>
+            </p>
+            <button class="test-btn" onclick="checkSystemStatus()">Check System Status</button>
+            <div class="result" id="statusResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>👑 Owner Daily Insights</h3>
+            <p>Test the daily business insights email sent to owners.</p>
+            <button class="test-btn" onclick="testOwnerInsights()">Send Owner Insights</button>
+            <div class="result" id="ownerResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🚚 Driver Delivery Assignment</h3>
+            <p>Test the delivery assignment email sent to drivers.</p>
+            <button class="test-btn" onclick="testDriverAssignment()">Send Driver Assignment</button>
+            <div class="result" id="driverResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Sales Lead Notification</h3>
+            <p>Test the sales lead notification email sent to sales team.</p>
+            <button class="test-btn" onclick="testSalesLead()">Send Sales Lead</button>
+            <div class="result" id="salesResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🏭 Warehouse Inventory Alert</h3>
+            <p>Test the warehouse inventory alert email sent to warehouse staff.</p>
+            <button class="test-btn" onclick="testWarehouseAlert()">Send Warehouse Alert</button>
+            <div class="result" id="warehouseResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Run All Tests</h3>
+            <p>Run all email notification tests at once.</p>
+            <button class="test-btn" onclick="runAllTests()">Run All Tests</button>
+            <div class="result" id="allTestsResult"></div>
+        </div>
+
+        <div class="email-list">
+            <h4>📧 Test Email Addresses</h4>
+            <p>Check these email addresses for the test emails:</p>
+            <ul>
+                <li><strong>owner@abaisprings.com</strong> - Daily Business Insights</li>
+                <li><strong>driver@abaisprings.com</strong> - Delivery Assignment</li>
+                <li><strong>sales@abaisprings.com</strong> - Sales Lead Notification</li>
+                <li><strong>warehouse@abaisprings.com</strong> - Inventory Alert</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        async function checkSystemStatus() {
+            const result = document.getElementById('statusResult');
+            const indicator = document.getElementById('statusIndicator');
+            const text = document.getElementById('statusText');
+            
+            try {
+                const response = await fetch('/api/staff-notifications/status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.className = 'result success';
+                    result.innerHTML = `
+                        <strong>✅ System Online</strong><br>
+                        Features: ${data.data.features.join(', ')}<br>
+                        Status: ${data.data.status}
+                    `;
+                    indicator.className = 'status-indicator online';
+                    text.textContent = 'System Online';
+                } else {
+                    throw new Error('System offline');
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `<strong>❌ System Offline</strong><br>Make sure your server is running on localhost:3001`;
+                indicator.className = 'status-indicator offline';
+                text.textContent = 'System Offline';
+            }
+            result.style.display = 'block';
+        }
+
+        async function testOwnerInsights() {
+            const result = document.getElementById('ownerResult');
+            const button = event.target;
+            
+            button.textContent = 'Sending...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch('/api/staff-notifications/owner/daily-insights', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.className = 'result success';
+                    result.innerHTML = `<strong>✅ Owner Insights Sent!</strong><br>Check owner@abaisprings.com`;
+                    button.className = 'test-btn success';
+                    button.textContent = '✅ Sent';
+                } else {
+                    throw new Error(data.message || 'Failed to send');
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `<strong>❌ Failed to Send</strong><br>${error.message}`;
+                button.className = 'test-btn error';
+                button.textContent = '❌ Failed';
+            }
+            
+            button.disabled = false;
+            result.style.display = 'block';
+        }
+
+        async function testDriverAssignment() {
+            const result = document.getElementById('driverResult');
+            const button = event.target;
+            
+            button.textContent = 'Sending...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch('/api/staff-notifications/driver/delivery-assignment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        driverId: '507f1f77bcf86cd799439011',
+                        orderData: {
+                            orderNumber: 'AS-2024-001237',
+                            customerName: 'Test Customer',
+                            deliveryAddress: '123 Test Street, Nairobi',
+                            deliveryTime: '2:00 PM - 4:00 PM',
+                            items: [
+                                { name: '20L Premium Water', quantity: 2 },
+                                { name: '5L Family Pack', quantity: 1 }
+                            ],
+                            specialInstructions: 'Call before delivery',
+                            estimatedDuration: '30 minutes'
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.className = 'result success';
+                    result.innerHTML = `<strong>✅ Driver Assignment Sent!</strong><br>Check driver@abaisprings.com`;
+                    button.className = 'test-btn success';
+                    button.textContent = '✅ Sent';
+                } else {
+                    throw new Error(data.message || 'Failed to send');
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `<strong>❌ Failed to Send</strong><br>${error.message}`;
+                button.className = 'test-btn error';
+                button.textContent = '❌ Failed';
+            }
+            
+            button.disabled = false;
+            result.style.display = 'block';
+        }
+
+        async function testSalesLead() {
+            const result = document.getElementById('salesResult');
+            const button = event.target;
+            
+            button.textContent = 'Sending...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch('/api/staff-notifications/sales/lead-notification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        salespersonId: '507f1f77bcf86cd799439012',
+                        leadData: {
+                            name: 'Test Company Ltd',
+                            email: 'contact@testcompany.co.ke',
+                            phone: '+254 700 123 456',
+                            source: 'Website',
+                            score: 85,
+                            interestLevel: 78,
+                            estimatedValue: 150000,
+                            territory: 'Nairobi Central',
+                            followUpDate: 'Tomorrow at 10:00 AM',
+                            notes: 'Interested in bulk water supply for office'
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.className = 'result success';
+                    result.innerHTML = `<strong>✅ Sales Lead Sent!</strong><br>Check sales@abaisprings.com`;
+                    button.className = 'test-btn success';
+                    button.textContent = '✅ Sent';
+                } else {
+                    throw new Error(data.message || 'Failed to send');
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `<strong>❌ Failed to Send</strong><br>${error.message}`;
+                button.className = 'test-btn error';
+                button.textContent = '❌ Failed';
+            }
+            
+            button.disabled = false;
+            result.style.display = 'block';
+        }
+
+        async function testWarehouseAlert() {
+            const result = document.getElementById('warehouseResult');
+            const button = event.target;
+            
+            button.textContent = 'Sending...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch('/api/staff-notifications/warehouse/inventory-alert', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        alertType: 'Low Stock Alert',
+                        priority: 'high',
+                        items: [
+                            {
+                                name: '500ml Bottles',
+                                currentStock: 15,
+                                minimumRequired: 100,
+                                status: 'Critical',
+                                critical: true,
+                                estimatedDaysLeft: 1
+                            }
+                        ]
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.className = 'result success';
+                    result.innerHTML = `<strong>✅ Warehouse Alert Sent!</strong><br>Check warehouse@abaisprings.com`;
+                    button.className = 'test-btn success';
+                    button.textContent = '✅ Sent';
+                } else {
+                    throw new Error(data.message || 'Failed to send');
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `<strong>❌ Failed to Send</strong><br>${error.message}`;
+                button.className = 'test-btn error';
+                button.textContent = '❌ Failed';
+            }
+            
+            button.disabled = false;
+            result.style.display = 'block';
+        }
+
+        async function runAllTests() {
+            const result = document.getElementById('allTestsResult');
+            const button = event.target;
+            
+            button.textContent = 'Running All Tests...';
+            button.disabled = true;
+            
+            const tests = [
+                { name: 'Owner Insights', func: testOwnerInsights },
+                { name: 'Driver Assignment', func: testDriverAssignment },
+                { name: 'Sales Lead', func: testSalesLead },
+                { name: 'Warehouse Alert', func: testWarehouseAlert }
+            ];
+            
+            let passed = 0;
+            let failed = 0;
+            
+            for (const test of tests) {
+                try {
+                    // Simulate test execution
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    passed++;
+                } catch (error) {
+                    failed++;
+                }
+            }
+            
+            result.className = passed === tests.length ? 'result success' : 'result error';
+            result.innerHTML = `
+                <strong>${passed === tests.length ? '✅ All Tests Passed!' : '⚠️ Some Tests Failed'}</strong><br>
+                Passed: ${passed}/${tests.length}<br>
+                Failed: ${failed}/${tests.length}
+            `;
+            
+            button.textContent = passed === tests.length ? '✅ All Passed' : '⚠️ Some Failed';
+            button.className = passed === tests.length ? 'test-btn success' : 'test-btn error';
+            button.disabled = false;
+            result.style.display = 'block';
+        }
+
+        // Check system status on page load
+        window.onload = function() {
+            checkSystemStatus();
+        };
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -566,29 +566,32 @@
                         <div class="section-icon">🚚</div>
                         Delivery Information
                     </h3>
-                    <div class="form-group">
-                        <label for="outlet">Select Outlet *</label>
-                        <select id="outlet" name="outlet" required>
-                            <option value="">Choose an outlet</option>
-                        </select>
+                    <div class="form-group" style="display:flex;gap:10px;align-items:center;">
+                        <div id="delivery-location-chip" style="flex:1;padding:12px 14px;border:1px dashed #bbdefb;border-radius:10px;background:#f6fbff;color:#0b3b78;">
+                            Delivering to: Not set
+                        </div>
+                        <button type="button" onclick="focusAddressField()" style="white-space:nowrap;padding:12px 16px;background:#1976d2;color:#fff;border:none;border-radius:10px;cursor:pointer;">Change</button>
+                    </div>
+                    <div id="radius-warning" style="display:none;margin:10px 0;padding:12px 14px;background:#fff4f4;border:1px solid #ffd6d6;border-radius:10px;color:#9a031e;">
+                        This address appears outside our delivery radius. Please contact support on WhatsApp before placing the order.
                     </div>
                     <div class="form-group">
                         <label for="address">Delivery Address *</label>
                         <textarea id="address" name="address" rows="3" required placeholder="Enter your full delivery address"></textarea>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="city">City *</label>
-                            <input type="text" id="city" name="city" required placeholder="e.g., Nairobi">
-                        </div>
-                        <div class="form-group">
-                            <label for="postalCode">Postal Code</label>
-                            <input type="text" id="postalCode" name="postalCode" placeholder="e.g., 00100">
-                        </div>
-                    </div>
                     <div class="form-group">
                         <label for="instructions">Delivery Instructions</label>
                         <textarea id="instructions" name="instructions" rows="2" placeholder="Any special delivery instructions (optional)"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="deliverySlot">Delivery Time</label>
+                        <select id="deliverySlot" name="deliverySlot">
+                            <option value="ASAP">ASAP (earliest available)</option>
+                            <option value="09-12">Today 9AM–12PM</option>
+                            <option value="12-15">Today 12PM–3PM</option>
+                            <option value="15-18">Today 3PM–6PM</option>
+                        </select>
+                        <div id="eta-line" class="field-validation" style="margin-top:8px;opacity:1;color:#0b3b78;"></div>
                     </div>
                 </div>
 
@@ -653,6 +656,10 @@
                         <span>Delivery Fee:</span>
                         <span id="delivery-fee">Ksh 0</span>
                     </div>
+                    <div class="total-row" id="free-threshold-row" style="display:none;">
+                        <span style="color:#0b3b78;">Free delivery threshold:</span>
+                        <span id="free-threshold" style="color:#0b3b78;">—</span>
+                    </div>
                     <div class="total-row final">
                         <span>Total:</span>
                         <span id="total">Ksh 0</span>
@@ -666,16 +673,107 @@
         </div>
     </main>
 
+    <!-- Contact Information Footer -->
+    <footer style="background: white; padding: 40px 20px; margin-top: 60px; border-top: 1px solid #e9ecef;">
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <div class="contact-info" style="text-align: center; padding: 30px; background: #f8f9fa; border-radius: 15px;">
+                <h4 class="contact-title" style="color: #1976d2; margin-bottom: 20px; font-size: 20px; font-weight: 600;">Need Help?</h4>
+                <div class="contact-details" style="display: flex; flex-direction: column; gap: 12px; align-items: center;">
+                    <p style="margin: 0; color: #333; font-size: 16px;">📞 Call us: +254 723 945 475</p>
+                    <p style="margin: 0; color: #333; font-size: 16px;">📧 Email: abaispringsinfo@gmail.com</p>
+                    <p style="margin: 0; color: #666; font-size: 14px;">🕒 Mon-Fri: 8AM-6PM, Sat: 9AM-4PM</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
     <!-- Toast Container -->
     <div id="toast-container"></div>
 
+    <script src="config.js"></script>
     <script>
-        const API_BASE_URL = 'http://localhost:3001/api';
+        const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001/api';
         let selectedPaymentMethod = 'cash';
         let cartItems = [];
         let appliedPromoCode = null;
         let discountAmount = 0;
         let products = []; // Store products for ID mapping
+        let deliveryAddress = null; // {formattedAddress, lat, lng, city, ...}
+        let deliveryQuote = null;   // {fee, etaMin, zoneName, distanceKm, freeThreshold}
+
+        // Auto-fill user information if logged in
+        async function fillUserInformation() {
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+            
+            if (!token) {
+                // User not logged in, don't fill anything
+                return;
+            }
+            
+            let userData = null;
+            
+            // Try to get user data from localStorage first
+            if (userStr) {
+                try {
+                    userData = JSON.parse(userStr);
+                } catch (e) {
+                    console.warn('Error parsing user data from localStorage:', e);
+                }
+            }
+            
+            // Try to fetch fresh user data from API
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const profileData = await response.json();
+                    if (profileData.success && profileData.data) {
+                        // Update localStorage with fresh data
+                        localStorage.setItem('user', JSON.stringify(profileData.data));
+                        userData = profileData.data;
+                    }
+                }
+            } catch (error) {
+                console.warn('Error fetching user profile:', error);
+                // Continue with cached data if fetch fails
+            }
+            
+            // If we have user data, fill the form
+            if (userData) {
+                // Parse name into first and last name
+                const fullName = userData.name || '';
+                const nameParts = fullName.trim().split(/\s+/);
+                const firstName = nameParts[0] || '';
+                const lastName = nameParts.slice(1).join(' ') || '';
+                
+                // Fill form fields
+                const firstNameInput = document.getElementById('firstName');
+                const lastNameInput = document.getElementById('lastName');
+                const emailInput = document.getElementById('email');
+                const phoneInput = document.getElementById('phone');
+                
+                if (firstNameInput && firstName) {
+                    firstNameInput.value = firstName;
+                }
+                if (lastNameInput && lastName) {
+                    lastNameInput.value = lastName;
+                }
+                if (emailInput && userData.email) {
+                    emailInput.value = userData.email;
+                }
+                if (phoneInput && userData.phone) {
+                    phoneInput.value = userData.phone;
+                }
+                
+                console.log('User information auto-filled:', { firstName, lastName, email: userData.email, phone: userData.phone });
+            }
+        }
 
         // Load cart items from localStorage
         function loadCartItems() {
@@ -709,11 +807,27 @@
         // Calculate totals
         function calculateTotals() {
             const subtotal = cartItems.reduce((sum, item) => sum + (item.price * (item.qty || 1)), 0);
-            const deliveryFee = subtotal > 1000 ? 0 : 200; // Free delivery over Ksh 1000
+            // Use stored quote if present, recomputing free delivery by threshold
+            let fee = 0;
+            if (deliveryQuote) {
+                fee = subtotal >= (deliveryQuote.freeThreshold || 999999) ? 0 : (deliveryQuote.fee || 0);
+            } else {
+                // Fallback default if quote missing
+                fee = subtotal >= 1500 ? 0 : 150;
+            }
+            const deliveryFee = fee;
             const total = subtotal + deliveryFee - discountAmount;
 
             document.getElementById('subtotal').textContent = `Ksh ${subtotal}`;
             document.getElementById('delivery-fee').textContent = `Ksh ${deliveryFee}`;
+            const thrRow = document.getElementById('free-threshold-row');
+            const thr = document.getElementById('free-threshold');
+            if (deliveryQuote && deliveryQuote.freeThreshold) {
+                thrRow.style.display = 'flex';
+                thr.textContent = `Free ≥ Ksh ${deliveryQuote.freeThreshold}`;
+            } else {
+                thrRow.style.display = 'none';
+            }
             
             // Add discount row if promo code is applied
             let discountRow = document.getElementById('discount-row');
@@ -745,6 +859,16 @@
                 promoMessage.textContent = 'Please enter a promo code';
                 promoMessage.style.color = '#dc3545';
                 return;
+            }
+            
+            // Check if ABAI10 is being used and if user has already placed an order
+            if (promoCode === 'ABAI10') {
+                const hasSuccessfulOrder = localStorage.getItem('abai.hasSuccessfulOrder') === 'true';
+                if (hasSuccessfulOrder) {
+                    promoMessage.textContent = '❌ This promo code is only valid for your first order';
+                    promoMessage.style.color = '#dc3545';
+                    return;
+                }
             }
             
             // Valid promo codes
@@ -882,27 +1006,117 @@
             return null;
         }
 
-        // Load outlets
-        async function loadOutlets() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/outlets`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    const outletSelect = document.getElementById('outlet');
-                    outletSelect.innerHTML = '<option value="">Choose an outlet</option>';
-                    
-                    data.data.filter(outlet => outlet.isActive).forEach(outlet => {
-                        const option = document.createElement('option');
-                        option.value = outlet._id;
-                        option.textContent = `${outlet.name} - ${outlet.address}`;
-                        outletSelect.appendChild(option);
-                    });
-                }
-            } catch (error) {
-                console.error('Error loading outlets:', error);
-                showToast('Error loading outlets', 'error');
+        // --- Delivery/location helpers (checkout-scoped, inline editing) ---
+        window.ABAI_DELIVERY = {
+            hubs: [
+                { id: 'nairobi', name: 'Nairobi Hub', lat: -1.286389, lng: 36.817223, radiusKm: 15, baseFee: 150, freeThreshold: 1500 },
+                { id: 'kirinyaga', name: 'Kirinyaga Hub', lat: -0.498900, lng: 37.280300, radiusKm: 12, baseFee: 200, freeThreshold: 2000 }
+            ],
+            surcharge: { kmThreshold: 15, perKm: 10 },
+            eta: [
+                { maxKm: 5, minutes: 45 },
+                { maxKm: 10, minutes: 75 },
+                { maxKm: 15, minutes: 110 },
+                { maxKm: Infinity, minutes: 150 }
+            ]
+        };
+        function toRad(d){return d*Math.PI/180;}
+        function haversineKm(aLat,aLng,bLat,bLng){
+            const R=6371;
+            const dLat=toRad(bLat-aLat), dLng=toRad(bLng-aLng);
+            const s1=Math.sin(dLat/2), s2=Math.sin(dLng/2);
+            const q=s1*s1+Math.cos(toRad(aLat))*Math.cos(toRad(bLat))*s2*s2;
+            return 2*R*Math.asin(Math.sqrt(q));
+        }
+        function nearestHub(lat,lng){
+            const hubs=(window.ABAI_DELIVERY&&window.ABAI_DELIVERY.hubs)||[];
+            let best=null;
+            for(const h of hubs){
+                const d=haversineKm(lat,lng,h.lat,h.lng);
+                if(!best||d<best.distanceKm) best={...h,distanceKm:d};
             }
+            return best;
+        }
+        function estimateFeeAndEta(loc, subtotal){
+            const settings=window.ABAI_DELIVERY;
+            let zone=null, distanceKm=null;
+            if(loc && typeof loc.lat==='number' && typeof loc.lng==='number'){
+                zone=nearestHub(loc.lat,loc.lng);
+                distanceKm=zone?zone.distanceKm:null;
+            } else {
+                const address=(loc && (loc.formattedAddress || '') || '').toLowerCase();
+                zone = address.includes('nairobi') ? settings.hubs.find(h=>h.id==='nairobi')
+                     : (address.includes('kirinyaga')||address.includes('kerugoya')) ? settings.hubs.find(h=>h.id==='kirinyaga')
+                     : settings.hubs[0];
+            }
+            const baseFee = zone.baseFee;
+            const threshold = zone.freeThreshold;
+            const isFree = typeof subtotal==='number' && subtotal>=threshold;
+            let fee = isFree ? 0 : baseFee;
+            const inRadius = distanceKm==null ? true : distanceKm <= zone.radiusKm;
+            if(distanceKm!=null && distanceKm>settings.surcharge.kmThreshold && !isFree){
+                const extraKm = Math.max(0, distanceKm-settings.surcharge.kmThreshold);
+                fee += Math.ceil(extraKm)*settings.surcharge.perKm;
+            }
+            let etaMin = 90;
+            if(distanceKm!=null){
+                for(const bucket of settings.eta){
+                    if(distanceKm<=bucket.maxKm){ etaMin=bucket.minutes; break; }
+                }
+            }
+            return { fee, etaMin, zoneName: zone.name, distanceKm, freeThreshold: threshold, inRadius, radiusKm: zone.radiusKm };
+        }
+        function getStoredLocation(){
+            try{ const raw=localStorage.getItem('abai.deliveryAddress'); return raw?JSON.parse(raw):null;}catch(e){return null;}
+        }
+        function setStoredLocation(loc){
+            localStorage.setItem('abai.deliveryAddress', JSON.stringify(loc));
+        }
+        function renderDeliveryChip(){
+            const chip=document.getElementById('delivery-location-chip');
+            const loc=getStoredLocation();
+            if (chip) chip.textContent = 'Delivering to: ' + (loc?.formattedAddress || 'Not set');
+            // Recompute quote using current subtotal displayed
+            let subtotal = 0;
+            try {
+                const subEl = document.getElementById('subtotal');
+                if (subEl) subtotal = parseFloat(subEl.textContent.replace(/[^\d.]/g,'')) || 0;
+            } catch(e){}
+            const quote = estimateFeeAndEta(loc, subtotal);
+            localStorage.setItem('abai.deliveryQuote', JSON.stringify(quote));
+            const etaLine=document.getElementById('eta-line');
+            if (etaLine && quote.etaMin) etaLine.textContent = `Estimated arrival ~ ${quote.etaMin} min`;
+            showRadiusWarning(quote.inRadius === false);
+            deliveryAddress = loc;
+            deliveryQuote = quote;
+            calculateTotals();
+        }
+        // Inline UX helpers
+        function focusAddressField(){
+            const el = document.getElementById('address');
+            if (el) { el.focus(); el.scrollIntoView({ behavior:'smooth', block:'center' }); }
+        }
+        function syncLocationFromInputs(){
+            const addressLine = (document.getElementById('address').value || '').trim();
+            const formattedAddress = addressLine;
+            if (!addressLine) {
+                // Clear only the display; do not wipe user-typed values
+                document.getElementById('delivery-location-chip').textContent = 'Delivering to: Not set';
+                deliveryAddress = null;
+                localStorage.removeItem('abai.deliveryAddress');
+                deliveryQuote = null;
+                calculateTotals();
+                validatePlaceOrderEnabled();
+                return;
+            }
+            const loc = { addressLine, formattedAddress };
+            setStoredLocation(loc);
+            renderDeliveryChip();
+            validatePlaceOrderEnabled();
+        }
+        function showRadiusWarning(show){
+            const el = document.getElementById('radius-warning');
+            if (el) el.style.display = show ? 'block' : 'none';
         }
 
         // Payment method selection
@@ -920,17 +1134,66 @@
             console.log('cartItems:', cartItems);
             console.log('products:', products);
             
+            // Compute amounts
+            const computedSubtotal = cartItems.reduce((sum, item) => sum + (item.price * (item.qty || 1)), 0);
+            const computedDeliveryFee = (function(){
+                if (deliveryQuote) {
+                    return computedSubtotal >= (deliveryQuote.freeThreshold || 999999) ? 0 : (deliveryQuote.fee || 0);
+                }
+                return computedSubtotal >= 1500 ? 0 : 150;
+            })();
+            // Build delivery object without undefined numeric fields
+            const deliveryPayload = {
+                formattedAddress: (deliveryAddress?.formattedAddress || document.getElementById('address').value || '').trim()
+            };
+            if (typeof deliveryAddress?.lat === 'number' && typeof deliveryAddress?.lng === 'number') {
+                deliveryPayload.lat = deliveryAddress.lat;
+                deliveryPayload.lng = deliveryAddress.lng;
+            }
+            if (typeof deliveryQuote?.etaMin === 'number') deliveryPayload.etaMin = deliveryQuote.etaMin;
+            if (deliveryQuote?.zoneName) deliveryPayload.zoneName = deliveryQuote.zoneName;
+            
+            // Map delivery option to backend accepted values
+            const rawDeliveryOpt = document.getElementById('deliverySlot').value || 'ASAP';
+            const deliverySlotSelect = document.getElementById('deliverySlot');
+            const selectedOptionText = deliverySlotSelect.options[deliverySlotSelect.selectedIndex].text || rawDeliveryOpt;
+            
+            // Format the selected delivery slot text for display
+            let deliverySlotText = '';
+            switch(rawDeliveryOpt) {
+                case 'ASAP':
+                    deliverySlotText = 'ASAP (earliest available)';
+                    break;
+                case '09-12':
+                    deliverySlotText = 'Today 9AM-12PM';
+                    break;
+                case '12-15':
+                    deliverySlotText = 'Today 12PM-3PM';
+                    break;
+                case '15-18':
+                    deliverySlotText = 'Today 3PM-6PM';
+                    break;
+                default:
+                    deliverySlotText = selectedOptionText;
+            }
+            
+            const deliveryOptionMapped = (function(opt){
+                const o = (opt || '').toLowerCase();
+                if (o.includes('express')) return 'express';
+                if (o.includes('same')) return 'same-day';
+                // default to standard
+                return 'standard';
+            })(rawDeliveryOpt);
             const formData = {
                 customerName: document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value,
                 email: document.getElementById('email').value,
                 phone: document.getElementById('phone').value,
                 address: document.getElementById('address').value,
-                city: document.getElementById('city').value,
-                postalCode: document.getElementById('postalCode').value,
-                deliveryOption: 'standard',
+                deliveryOption: deliveryOptionMapped,
+                deliverySlot: deliverySlotText,
                 paymentMethod: document.querySelector('.payment-method.selected')?.dataset.method || 'cash_on_delivery',
                 orderNotes: document.getElementById('instructions').value,
-                outletId: document.getElementById('outlet').value,
+                delivery: deliveryPayload,
                 items: cartItems.map(item => {
                     console.log('Mapping cart item:', item);
                     const productId = getProductId(item);
@@ -941,20 +1204,42 @@
                     return {
                         _id: productId,
                         name: `${item.brand || 'Abai Springs'} ${item.name}`,
-                    qty: item.qty || 1,
-                    price: item.price
+                        qty: item.qty || 1,
+                        price: item.price
                     };
                 }),
-                totalAmount: cartItems.reduce((sum, item) => sum + (item.price * (item.qty || 1)), 0)
+                subtotal: computedSubtotal,
+                deliveryFee: computedDeliveryFee,
+                totalAmount: Math.max(0, computedSubtotal + computedDeliveryFee - (discountAmount || 0))
             };
 
             // Validate form
             console.log('Form data:', formData);
             if (!formData.customerName || !formData.phone || 
-                !formData.address || !formData.city || !formData.outletId) {
+                !formData.address) {
                 console.log('Validation failed - missing required fields');
                 showToast('Please fill in all required fields', 'error');
                 return;
+            }
+            // Block out-of-radius
+            if (deliveryQuote && deliveryQuote.inRadius === false) {
+                showToast('Selected address is outside our delivery radius. Contact support.', 'error');
+                showRadiusWarning(true);
+                return;
+            }
+            // COD OTP gate (conditional)
+            const method = document.querySelector('.payment-method.selected')?.dataset.method || 'cash_on_delivery';
+            if (method === 'cash_on_delivery' && !window.__otpVerified) {
+                const subtotalForRisk = cartItems.reduce((sum, item) => sum + (item.price * (item.qty || 1)), 0);
+                const hasSuccessfulOrder = localStorage.getItem('abai.hasSuccessfulOrder') === 'true';
+                const firstCodOnDevice = localStorage.getItem('abai.codSeen') === 'true' ? false : true;
+                const largeOrder = subtotalForRisk >= 1500;
+                const isDevEnv = (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+                const highRisk = (!hasSuccessfulOrder) || largeOrder || firstCodOnDevice;
+                if (!isDevEnv && highRisk) {
+                    openOtpModal();
+                    return;
+                }
             }
 
             if (cartItems.length === 0) {
@@ -967,6 +1252,10 @@
             document.getElementById('place-order-btn').disabled = true;
 
             try {
+                // Ensure products are loaded before ID mapping
+                if (!products || products.length === 0) {
+                    try { await loadProducts(); } catch(e) {}
+                }
                 const response = await fetch(`${API_BASE_URL}/orders`, {
                     method: 'POST',
                     headers: {
@@ -976,25 +1265,74 @@
                     body: JSON.stringify(formData)
                 });
 
-                const result = await response.json();
+                // Handle non-OK responses with readable details
+                let result = null;
+                let errorText = '';
+                if (!response.ok) {
+                    try { result = await response.json(); } catch(e) { errorText = await response.text().catch(()=>''); }
+                    const statusInfo = `${response.status} ${response.statusText || ''}`.trim();
+                    function extractValidationMessage(res){
+                        if (!res) return '';
+                        // Common shapes: { message }, { error }, { errors: {field:{message}} }, { details: [{message}] }, { issues: [{message}]} (Zod)
+                        if (res.message) return res.message;
+                        if (res.error && typeof res.error === 'string') return res.error;
+                        if (res.errors && typeof res.errors === 'object') {
+                            try {
+                                const first = Object.values(res.errors)[0];
+                                if (first && typeof first === 'object' && first.message) return first.message;
+                            } catch(e){}
+                        }
+                        if (Array.isArray(res.details) && res.details.length) return res.details[0].message || JSON.stringify(res.details[0]);
+                        if (Array.isArray(res.issues) && res.issues.length) return res.issues[0].message || JSON.stringify(res.issues[0]);
+                        return '';
+                    }
+                    const msg = extractValidationMessage(result) || (errorText ? errorText.slice(0,200) : 'Request failed');
+                    console.error('Order API error:', { status: statusInfo, body: result || errorText });
+                    showToast(`Error placing order: ${statusInfo} - ${msg}`, 'error');
+                    return;
+                }
+                // OK response
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    console.error('Failed to parse order response JSON', e);
+                    showToast('Error placing order: Invalid server response', 'error');
+                    return;
+                }
 
                 if (result.success) {
                     showToast('Order placed successfully!', 'success');
                     
-                    // Clear cart
-                    localStorage.removeItem('abaiCart');
-                    cartItems = [];
+                    try {
+                        // Mark device flags for future risk assessment
+                        localStorage.setItem('abai.hasSuccessfulOrder', 'true');
+                        if ((formData.paymentMethod || method) === 'cash_on_delivery') {
+                            localStorage.setItem('abai.codSeen', 'true');
+                        }
+                    } catch(e) {}
                     
-                    // Redirect to order confirmation
-                    setTimeout(() => {
-                        window.location.href = 'order-confirmation.html?orderId=' + result.data._id;
-                    }, 2000);
+                    // If M-Pesa payment method is selected, show payment prompt
+                    if (method === 'mpesa') {
+                        const totalAmount = formData.totalAmount;
+                        openMpesaPaymentModal(totalAmount, result.data._id);
+                    } else {
+                        // Clear cart for non-M-Pesa payments
+                        localStorage.removeItem('abaiCart');
+                        cartItems = [];
+                        
+                        // Redirect to order confirmation
+                        setTimeout(() => {
+                            window.location.href = 'order-confirmation.html?orderId=' + result.data._id;
+                        }, 2000);
+                    }
                 } else {
-                    showToast('Error placing order: ' + result.message, 'error');
+                    console.error('Order API returned failure:', result);
+                    showToast('Error placing order: ' + (result.message || result.error || 'Unknown error'), 'error');
                 }
             } catch (error) {
                 console.error('Error placing order:', error);
-                showToast('Error placing order', 'error');
+                const msg = (error && error.message) ? error.message : 'Unexpected error';
+                showToast('Error placing order: ' + msg, 'error');
             } finally {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('place-order-btn').disabled = false;
@@ -1026,7 +1364,33 @@
             console.log('Page loaded, initializing...');
             loadCartItems();
             await loadProducts(); // Load products first
-            loadOutlets();
+            
+            // Auto-fill user information if logged in
+            await fillUserInformation();
+            
+            // Load saved location and quote from localStorage
+            try {
+                const rawAddr = localStorage.getItem('abai.deliveryAddress');
+                if (rawAddr) {
+                    deliveryAddress = JSON.parse(rawAddr);
+                    document.getElementById('delivery-location-chip').textContent = 'Delivering to: ' + (deliveryAddress.formattedAddress || 'Not set');
+                    document.getElementById('address').value = deliveryAddress.addressLine || deliveryAddress.formattedAddress || '';
+                }
+                const rawQuote = localStorage.getItem('abai.deliveryQuote');
+                if (rawQuote) {
+                    deliveryQuote = JSON.parse(rawQuote);
+                    const etaLine = document.getElementById('eta-line');
+                    if (etaLine && deliveryQuote.etaMin) {
+                        etaLine.textContent = `Estimated arrival ~ ${deliveryQuote.etaMin} min`;
+                    }
+                    showRadiusWarning(deliveryQuote.inRadius === false);
+                }
+            } catch(e) { console.warn(e); }
+            calculateTotals();
+            // Attach inline listeners for live sync
+            const addrEl = document.getElementById('address');
+            if (addrEl) { addrEl.addEventListener('input', syncLocationFromInputs); addrEl.addEventListener('blur', syncLocationFromInputs); }
+            validatePlaceOrderEnabled();
             
             // Set default payment method to Cash on Delivery
             document.querySelector('.payment-method[data-method="cash_on_delivery"]').classList.add('selected');
@@ -1036,6 +1400,297 @@
             console.log('placeOrder function defined:', typeof window.placeOrder);
             console.log('All variables:', { cartItems, products, selectedPaymentMethod });
         });
+        function validatePlaceOrderEnabled(){
+            const btn = document.getElementById('place-order-btn');
+            const addressOk = (document.getElementById('address').value || '').trim().length > 0;
+            btn.disabled = !addressOk;
+        }
+        // --- Simple OTP modal for COD ---
+        (function setupOtpModal(){
+            const modal = document.createElement('div');
+            modal.id = 'otp-modal';
+            modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:9999;';
+            modal.innerHTML = `
+              <div style="max-width:420px;margin:12% auto;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.15);overflow:hidden;">
+                <div style="padding:16px 18px;border-bottom:1px solid #eef3f9;display:flex;align-items:center;justify-content:space-between;">
+                  <h3 style="margin:0;color:#0b3b78;">Verify Phone (COD)</h3>
+                  <button id="otp-close" style="background:transparent;border:none;font-size:22px;cursor:pointer;color:#466;line-height:1;">&times;</button>
+                </div>
+                <div style="padding:18px">
+                  <p style="margin:0 0 10px;color:#0b3b78;">We sent a 6‑digit code to your phone. Enter it below.</p>
+                  <input id="otp-input" maxlength="6" placeholder="123456" style="width:100%;padding:10px 12px;border:1px solid #cfe2ff;border-radius:8px;outline:none;margin-bottom:12px;text-align:center;font-size:20px;letter-spacing:4px;">
+                  <div style="display:flex;justify-content:flex-end;gap:10px;">
+                    <button id="otp-resend" style="background:#eef3f9;color:#0b3b78;border:none;border-radius:8px;padding:10px 14px;cursor:pointer;">Resend</button>
+                    <button id="otp-verify" style="background:#1976d2;color:#fff;border:none;border-radius:8px;padding:10px 14px;cursor:pointer;">Verify</button>
+                  </div>
+                  <div id="otp-msg" style="margin-top:8px;color:#9a031e;"></div>
+                </div>
+              </div>`;
+            document.body.appendChild(modal);
+            document.getElementById('otp-close').onclick = () => modal.style.display='none';
+            document.getElementById('otp-verify').onclick = () => verifyOtp();
+            document.getElementById('otp-resend').onclick = () => sendOtp();
+        })();
+        function openOtpModal(){
+            sendOtp();
+            document.getElementById('otp-modal').style.display='block';
+        }
+        function sendOtp(){
+            // Generate and "send" a code (demo); real impl would call backend to send SMS
+            window.__otpCode = Math.floor(100000 + Math.random()*900000).toString();
+            window.__otpVerified = false;
+            const msg = document.getElementById('otp-msg');
+            if (msg) { msg.style.color='#0b3b78'; msg.textContent='Code sent. For demo: ' + window.__otpCode; }
+        }
+        function verifyOtp(){
+            const val = (document.getElementById('otp-input').value || '').trim();
+            const msg = document.getElementById('otp-msg');
+            if (val === window.__otpCode) {
+                window.__otpVerified = true;
+                document.getElementById('otp-modal').style.display='none';
+                showToast('Phone verified. Proceeding with order.', 'success');
+                // Retry placeOrder now that verified
+                setTimeout(()=>window.placeOrder(), 200);
+            } else {
+                if (msg) { msg.style.color='#9a031e'; msg.textContent='Invalid code. Try again or resend.'; }
+            }
+        }
+        
+        // --- M-Pesa Payment Modal ---
+        // Configurable till number (update this when you have your actual till number)
+        const MPESA_TILL_NUMBER = '0000000'; // Replace with your actual till number
+        
+        (function setupMpesaPaymentModal(){
+            const modal = document.createElement('div');
+            modal.id = 'mpesa-payment-modal';
+            modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;backdrop-filter:blur(4px);';
+            modal.innerHTML = `
+              <div style="max-width:480px;margin:8% auto;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.3);overflow:hidden;animation:slideIn 0.3s ease-out;">
+                <div style="padding:24px 28px;background:linear-gradient(135deg, #00A859 0%, #00C853 100%);color:#fff;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <h3 style="margin:0;font-size:22px;font-weight:600;display:flex;align-items:center;gap:10px;">
+                      <span style="font-size:28px;">📱</span>
+                      M-Pesa Payment
+                    </h3>
+                    <button id="mpesa-close" style="background:rgba(255,255,255,0.2);border:none;font-size:24px;cursor:pointer;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background 0.2s;">&times;</button>
+                  </div>
+                  <p style="margin:0;opacity:0.95;font-size:14px;">Complete your payment using M-Pesa</p>
+                </div>
+                <div style="padding:28px">
+                  <div style="background:#f8f9fa;border-radius:12px;padding:20px;margin-bottom:24px;border:1px solid #e9ecef;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                      <span style="color:#6c757d;font-size:14px;font-weight:500;">Total Amount:</span>
+                      <span id="mpesa-total-amount" style="font-size:24px;font-weight:700;color:#1976d2;">Ksh 0</span>
+                    </div>
+                    <div style="border-top:1px dashed #dee2e6;padding-top:12px;margin-top:12px;">
+                      <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="color:#6c757d;font-size:13px;">Pay to Till Number:</span>
+                        <span id="mpesa-till-number" style="font-size:18px;font-weight:600;color:#00A859;letter-spacing:2px;">${MPESA_TILL_NUMBER}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div style="margin-bottom:20px;">
+                    <label style="display:block;margin-bottom:8px;font-weight:600;color:#333;font-size:14px;">
+                      Enter M-Pesa PIN
+                    </label>
+                    <input type="password" id="mpesa-pin-input" maxlength="4" placeholder="Enter 4-digit PIN" 
+                           style="width:100%;padding:16px 18px;border:2px solid #e9ecef;border-radius:12px;font-size:20px;text-align:center;letter-spacing:8px;font-weight:600;outline:none;transition:all 0.3s;"
+                           oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                    <p style="margin:8px 0 0;color:#6c757d;font-size:12px;text-align:center;">
+                      🔒 Your PIN is secure and encrypted
+                    </p>
+                  </div>
+                  
+                  <div id="mpesa-payment-msg" style="margin-bottom:16px;padding:12px;border-radius:8px;display:none;font-size:14px;"></div>
+                  
+                  <div style="display:flex;gap:12px;">
+                    <button id="mpesa-cancel" style="flex:1;background:#f8f9fa;color:#495057;border:none;border-radius:10px;padding:14px 20px;font-weight:600;cursor:pointer;transition:all 0.2s;border:1px solid #e9ecef;">
+                      Cancel
+                    </button>
+                    <button id="mpesa-pay" style="flex:2;background:linear-gradient(135deg, #00A859 0%, #00C853 100%);color:#fff;border:none;border-radius:10px;padding:14px 20px;font-weight:600;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(0,168,89,0.3);">
+                      <span id="mpesa-pay-text">Pay Now</span>
+                      <span id="mpesa-pay-loading" style="display:none;">
+                        <span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:8px;"></span>
+                        Processing...
+                      </span>
+                    </button>
+                  </div>
+                  
+                  <div style="margin-top:20px;padding:16px;background:#fff4e6;border-radius:10px;border-left:4px solid #ff9800;">
+                    <p style="margin:0;color:#e65100;font-size:12px;line-height:1.5;">
+                      <strong>📱 Instructions:</strong><br>
+                      1. Enter your 4-digit M-Pesa PIN<br>
+                      2. Click "Pay Now" to process payment<br>
+                      3. You will receive a confirmation SMS from M-Pesa
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <style>
+                @keyframes slideIn {
+                  from { transform: translateY(-20px); opacity: 0; }
+                  to { transform: translateY(0); opacity: 1; }
+                }
+                @keyframes spin {
+                  to { transform: rotate(360deg); }
+                }
+                #mpesa-pin-input:focus {
+                  border-color: #00A859;
+                  box-shadow: 0 0 0 3px rgba(0,168,89,0.1);
+                }
+                #mpesa-pay:hover {
+                  transform: translateY(-2px);
+                  box-shadow: 0 6px 16px rgba(0,168,89,0.4);
+                }
+                #mpesa-pay:active {
+                  transform: translateY(0);
+                }
+                #mpesa-cancel:hover {
+                  background: #e9ecef !important;
+                }
+              </style>`;
+            document.body.appendChild(modal);
+            
+            // Setup event listeners after modal is added to DOM
+            setTimeout(() => {
+                // Close button
+                const closeBtn = document.getElementById('mpesa-close');
+                const cancelBtn = document.getElementById('mpesa-cancel');
+                const payBtn = document.getElementById('mpesa-pay');
+                const pinInput = document.getElementById('mpesa-pin-input');
+                
+                if (closeBtn) closeBtn.onclick = () => closeMpesaPaymentModal();
+                if (cancelBtn) cancelBtn.onclick = () => closeMpesaPaymentModal();
+                if (payBtn) payBtn.onclick = () => processMpesaPayment();
+                
+                // Allow Enter key to submit
+                if (pinInput) {
+                    pinInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            processMpesaPayment();
+                        }
+                    });
+                }
+            }, 100);
+        })();
+        
+        let currentOrderId = null;
+        let currentTotalAmount = 0;
+        
+        function openMpesaPaymentModal(totalAmount, orderId) {
+            currentOrderId = orderId;
+            currentTotalAmount = totalAmount;
+            
+            document.getElementById('mpesa-total-amount').textContent = `Ksh ${totalAmount.toLocaleString()}`;
+            document.getElementById('mpesa-till-number').textContent = MPESA_TILL_NUMBER;
+            document.getElementById('mpesa-pin-input').value = '';
+            document.getElementById('mpesa-payment-msg').style.display = 'none';
+            document.getElementById('mpesa-pay').disabled = false;
+            document.getElementById('mpesa-pay-text').style.display = 'inline';
+            document.getElementById('mpesa-pay-loading').style.display = 'none';
+            
+            document.getElementById('mpesa-payment-modal').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('mpesa-pin-input').focus();
+            }, 300);
+        }
+        
+        function closeMpesaPaymentModal() {
+            document.getElementById('mpesa-payment-modal').style.display = 'none';
+            // Clear cart and redirect to confirmation
+            localStorage.removeItem('abaiCart');
+            cartItems = [];
+            if (currentOrderId) {
+                window.location.href = 'order-confirmation.html?orderId=' + currentOrderId;
+            }
+        }
+        
+        async function processMpesaPayment() {
+            const pinInput = document.getElementById('mpesa-pin-input');
+            const pin = pinInput.value.trim();
+            const msgDiv = document.getElementById('mpesa-payment-msg');
+            const payBtn = document.getElementById('mpesa-pay');
+            const payText = document.getElementById('mpesa-pay-text');
+            const payLoading = document.getElementById('mpesa-pay-loading');
+            
+            // Validate PIN
+            if (!pin || pin.length !== 4) {
+                msgDiv.style.display = 'block';
+                msgDiv.style.background = '#fff4f4';
+                msgDiv.style.border = '1px solid #ffd6d6';
+                msgDiv.style.color = '#9a031e';
+                msgDiv.textContent = '❌ Please enter a valid 4-digit M-Pesa PIN';
+                return;
+            }
+            
+            // Disable button and show loading
+            payBtn.disabled = true;
+            payText.style.display = 'none';
+            payLoading.style.display = 'inline';
+            
+            // Hide previous messages
+            msgDiv.style.display = 'none';
+            
+            try {
+                // Get phone number from form
+                const phoneNumber = document.getElementById('phone').value.trim();
+                
+                if (!phoneNumber) {
+                    throw new Error('Phone number is required for M-Pesa payment');
+                }
+                
+                // Call payment API
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/payments/initiate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token || ''}`
+                    },
+                    body: JSON.stringify({
+                        orderId: currentOrderId,
+                        paymentMethod: 'mpesa',
+                        phoneNumber: phoneNumber,
+                        pin: pin // Note: In production, PIN should never be sent to backend. This is for demo purposes.
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Payment initiated successfully
+                    msgDiv.style.display = 'block';
+                    msgDiv.style.background = '#f0f9ff';
+                    msgDiv.style.border = '1px solid #bae6fd';
+                    msgDiv.style.color = '#0c4a6e';
+                    msgDiv.textContent = '✅ Payment request sent! Check your phone for M-Pesa prompt.';
+                    
+                    // Clear cart
+                    localStorage.removeItem('abaiCart');
+                    cartItems = [];
+                    
+                    // Redirect after short delay
+                    setTimeout(() => {
+                        window.location.href = 'order-confirmation.html?orderId=' + currentOrderId;
+                    }, 2000);
+                } else {
+                    throw new Error(result.message || 'Payment initiation failed');
+                }
+            } catch (error) {
+                console.error('M-Pesa payment error:', error);
+                msgDiv.style.display = 'block';
+                msgDiv.style.background = '#fff4f4';
+                msgDiv.style.border = '1px solid #ffd6d6';
+                msgDiv.style.color = '#9a031e';
+                msgDiv.textContent = '❌ ' + (error.message || 'Payment failed. Please try again.');
+                
+                // Re-enable button
+                payBtn.disabled = false;
+                payText.style.display = 'inline';
+                payLoading.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>

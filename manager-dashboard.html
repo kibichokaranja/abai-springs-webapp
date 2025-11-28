@@ -1,0 +1,3219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Dashboard - Abai Springs</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 2rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4facfe;
+        }
+        
+        .user-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            color: white;
+        }
+        
+        .user-info .user-name {
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+        }
+        
+        .user-info .user-role {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+        
+        .nav-menu {
+            list-style: none;
+        }
+        
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            text-decoration: none;
+            color: #666;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .logout-btn {
+            margin-top: 2rem;
+            width: 100%;
+            padding: 12px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            border-left: 4px solid #4facfe;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            font-size: 2rem;
+            color: #4facfe;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 1rem;
+        }
+        
+        /* Content Sections */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        .section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            color: #333;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section h2 i {
+            color: #4facfe;
+        }
+        
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .data-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        /* Status Badges */
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        
+        /* Section Content */
+        .section-content {
+            display: none;
+        }
+        
+        .section-content.active {
+            display: block;
+        }
+        
+        /* Search Input */
+        .search-input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+        
+        /* View Button */
+        .btn-view {
+            padding: 6px 12px;
+            background: #4facfe;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-view:hover {
+            background: #3d8bfe;
+            transform: translateY(-2px);
+        }
+        
+        /* Tabs */
+        .tab-btn {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #666;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .tab-btn:hover {
+            color: #4facfe;
+        }
+        
+        .tab-btn.active {
+            color: #4facfe;
+            border-bottom-color: #4facfe;
+            font-weight: 600;
+        }
+        
+        .supplier-tab-content {
+            display: none;
+        }
+        
+        .supplier-tab-content.active {
+            display: block;
+        }
+        
+        .payment-tab-content {
+            display: none;
+        }
+        
+        .payment-tab-content.active {
+            display: block;
+        }
+            display: block;
+        }
+        
+        /* Preview Section Hover */
+        .section[onclick] {
+            transition: all 0.3s ease;
+        }
+        
+        .section[onclick]:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+        }
+        
+        .section[onclick] h2 {
+            transition: color 0.3s ease;
+        }
+        
+        .section[onclick]:hover h2 {
+            color: #4facfe;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-tint"></i>
+                <span>Abai Springs</span>
+            </div>
+            
+            <div class="user-info" id="userInfo">
+                <div class="user-name">Loading...</div>
+                <div class="user-role">Manager</div>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a class="nav-link active" onclick="showSection('dashboard')">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('orders')">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Orders</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('products')">
+                        <i class="fas fa-box"></i>
+                        <span>Products</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('customers')">
+                        <i class="fas fa-users"></i>
+                        <span>Customers</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('payments')">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Payments</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('analytics')">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Analytics</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('suppliers')">
+                        <i class="fas fa-truck"></i>
+                        <span>Suppliers</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <button class="logout-btn" onclick="handleLogout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="section-content active">
+                <div class="header">
+                    <h1><i class="fas fa-tachometer-alt"></i> Manager Dashboard</h1>
+                    <p>Welcome to your management interface</p>
+                </div>
+                
+                <!-- Stats Grid -->
+                <div class="stats-grid" id="stats-grid">
+                    <div class="loading">Loading statistics...</div>
+                </div>
+                
+                <!-- Section Previews Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+                    <!-- Orders Preview -->
+                    <div class="section" style="cursor: pointer;" onclick="event.stopPropagation(); showSection('orders');">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h2><i class="fas fa-shopping-cart"></i> Orders</h2>
+                            <span style="color: #4facfe; font-size: 0.9rem;">View All →</span>
+                        </div>
+                        <div id="recent-orders">
+                            <div class="loading">Loading recent orders...</div>
+                        </div>
+                        <div id="order-status-overview" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                            <div class="loading">Loading status overview...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Products Preview -->
+                    <div class="section" style="cursor: pointer;" onclick="event.stopPropagation(); showSection('products');">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h2><i class="fas fa-box"></i> Products</h2>
+                            <span style="color: #4facfe; font-size: 0.9rem;">View All →</span>
+                        </div>
+                        <div id="products-preview">
+                            <div class="loading">Loading products...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Customers Preview -->
+                    <div class="section" style="cursor: pointer;" onclick="event.stopPropagation(); showSection('customers');">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h2><i class="fas fa-users"></i> Customers</h2>
+                            <span style="color: #4facfe; font-size: 0.9rem;">View All →</span>
+                        </div>
+                        <div id="customers-preview">
+                            <div class="loading">Loading customers...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payments Preview -->
+                    <div class="section" style="cursor: pointer;" onclick="event.stopPropagation(); showSection('payments');">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h2><i class="fas fa-money-bill-wave"></i> Payments</h2>
+                            <span style="color: #4facfe; font-size: 0.9rem;">View All →</span>
+                        </div>
+                        <div id="payments-preview">
+                            <div class="loading">Loading payments...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Suppliers Preview -->
+                    <div class="section" style="cursor: pointer;" onclick="event.stopPropagation(); showSection('suppliers');">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h2><i class="fas fa-truck"></i> Suppliers & Warehouse</h2>
+                            <span style="color: #4facfe; font-size: 0.9rem;">View All →</span>
+                        </div>
+                        <div id="suppliers-preview">
+                            <div class="loading">Loading suppliers data...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Analytics Preview -->
+                    <div class="section" style="cursor: pointer;" onclick="event.stopPropagation(); showSection('analytics');">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h2><i class="fas fa-chart-line"></i> Analytics</h2>
+                            <span style="color: #4facfe; font-size: 0.9rem;">View All →</span>
+                        </div>
+                        <div id="analytics-preview">
+                            <div class="loading">Loading analytics...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Orders Section -->
+            <div id="orders-section" class="section-content">
+                <div class="header">
+                    <h1><i class="fas fa-shopping-cart"></i> Orders Management</h1>
+                    <p>View and manage customer orders</p>
+                </div>
+                
+                <input type="text" class="search-input" id="orderSearch" placeholder="Search orders..." onkeyup="searchOrders()">
+                
+                <div class="section">
+                    <h2><i class="fas fa-list"></i> All Orders</h2>
+                    <div id="orders-table">
+                        <div class="loading">Loading orders...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Products Section -->
+            <div id="products-section" class="section-content">
+                <div class="header">
+                    <h1><i class="fas fa-box"></i> Products</h1>
+                    <p>View product inventory</p>
+                </div>
+                
+                <input type="text" class="search-input" id="productSearch" placeholder="Search products..." onkeyup="searchProducts()">
+                
+                <div class="section">
+                    <h2><i class="fas fa-list"></i> All Products</h2>
+                    <div id="products-table">
+                        <div class="loading">Loading products...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Customers Section -->
+            <div id="customers-section" class="section-content">
+                <div class="header">
+                    <h1><i class="fas fa-users"></i> Customers</h1>
+                    <p>View customer information</p>
+                </div>
+                
+                <input type="text" class="search-input" id="customerSearch" placeholder="Search customers..." onkeyup="searchCustomers()">
+                
+                <div class="section">
+                    <h2><i class="fas fa-list"></i> All Customers</h2>
+                    <div id="customers-table">
+                        <div class="loading">Loading customers...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Payments Section -->
+            <div id="payments-section" class="section-content">
+                <div class="header">
+                    <h1><i class="fas fa-money-bill-wave"></i> Payments Management</h1>
+                    <p>Manage supplier payments, customer payments, and payment terms</p>
+                </div>
+                
+                <!-- Tabs for different payment types -->
+                <div style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 2px solid #e0e0e0;">
+                    <button class="tab-btn active" onclick="showPaymentTab('supplier-payments')" id="supplier-payments-tab-btn">
+                        <i class="fas fa-truck"></i> Supplier Payments
+                    </button>
+                    <button class="tab-btn" onclick="showPaymentTab('customer-payments')" id="customer-payments-tab-btn">
+                        <i class="fas fa-users"></i> Customer Payments
+                    </button>
+                    <button class="tab-btn" onclick="showPaymentTab('payment-terms')" id="payment-terms-tab-btn">
+                        <i class="fas fa-file-contract"></i> Payment Terms
+                    </button>
+                </div>
+                
+                <!-- Supplier Payments Tab -->
+                <div id="supplier-payments-tab" class="payment-tab-content" style="display: block;">
+                    <input type="text" class="search-input" id="supplierPaymentSearch" placeholder="Search supplier payments by order number, supplier name..." onkeyup="searchSupplierPayments()">
+                    
+                    <div class="section">
+                        <h2><i class="fas fa-list"></i> Supplier Payments</h2>
+                        <div id="supplier-payments-table">
+                            <div class="loading">Loading supplier payments...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Customer Payments Tab -->
+                <div id="customer-payments-tab" class="payment-tab-content" style="display: none;">
+                    <input type="text" class="search-input" id="customerPaymentSearch" placeholder="Search customer payments by order number, customer name..." onkeyup="searchCustomerPayments()">
+                    
+                    <div class="section">
+                        <h2><i class="fas fa-list"></i> Customer Payments</h2>
+                        <div id="customer-payments-table">
+                            <div class="loading">Loading customer payments...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment Terms Tab -->
+                <div id="payment-terms-tab" class="payment-tab-content" style="display: none;">
+                    <div class="section">
+                        <h2><i class="fas fa-file-contract"></i> Payment Terms Reference</h2>
+                        <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px; margin-bottom: 1rem;">
+                            <p style="color: #666; margin-bottom: 1rem;">Common payment terms used in Kenyan business:</p>
+                            <div style="display: grid; gap: 1rem;">
+                                <div style="padding: 1rem; background: white; border-radius: 8px; border-left: 4px solid #4facfe;">
+                                    <strong style="color: #333;">Net 30</strong>
+                                    <p style="color: #666; margin-top: 0.5rem; font-size: 0.9rem;">Payment due within 30 days of invoice date</p>
+                                </div>
+                                <div style="padding: 1rem; background: white; border-radius: 8px; border-left: 4px solid #4facfe;">
+                                    <strong style="color: #333;">Net 15</strong>
+                                    <p style="color: #666; margin-top: 0.5rem; font-size: 0.9rem;">Payment due within 15 days of invoice date</p>
+                                </div>
+                                <div style="padding: 1rem; background: white; border-radius: 8px; border-left: 4px solid #4facfe;">
+                                    <strong style="color: #333;">Net 7</strong>
+                                    <p style="color: #666; margin-top: 0.5rem; font-size: 0.9rem;">Payment due within 7 days of invoice date</p>
+                                </div>
+                                <div style="padding: 1rem; background: white; border-radius: 8px; border-left: 4px solid #4facfe;">
+                                    <strong style="color: #333;">COD (Cash on Delivery)</strong>
+                                    <p style="color: #666; margin-top: 0.5rem; font-size: 0.9rem;">Payment required at the time of delivery</p>
+                                </div>
+                                <div style="padding: 1rem; background: white; border-radius: 8px; border-left: 4px solid #4facfe;">
+                                    <strong style="color: #333;">CIA (Cash in Advance)</strong>
+                                    <p style="color: #666; margin-top: 0.5rem; font-size: 0.9rem;">Payment required before delivery</p>
+                                </div>
+                                <div style="padding: 1rem; background: white; border-radius: 8px; border-left: 4px solid #4facfe;">
+                                    <strong style="color: #333;">2/10 Net 30</strong>
+                                    <p style="color: #666; margin-top: 0.5rem; font-size: 0.9rem;">2% discount if paid within 10 days, otherwise full amount due in 30 days</p>
+                                </div>
+                                <div style="padding: 1rem; background: white; border-radius: 8px; border-left: 4px solid #4facfe;">
+                                    <strong style="color: #333;">50/50</strong>
+                                    <p style="color: #666; margin-top: 0.5rem; font-size: 0.9rem;">50% upfront payment, 50% on delivery</p>
+                                </div>
+                                <div style="padding: 1rem; background: white; border-radius: 8px; border-left: 4px solid #4facfe;">
+                                    <strong style="color: #333;">30/70</strong>
+                                    <p style="color: #666; margin-top: 0.5rem; font-size: 0.9rem;">30% upfront payment, 70% on delivery</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analytics Section -->
+            <div id="analytics-section" class="section-content">
+                <div class="header">
+                    <h1><i class="fas fa-chart-line"></i> Analytics & Reports</h1>
+                    <p>View business analytics and insights</p>
+                </div>
+                
+                <div class="content-grid">
+                    <div class="section">
+                        <h2><i class="fas fa-chart-bar"></i> Revenue Trends</h2>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                    
+                    <div class="section">
+                        <h2><i class="fas fa-chart-pie"></i> Product Sales</h2>
+                        <canvas id="productSalesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Suppliers Section -->
+            <div id="suppliers-section" class="section-content">
+                <div class="header">
+                    <h1><i class="fas fa-truck"></i> Suppliers & Warehouse</h1>
+                    <p>Manage supplier orders and warehouse inventory</p>
+                </div>
+                
+                <!-- Tabs for Suppliers, Supplier Orders and Warehouse Inventory -->
+                <div style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 2px solid #e0e0e0;">
+                    <button class="tab-btn" onclick="showSupplierTab('suppliers')" id="suppliers-tab-btn">
+                        <i class="fas fa-truck"></i> Suppliers
+                    </button>
+                    <button class="tab-btn active" onclick="showSupplierTab('orders')" id="orders-tab-btn">
+                        <i class="fas fa-shopping-cart"></i> Supplier Orders
+                    </button>
+                    <button class="tab-btn" onclick="showSupplierTab('inventory')" id="inventory-tab-btn">
+                        <i class="fas fa-warehouse"></i> Warehouse Inventory
+                    </button>
+                </div>
+                
+                <!-- Suppliers Tab -->
+                <div id="suppliers-tab" class="supplier-tab-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2><i class="fas fa-list"></i> All Suppliers</h2>
+                        <button class="btn-view" onclick="showAddSupplierModal()" style="padding: 10px 20px; font-size: 1rem;">
+                            <i class="fas fa-plus"></i> Add New Supplier
+                        </button>
+                    </div>
+                    
+                    <input type="text" class="search-input" id="supplierSearch" placeholder="Search suppliers..." onkeyup="searchSuppliers()">
+                    
+                    <div class="section">
+                        <div id="suppliers-table">
+                            <div class="loading">Loading suppliers...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Supplier Orders Tab -->
+                <div id="supplier-orders-tab" class="supplier-tab-content active">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2><i class="fas fa-list"></i> Supplier Orders</h2>
+                        <div style="display: flex; gap: 1rem;">
+                            <button class="btn-view" onclick="showAddSupplierModal()" style="padding: 10px 20px; font-size: 1rem; background: #28a745;">
+                                <i class="fas fa-plus"></i> Add New Supplier
+                            </button>
+                            <button class="btn-view" onclick="showAddSupplierOrderModal()" style="padding: 10px 20px; font-size: 1rem;">
+                                <i class="fas fa-plus"></i> Add New Order
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <input type="text" class="search-input" id="supplierOrderSearch" placeholder="Search supplier orders..." onkeyup="searchSupplierOrders()">
+                    
+                    <div class="section">
+                        <div id="supplier-orders-table">
+                            <div class="loading">Loading supplier orders...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Warehouse Inventory Tab -->
+                <div id="warehouse-inventory-tab" class="supplier-tab-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2><i class="fas fa-boxes"></i> Warehouse Inventory</h2>
+                        <button class="btn-view" onclick="showAddInventoryModal()" style="padding: 10px 20px; font-size: 1rem;">
+                            <i class="fas fa-plus"></i> Add Inventory Item
+                        </button>
+                    </div>
+                    
+                    <input type="text" class="search-input" id="inventorySearch" placeholder="Search inventory..." onkeyup="searchInventory()">
+                    
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                        <select id="inventoryTypeFilter" class="search-input" style="width: auto; padding: 8px 12px;" onchange="loadWarehouseInventory()">
+                            <option value="">All Types</option>
+                            <option value="bottles">Bottles</option>
+                            <option value="bottle_tops">Bottle Tops</option>
+                            <option value="branding">Branding</option>
+                            <option value="labels">Labels</option>
+                            <option value="packaging">Packaging</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="lowStockFilter" onchange="loadWarehouseInventory()">
+                            Show Low Stock Only
+                        </label>
+                    </div>
+                    
+                    <div class="section">
+                        <div id="warehouse-inventory-table">
+                            <div class="loading">Loading warehouse inventory...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Supplier Order Modal -->
+    <div id="addSupplierOrderModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 15px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2>Add Supplier Order</h2>
+                <button onclick="closeAddSupplierOrderModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <form id="supplierOrderForm" onsubmit="handleAddSupplierOrder(event)">
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Supplier *</label>
+                    <select id="orderSupplier" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                        <option value="">Select Supplier</option>
+                    </select>
+                </div>
+                <div id="orderItemsContainer">
+                    <div class="order-item" style="border: 1px solid #e0e0e0; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Item Type *</label>
+                                <select name="itemType" required style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                                    <option value="">Select Type</option>
+                                    <option value="bottles">Bottles</option>
+                                    <option value="bottle_tops">Bottle Tops</option>
+                                    <option value="branding">Branding</option>
+                                    <option value="labels">Labels</option>
+                                    <option value="packaging">Packaging</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Description *</label>
+                                <input type="text" name="description" required style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Quantity *</label>
+                                <input type="number" name="quantity" required min="1" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Unit Price (KES) *</label>
+                                <input type="number" name="unitPrice" required min="0" step="0.01" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                            </div>
+                            <div style="display: flex; align-items: flex-end;">
+                                <button type="button" onclick="removeOrderItem(this)" style="background: #ff6b6b; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" onclick="addOrderItem()" style="background: #4facfe; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-bottom: 1rem;">
+                    <i class="fas fa-plus"></i> Add Item
+                </button>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Tax (KES)</label>
+                        <input type="number" id="orderTax" min="0" step="0.01" value="0" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Shipping Cost (KES)</label>
+                        <input type="number" id="orderShipping" min="0" step="0.01" value="0" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    </div>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Expected Delivery Date</label>
+                    <input type="date" id="expectedDeliveryDate" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Notes</label>
+                    <textarea id="orderNotes" rows="3" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px;"></textarea>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" onclick="closeAddSupplierOrderModal()" style="background: #ccc; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Cancel</button>
+                    <button type="submit" style="background: #4facfe; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Create Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Supplier Modal -->
+    <div id="addSupplierModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 15px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 id="supplierModalTitle">Add New Supplier</h2>
+                <button onclick="closeAddSupplierModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <form id="supplierForm" onsubmit="handleSaveSupplier(event)">
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Supplier Name *</label>
+                    <input type="text" id="supplierName" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Contact Person</label>
+                    <input type="text" id="supplierContactPerson" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Email *</label>
+                        <input type="email" id="supplierEmail" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Phone *</label>
+                        <input type="text" id="supplierPhone" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    </div>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Street Address</label>
+                    <input type="text" id="supplierStreet" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">City</label>
+                        <input type="text" id="supplierCity" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Postal Code</label>
+                        <input type="text" id="supplierPostalCode" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    </div>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Items Supplied</label>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" value="bottles" class="supplier-item-checkbox">
+                            <span>Bottles</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" value="bottle_tops" class="supplier-item-checkbox">
+                            <span>Bottle Tops</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" value="branding" class="supplier-item-checkbox">
+                            <span>Branding</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" value="labels" class="supplier-item-checkbox">
+                            <span>Labels</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" value="packaging" class="supplier-item-checkbox">
+                            <span>Packaging</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" value="other" class="supplier-item-checkbox">
+                            <span>Other</span>
+                        </label>
+                    </div>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Payment Terms</label>
+                    <select id="supplierPaymentTerms" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                        <option value="cash">Cash</option>
+                        <option value="net_15">Net 15</option>
+                        <option value="net_30" selected>Net 30</option>
+                        <option value="net_60">Net 60</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Notes</label>
+                    <textarea id="supplierNotes" rows="3" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px;"></textarea>
+                </div>
+                <input type="hidden" id="supplierId">
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" onclick="closeAddSupplierModal()" style="background: #ccc; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Cancel</button>
+                    <button type="submit" style="background: #4facfe; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Save Supplier</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Supplier Order Details Modal -->
+    <div id="supplierOrderDetailsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 15px; max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2>Supplier Order Details</h2>
+                <button onclick="closeSupplierOrderDetailsModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <div id="supplierOrderDetailsContent">
+                <div class="loading">Loading order details...</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Customer Payment Confirmation Modal -->
+    <div id="customerPaymentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 15px; max-width: 500px; width: 90%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2><i class="fas fa-money-bill-wave"></i> Confirm Payment</h2>
+                <button onclick="closeCustomerPaymentModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <div id="customerPaymentContent">
+                <div style="margin-bottom: 1rem;">
+                    <strong>Order ID:</strong> <span id="customerPaymentOrderId"></span>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <strong>Total Amount:</strong> <span id="customerPaymentAmount"></span>
+                </div>
+                <form id="customerPaymentForm" onsubmit="confirmCustomerPayment(event)">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #666; font-weight: 500;">Payment Method *</label>
+                        <select id="customerPaymentMethod" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+                            <option value="">Select payment method</option>
+                            <option value="cash">Cash</option>
+                            <option value="mpesa">M-Pesa</option>
+                            <option value="airtel_money">Airtel Money</option>
+                            <option value="card">Card</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #666; font-weight: 500;">Transaction Reference (Optional)</label>
+                        <input type="text" id="customerPaymentReference" placeholder="e.g., M-Pesa confirmation code" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #666; font-weight: 500;">Payment Date *</label>
+                        <input type="datetime-local" id="customerPaymentDate" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button type="button" onclick="closeCustomerPaymentModal()" style="flex: 1; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem;">Cancel</button>
+                        <button type="submit" style="flex: 1; padding: 12px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600;">Confirm Payment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Supplier Payment Confirmation Modal -->
+    <div id="supplierPaymentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 15px; max-width: 500px; width: 90%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2><i class="fas fa-money-bill-wave"></i> Mark Supplier Payment</h2>
+                <button onclick="closeSupplierPaymentModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <div id="supplierPaymentContent">
+                <div style="margin-bottom: 1rem;">
+                    <strong>Order Number:</strong> <span id="supplierPaymentOrderNumber"></span>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <strong>Supplier:</strong> <span id="supplierPaymentSupplier"></span>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <strong>Total Amount:</strong> <span id="supplierPaymentAmount"></span>
+                </div>
+                <form id="supplierPaymentForm" onsubmit="confirmSupplierPayment(event)">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #666; font-weight: 500;">Payment Status *</label>
+                        <select id="supplierPaymentStatus" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+                            <option value="">Select payment status</option>
+                            <option value="paid">Paid (Full Payment)</option>
+                            <option value="partial">Partial Payment</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #666; font-weight: 500;">Amount Paid *</label>
+                        <input type="number" id="supplierPaymentPaidAmount" step="0.01" min="0" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #666; font-weight: 500;">Payment Method *</label>
+                        <select id="supplierPaymentMethod" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+                            <option value="">Select payment method</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="mpesa">M-Pesa</option>
+                            <option value="airtel_money">Airtel Money</option>
+                            <option value="cash">Cash</option>
+                            <option value="cheque">Cheque</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #666; font-weight: 500;">Transaction Reference (Optional)</label>
+                        <input type="text" id="supplierPaymentReference" placeholder="e.g., Bank transaction ID, M-Pesa code" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #666; font-weight: 500;">Payment Date *</label>
+                        <input type="datetime-local" id="supplierPaymentDate" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #666; font-weight: 500;">Invoice Number (Optional)</label>
+                        <input type="text" id="supplierPaymentInvoice" placeholder="Invoice number if available" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button type="button" onclick="closeSupplierPaymentModal()" style="flex: 1; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem;">Cancel</button>
+                        <button type="submit" style="flex: 1; padding: 12px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600;">Confirm Payment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE_URL = 'http://localhost:3001/api';
+        
+        // Get staff token
+        function getStaffToken() {
+            return localStorage.getItem('staffToken') || sessionStorage.getItem('staffToken');
+        }
+        
+        // Get auth headers
+        function getAuthHeaders() {
+            const token = getStaffToken();
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            return headers;
+        }
+        
+        // Check authentication
+        async function checkAuth() {
+            const token = getStaffToken();
+            const staffUserStr = localStorage.getItem('staffUser');
+            
+            if (!token || !staffUserStr) {
+                window.location.href = '/staff-login';
+                return false;
+            }
+            
+            const staffUser = JSON.parse(staffUserStr);
+            
+            // Check if we have at least email or id
+            if (!staffUser.email && !staffUser.id) {
+                window.location.href = '/staff-login';
+                return false;
+            }
+            
+            // Verify token (optional - if endpoint exists)
+            try {
+                const response = await fetch(`${API_BASE_URL}/staff-auth/verify-staff`, {
+                    headers: getAuthHeaders()
+                });
+                
+                if (!response.ok) {
+                    // If verify endpoint fails but we have token and user, still allow access
+                    console.warn('Token verification failed, but allowing access with stored credentials');
+                }
+            } catch (error) {
+                // If endpoint doesn't exist or fails, still allow access if we have token
+                console.warn('Token verification endpoint not available, using stored credentials');
+            }
+            
+            // Update user info
+            const userInfo = document.getElementById('userInfo');
+            if (userInfo) {
+                const nameEl = userInfo.querySelector('.user-name');
+                const roleEl = userInfo.querySelector('.user-role');
+                if (nameEl) nameEl.textContent = staffUser.name || 'Manager';
+                if (roleEl) roleEl.textContent = staffUser.role || 'Manager';
+            }
+            
+            return true;
+        }
+        
+        // Show section
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section-content').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Show selected section
+            const targetSection = document.getElementById(sectionName + '-section');
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+            
+            // Add active class to corresponding nav link
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                if (link.getAttribute('onclick')?.includes(`'${sectionName}'`)) {
+                    link.classList.add('active');
+                }
+            });
+            
+            // Load data for the section
+            loadSectionData(sectionName);
+        }
+        
+        // Load section data
+        async function loadSectionData(section) {
+            switch(section) {
+                case 'dashboard':
+                    await loadDashboardData();
+                    break;
+                case 'orders':
+                    await loadOrders();
+                    break;
+                case 'products':
+                    await loadProducts();
+                    break;
+                case 'customers':
+                    await loadCustomers();
+                    break;
+                case 'payments':
+                    await loadSupplierPayments();
+                    break;
+                case 'analytics':
+                    await loadAnalytics();
+                    break;
+                case 'suppliers':
+                    await loadSuppliers();
+                    break;
+            }
+        }
+        
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                const [products, orders, users, payments, supplierOrders, warehouseInventory] = await Promise.all([
+                    fetch(`${API_BASE_URL}/products`).then(r => r.json()).catch(() => ({success: true, data: []})),
+                    fetch(`${API_BASE_URL}/orders`).then(r => r.json()).catch(() => ({success: true, data: []})),
+                    fetch(`${API_BASE_URL}/auth/users`, {
+                        headers: getAuthHeaders()
+                    }).then(r => r.json()).catch(() => ({success: true, data: []})),
+                    fetch(`${API_BASE_URL}/payments`, {
+                        headers: getAuthHeaders()
+                    }).then(r => r.json()).catch(() => ({success: true, data: []})),
+                    fetch(`${API_BASE_URL}/supplier-orders`, {
+                        headers: getAuthHeaders()
+                    }).then(r => r.json()).catch(() => ({success: true, data: []})),
+                    fetch(`${API_BASE_URL}/warehouse-inventory`, {
+                        headers: getAuthHeaders()
+                    }).then(r => r.json()).catch(() => ({success: true, data: []}))
+                ]);
+                
+                // Update stats
+                const statsGrid = document.getElementById('stats-grid');
+                const productsCount = (products?.success && products?.data) ? products.data.length : 0;
+                const ordersCount = (orders?.success && orders?.data) ? orders.data.length : 0;
+                const usersCount = (users?.success && users?.data) ? users.data.filter(u => u.role === 'customer').length : 0;
+                const paymentsCount = (payments?.success && payments?.data) ? payments.data.length : 0;
+                
+                // Calculate today's revenue
+                let todayRevenue = 0;
+                if (orders?.success && orders?.data) {
+                    const today = new Date().toDateString();
+                    todayRevenue = orders.data
+                        .filter(order => new Date(order.createdAt).toDateString() === today && (order.status === 'completed' || order.status === 'delivered'))
+                        .reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+                }
+                
+                statsGrid.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+                        <div class="stat-number">${ordersCount}</div>
+                        <div class="stat-label">Total Orders</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-box"></i></div>
+                        <div class="stat-number">${productsCount}</div>
+                        <div class="stat-label">Products</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-users"></i></div>
+                        <div class="stat-number">${usersCount}</div>
+                        <div class="stat-label">Customers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+                        <div class="stat-number">KES ${todayRevenue.toLocaleString()}</div>
+                        <div class="stat-label">Today's Revenue</div>
+                    </div>
+                `;
+                
+                // Update Orders Preview
+                const recentOrders = document.getElementById('recent-orders');
+                if (orders?.success && orders?.data && orders.data.length > 0) {
+                    const recent = orders.data.slice(0, 5);
+                    recentOrders.innerHTML = `
+                        <table class="data-table" style="font-size: 0.9rem;">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${recent.map(order => `
+                                    <tr>
+                                        <td>#${order._id?.toString().slice(-6) || 'N/A'}</td>
+                                        <td>${order.customer?.name || order.customerName || 'N/A'}</td>
+                                        <td>KES ${(order.totalAmount || 0).toLocaleString()}</td>
+                                        <td><span class="badge badge-${getStatusColor(order.status)}">${order.status || 'pending'}</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    recentOrders.innerHTML = '<p style="text-align: center; color: #666; padding: 1rem;">No recent orders</p>';
+                }
+                
+                // Update Order Status Overview
+                const orderStatusOverview = document.getElementById('order-status-overview');
+                if (orders?.success && orders?.data) {
+                    const statusCounts = {};
+                    orders.data.forEach(order => {
+                        const status = order.status || 'pending';
+                        statusCounts[status] = (statusCounts[status] || 0) + 1;
+                    });
+                    
+                    orderStatusOverview.innerHTML = Object.entries(statusCounts).slice(0, 5).map(([status, count]) => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
+                            <span><span class="badge badge-${getStatusColor(status)}">${status}</span></span>
+                            <strong>${count}</strong>
+                        </div>
+                    `).join('') || '<p style="text-align: center; color: #666; padding: 1rem;">No orders</p>';
+                } else {
+                    orderStatusOverview.innerHTML = '<p style="text-align: center; color: #666; padding: 1rem;">No order data</p>';
+                }
+                
+                // Update Products Preview
+                const productsPreview = document.getElementById('products-preview');
+                if (products?.success && products?.data && products.data.length > 0) {
+                    const recentProducts = products.data.slice(0, 5);
+                    const lowStockProducts = products.data.filter(p => p.stockLevel <= p.lowStockThreshold);
+                    
+                    productsPreview.innerHTML = `
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: #333;">Recent Products:</strong>
+                        </div>
+                        <table class="data-table" style="font-size: 0.9rem;">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Stock</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${recentProducts.map(product => `
+                                    <tr>
+                                        <td>${product.name || 'N/A'}</td>
+                                        <td>${product.stockLevel || 0}</td>
+                                        <td><span class="badge badge-${product.stockLevel <= product.lowStockThreshold ? 'warning' : 'success'}">${product.stockLevel <= product.lowStockThreshold ? 'Low' : 'OK'}</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        ${lowStockProducts.length > 0 ? `
+                            <div style="margin-top: 1rem; padding: 0.75rem; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                                <strong style="color: #856404;"><i class="fas fa-exclamation-triangle"></i> ${lowStockProducts.length} product(s) with low stock</strong>
+                            </div>
+                        ` : ''}
+                    `;
+                } else {
+                    productsPreview.innerHTML = '<p style="text-align: center; color: #666; padding: 1rem;">No products found</p>';
+                }
+                
+                // Update Customers Preview
+                const customersPreview = document.getElementById('customers-preview');
+                if (users?.success && users?.data) {
+                    const customers = users.data.filter(u => u.role === 'customer').slice(0, 5);
+                    
+                    if (customers.length > 0) {
+                        customersPreview.innerHTML = `
+                            <table class="data-table" style="font-size: 0.9rem;">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${customers.map(customer => `
+                                        <tr>
+                                            <td>${customer.name || 'N/A'}</td>
+                                            <td>${customer.email || 'N/A'}</td>
+                                            <td><span class="badge badge-${customer.isActive ? 'success' : 'danger'}">${customer.isActive ? 'Active' : 'Inactive'}</span></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                            <div style="margin-top: 1rem; text-align: center; color: #666; font-size: 0.9rem;">
+                                Total: ${users.data.filter(u => u.role === 'customer').length} customers
+                            </div>
+                        `;
+                    } else {
+                        customersPreview.innerHTML = '<p style="text-align: center; color: #666; padding: 1rem;">No customers found</p>';
+                    }
+                } else {
+                    customersPreview.innerHTML = '<p style="text-align: center; color: #666; padding: 1rem;">No customer data</p>';
+                }
+                
+                // Update Payments Preview
+                const paymentsPreview = document.getElementById('payments-preview');
+                if (supplierOrders?.success && supplierOrders?.data && supplierOrders.data.length > 0) {
+                    const recentPayments = supplierOrders.data.slice(0, 5);
+                    const pendingPayments = supplierOrders.data.filter(order => order.paymentStatus === 'pending').length;
+                    const paidPayments = supplierOrders.data.filter(order => order.paymentStatus === 'paid').length;
+                    
+                    paymentsPreview.innerHTML = `
+                        <table class="data-table" style="font-size: 0.9rem;">
+                            <thead>
+                                <tr>
+                                    <th>Order Number</th>
+                                    <th>Supplier</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${recentPayments.map(order => {
+                                    const statusColor = order.paymentStatus === 'paid' ? 'success' : 
+                                                       order.paymentStatus === 'partial' ? 'warning' : 
+                                                       order.paymentStatus === 'overdue' ? 'danger' : 'info';
+                                    return `
+                                    <tr>
+                                        <td>${order.orderNumber || 'N/A'}</td>
+                                        <td>${order.supplier?.name || 'N/A'}</td>
+                                        <td>KES ${(order.totalAmount || 0).toLocaleString()}</td>
+                                        <td><span class="badge badge-${statusColor}">${order.paymentStatus || 'pending'}</span></td>
+                                    </tr>
+                                `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                        <div style="margin-top: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #666;">
+                                <span><strong>Pending:</strong> ${pendingPayments}</span>
+                                <span><strong>Paid:</strong> ${paidPayments}</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    paymentsPreview.innerHTML = '<p style="text-align: center; color: #666; padding: 1rem;">No payment records found</p>';
+                }
+                
+                // Update Suppliers Preview
+                const suppliersPreview = document.getElementById('suppliers-preview');
+                const pendingOrders = supplierOrders?.success && supplierOrders?.data ? supplierOrders.data.filter(o => o.status === 'pending' || o.status === 'ordered' || o.status === 'in_transit').length : 0;
+                const lowStockItems = warehouseInventory?.success && warehouseInventory?.data ? warehouseInventory.data.filter(i => i.quantity <= i.lowStockThreshold).length : 0;
+                
+                suppliersPreview.innerHTML = `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #4facfe;">${supplierOrders?.success && supplierOrders?.data ? supplierOrders.data.length : 0}</div>
+                            <div style="color: #666; font-size: 0.9rem;">Total Orders</div>
+                        </div>
+                        <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 2rem; font-weight: bold; color: ${pendingOrders > 0 ? '#ffc107' : '#28a745'};">${pendingOrders}</div>
+                            <div style="color: #666; font-size: 0.9rem;">Pending Orders</div>
+                        </div>
+                    </div>
+                    ${warehouseInventory?.success && warehouseInventory?.data && warehouseInventory.data.length > 0 ? `
+                        <div style="margin-top: 1rem;">
+                            <strong style="color: #333;">Warehouse Items:</strong>
+                            <div style="margin-top: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+                                    <span>Total Items:</span>
+                                    <strong>${warehouseInventory.data.length}</strong>
+                                </div>
+                                ${lowStockItems > 0 ? `
+                                    <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; color: #ffc107;">
+                                        <span><i class="fas fa-exclamation-triangle"></i> Low Stock:</span>
+                                        <strong>${lowStockItems}</strong>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    ` : '<p style="text-align: center; color: #666; padding: 1rem;">No warehouse data</p>'}
+                `;
+                
+                // Update Analytics Preview
+                const analyticsPreview = document.getElementById('analytics-preview');
+                if (orders?.success && orders?.data) {
+                    // Calculate revenue by status
+                    const revenueByStatus = {};
+                    let totalRevenue = 0;
+                    orders.data.forEach(order => {
+                        if (order.status === 'completed' || order.status === 'delivered') {
+                            totalRevenue += order.totalAmount || 0;
+                        }
+                        const status = order.status || 'pending';
+                        if (!revenueByStatus[status]) {
+                            revenueByStatus[status] = 0;
+                        }
+                        revenueByStatus[status] += order.totalAmount || 0;
+                    });
+                    
+                    analyticsPreview.innerHTML = `
+                        <div style="margin-bottom: 1rem;">
+                            <div style="padding: 1rem; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 8px; color: white; text-align: center;">
+                                <div style="font-size: 1.5rem; font-weight: bold;">KES ${totalRevenue.toLocaleString()}</div>
+                                <div style="font-size: 0.9rem; opacity: 0.9;">Total Revenue</div>
+                            </div>
+                        </div>
+                        <div>
+                            <strong style="color: #333;">Revenue by Status:</strong>
+                            <div style="margin-top: 0.5rem;">
+                                ${Object.entries(revenueByStatus).slice(0, 4).map(([status, amount]) => `
+                                    <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+                                        <span><span class="badge badge-${getStatusColor(status)}">${status}</span></span>
+                                        <strong>KES ${amount.toLocaleString()}</strong>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    analyticsPreview.innerHTML = '<p style="text-align: center; color: #666; padding: 1rem;">No analytics data</p>';
+                }
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+        
+        // Load orders
+        async function loadOrders(searchTerm = '') {
+            try {
+                const url = searchTerm ? 
+                    `${API_BASE_URL}/orders?search=${encodeURIComponent(searchTerm)}` : 
+                    `${API_BASE_URL}/orders`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const ordersTable = document.getElementById('orders-table');
+                if (data.success && data.data && data.data.length > 0) {
+                    ordersTable.innerHTML = `
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Items</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Payment Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.data.map(order => {
+                                    const paymentStatus = order.paymentStatus || 'pending';
+                                    const paymentStatusColor = paymentStatus === 'paid' ? 'success' : 
+                                                               paymentStatus === 'partial' ? 'warning' : 'danger';
+                                    const showConfirmBtn = paymentStatus === 'pending' && order.status !== 'cancelled';
+                                    return `
+                                    <tr>
+                                        <td>#${order._id?.toString().slice(-6) || 'N/A'}</td>
+                                        <td>${order.customer?.name || order.customerName || 'N/A'}</td>
+                                        <td>${order.items?.length || 0} item(s)</td>
+                                        <td>KES ${(order.totalAmount || 0).toLocaleString()}</td>
+                                        <td><span class="badge badge-${getStatusColor(order.status)}">${order.status || 'pending'}</span></td>
+                                        <td><span class="badge badge-${paymentStatusColor}">${paymentStatus}</span></td>
+                                        <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+                                        <td>
+                                            <button class="btn-view" onclick="viewOrder('${order._id}')">View</button>
+                                            ${showConfirmBtn ? `<button class="btn-view" onclick="openCustomerPaymentModal('${order._id}', ${order.totalAmount || 0})" style="background: #28a745; margin-left: 5px;">Confirm Payment</button>` : ''}
+                                        </td>
+                                    </tr>
+                                `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    ordersTable.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">No orders found</p>';
+                }
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                document.getElementById('orders-table').innerHTML = '<p style="text-align: center; color: #d32f2f; padding: 2rem;">Error loading orders</p>';
+            }
+        }
+        
+        // Load products
+        async function loadProducts(searchTerm = '') {
+            try {
+                const url = searchTerm ? 
+                    `${API_BASE_URL}/products?search=${encodeURIComponent(searchTerm)}` : 
+                    `${API_BASE_URL}/products`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const productsTable = document.getElementById('products-table');
+                if (data.success && data.data && data.data.length > 0) {
+                    productsTable.innerHTML = `
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Brand</th>
+                                    <th>Category</th>
+                                    <th>Price</th>
+                                    <th>Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.data.map(product => `
+                                    <tr>
+                                        <td>${product.name || 'N/A'}</td>
+                                        <td>${product.brand || 'N/A'}</td>
+                                        <td>${product.category || 'N/A'}</td>
+                                        <td>KES ${(product.price || 0).toLocaleString()}</td>
+                                        <td>${product.stockLevel || 0}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    productsTable.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">No products found</p>';
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+                document.getElementById('products-table').innerHTML = '<p style="text-align: center; color: #d32f2f; padding: 2rem;">Error loading products</p>';
+            }
+        }
+        
+        // Load customers
+        async function loadCustomers(searchTerm = '') {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/users`, {
+                    headers: getAuthHeaders()
+                });
+                const data = await response.json();
+                
+                const customersTable = document.getElementById('customers-table');
+                if (data.success && data.data && data.data.length > 0) {
+                    let customers = data.data.filter(user => user.role === 'customer');
+                    
+                    if (searchTerm) {
+                        const term = searchTerm.toLowerCase();
+                        customers = customers.filter(c => 
+                            (c.name && c.name.toLowerCase().includes(term)) ||
+                            (c.email && c.email.toLowerCase().includes(term))
+                        );
+                    }
+                    
+                    if (customers.length > 0) {
+                        customersTable.innerHTML = `
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${customers.map(customer => `
+                                        <tr>
+                                            <td>${customer.name || 'N/A'}</td>
+                                            <td>${customer.email || 'N/A'}</td>
+                                            <td>${customer.phone || 'N/A'}</td>
+                                            <td><span class="badge badge-${customer.isActive ? 'success' : 'danger'}">${customer.isActive ? 'Active' : 'Inactive'}</span></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        `;
+                    } else {
+                        customersTable.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">No customers found</p>';
+                    }
+                } else {
+                    customersTable.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">No customers found</p>';
+                }
+            } catch (error) {
+                console.error('Error loading customers:', error);
+                document.getElementById('customers-table').innerHTML = '<p style="text-align: center; color: #d32f2f; padding: 2rem;">Error loading customers</p>';
+            }
+        }
+        
+        // Payment tab switching
+        function showPaymentTab(tabName) {
+            // Hide all payment tabs
+            document.querySelectorAll('.payment-tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            const targetTab = document.getElementById(tabName + '-tab');
+            if (targetTab) {
+                targetTab.style.display = 'block';
+            }
+            
+            // Add active class to corresponding button
+            const tabBtn = document.getElementById(tabName + '-tab-btn');
+            if (tabBtn) {
+                tabBtn.classList.add('active');
+            }
+            
+            // Load data for the tab
+            if (tabName === 'supplier-payments') {
+                loadSupplierPayments();
+            } else if (tabName === 'customer-payments') {
+                loadCustomerPayments();
+            }
+        }
+        
+        // Load supplier payments
+        async function loadSupplierPayments(searchTerm = '') {
+            try {
+                const response = await fetch(`${API_BASE_URL}/supplier-orders`, {
+                    headers: getAuthHeaders()
+                }).catch(() => ({ok: false}));
+                
+                const data = response.ok ? await response.json() : {success: true, data: []};
+                
+                const paymentsTable = document.getElementById('supplier-payments-table');
+                if (data.success && data.data && data.data.length > 0) {
+                    let orders = data.data;
+                    
+                    if (searchTerm) {
+                        const term = searchTerm.toLowerCase();
+                        orders = orders.filter(order => 
+                            (order.orderNumber && order.orderNumber.toLowerCase().includes(term)) ||
+                            (order.supplier?.name && order.supplier.name.toLowerCase().includes(term)) ||
+                            (order.paymentStatus && order.paymentStatus.toLowerCase().includes(term))
+                        );
+                    }
+                    
+                    if (orders.length > 0) {
+                        paymentsTable.innerHTML = `
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order Number</th>
+                                        <th>Supplier</th>
+                                        <th>Total Amount</th>
+                                        <th>Payment Status</th>
+                                        <th>Payment Terms</th>
+                                        <th>Due Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${orders.map(order => {
+                                        const dueDate = order.expectedDeliveryDate ? new Date(order.expectedDeliveryDate) : null;
+                                        const isOverdue = dueDate && dueDate < new Date() && order.paymentStatus === 'pending';
+                                        const paymentStatusColor = order.paymentStatus === 'paid' ? 'success' : 
+                                                                   order.paymentStatus === 'partial' ? 'warning' : 
+                                                                   isOverdue ? 'danger' : 'info';
+                                        return `
+                                        <tr>
+                                            <td>${order.orderNumber || 'N/A'}</td>
+                                            <td>${order.supplier?.name || 'N/A'}</td>
+                                            <td>KES ${(order.totalAmount || 0).toLocaleString()}</td>
+                                            <td><span class="badge badge-${paymentStatusColor}">${order.paymentStatus || 'pending'}</span></td>
+                                            <td>${order.supplier?.paymentTerms || 'N/A'}</td>
+                                            <td>${dueDate ? dueDate.toLocaleDateString() : 'N/A'}</td>
+                                            <td>
+                                                <button class="btn-view" onclick="viewSupplierOrder('${order._id || order.id}')">View</button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        `;
+                    } else {
+                        paymentsTable.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">No supplier payments found</p>';
+                    }
+                } else {
+                    paymentsTable.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">No supplier payments found</p>';
+                }
+            } catch (error) {
+                console.error('Error loading supplier payments:', error);
+                document.getElementById('supplier-payments-table').innerHTML = '<p style="text-align: center; color: #d32f2f; padding: 2rem;">Error loading supplier payments</p>';
+            }
+        }
+        
+        // Load customer payments
+        async function loadCustomerPayments(searchTerm = '') {
+            try {
+                const response = await fetch(`${API_BASE_URL}/payments`, {
+                    headers: getAuthHeaders()
+                }).catch(() => ({ok: false}));
+                
+                const data = response.ok ? await response.json() : {success: true, data: []};
+                
+                const paymentsTable = document.getElementById('customer-payments-table');
+                if (data.success && data.data && data.data.length > 0) {
+                    let payments = data.data;
+                    
+                    if (searchTerm) {
+                        const term = searchTerm.toLowerCase();
+                        payments = payments.filter(payment => 
+                            (payment.order?.orderNumber && payment.order.orderNumber.toLowerCase().includes(term)) ||
+                            (payment.customer?.name && payment.customer.name.toLowerCase().includes(term)) ||
+                            (payment.status && payment.status.toLowerCase().includes(term))
+                        );
+                    }
+                    
+                    if (payments.length > 0) {
+                        paymentsTable.innerHTML = `
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Payment ID</th>
+                                        <th>Order Number</th>
+                                        <th>Customer</th>
+                                        <th>Amount</th>
+                                        <th>Payment Method</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${payments.map(payment => {
+                                        const statusColor = payment.status === 'completed' ? 'success' : 
+                                                           payment.status === 'pending' ? 'warning' : 'danger';
+                                        return `
+                                        <tr>
+                                            <td>${payment._id?.toString().substring(0, 8) || payment.id?.toString().substring(0, 8) || 'N/A'}</td>
+                                            <td>${payment.order?.orderNumber || 'N/A'}</td>
+                                            <td>${payment.customer?.name || payment.customer?.email || 'N/A'}</td>
+                                            <td>KES ${(payment.amount || 0).toLocaleString()}</td>
+                                            <td>${payment.paymentMethod || 'N/A'}</td>
+                                            <td><span class="badge badge-${statusColor}">${payment.status || 'pending'}</span></td>
+                                            <td>${payment.createdAt ? new Date(payment.createdAt).toLocaleDateString() : 'N/A'}</td>
+                                            <td>
+                                                <button class="btn-view" onclick="viewCustomerPayment('${payment._id || payment.id}')">View</button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        `;
+                    } else {
+                        paymentsTable.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">No customer payments found</p>';
+                    }
+                } else {
+                    paymentsTable.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">No customer payments found</p>';
+                }
+            } catch (error) {
+                console.error('Error loading customer payments:', error);
+                document.getElementById('customer-payments-table').innerHTML = '<p style="text-align: center; color: #d32f2f; padding: 2rem;">Error loading customer payments</p>';
+            }
+        }
+        
+        // Load analytics
+        async function loadAnalytics() {
+            try {
+                // Load orders for analytics
+                const response = await fetch(`${API_BASE_URL}/orders`);
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    // Revenue chart
+                    const revenueCtx = document.getElementById('revenueChart');
+                    if (revenueCtx) {
+                        // Group orders by date
+                        const revenueByDate = {};
+                        data.data.forEach(order => {
+                            if (order.status === 'completed') {
+                                const date = new Date(order.createdAt).toLocaleDateString();
+                                revenueByDate[date] = (revenueByDate[date] || 0) + (order.totalAmount || 0);
+                            }
+                        });
+                        
+                        new Chart(revenueCtx, {
+                            type: 'line',
+                            data: {
+                                labels: Object.keys(revenueByDate),
+                                datasets: [{
+                                    label: 'Revenue (KES)',
+                                    data: Object.values(revenueByDate),
+                                    borderColor: '#4facfe',
+                                    backgroundColor: 'rgba(79, 172, 254, 0.1)',
+                                    tension: 0.4
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: {
+                                        display: true
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+            }
+        }
+        
+        // Helper functions
+        function getStatusColor(status) {
+            const statusColors = {
+                'completed': 'success',
+                'pending': 'warning',
+                'cancelled': 'danger',
+                'processing': 'info'
+            };
+            return statusColors[status] || 'info';
+        }
+        
+        function searchOrders() {
+            const term = document.getElementById('orderSearch').value;
+            loadOrders(term);
+        }
+        
+        function searchProducts() {
+            const term = document.getElementById('productSearch').value;
+            loadProducts(term);
+        }
+        
+        function searchCustomers() {
+            const term = document.getElementById('customerSearch').value;
+            loadCustomers(term);
+        }
+        
+        function searchSupplierPayments() {
+            const term = document.getElementById('supplierPaymentSearch').value;
+            loadSupplierPayments(term);
+        }
+        
+        function searchCustomerPayments() {
+            const term = document.getElementById('customerPaymentSearch').value;
+            loadCustomerPayments(term);
+        }
+        
+        function viewCustomerPayment(paymentId) {
+            alert(`View customer payment details for: ${paymentId}\n\nThis feature can be expanded to show payment details in a modal.`);
+        }
+        
+        // Customer Payment Confirmation Functions
+        let currentCustomerOrderId = null;
+        
+        function openCustomerPaymentModal(orderId, amount) {
+            currentCustomerOrderId = orderId;
+            document.getElementById('customerPaymentOrderId').textContent = `#${orderId.toString().slice(-6)}`;
+            document.getElementById('customerPaymentAmount').textContent = `KES ${amount.toLocaleString()}`;
+            document.getElementById('customerPaymentDate').value = new Date().toISOString().slice(0, 16);
+            document.getElementById('customerPaymentForm').reset();
+            document.getElementById('customerPaymentOrderId').textContent = `#${orderId.toString().slice(-6)}`;
+            document.getElementById('customerPaymentAmount').textContent = `KES ${amount.toLocaleString()}`;
+            document.getElementById('customerPaymentModal').style.display = 'flex';
+        }
+        
+        function closeCustomerPaymentModal() {
+            document.getElementById('customerPaymentModal').style.display = 'none';
+            currentCustomerOrderId = null;
+        }
+        
+        async function confirmCustomerPayment(event) {
+            event.preventDefault();
+            
+            if (!currentCustomerOrderId) {
+                alert('Error: No order selected');
+                return;
+            }
+            
+            const paymentMethod = document.getElementById('customerPaymentMethod').value;
+            const paymentReference = document.getElementById('customerPaymentReference').value;
+            const paymentDate = document.getElementById('customerPaymentDate').value;
+            
+            try {
+                // Update order status to confirmed and payment status to paid
+                const response = await fetch(`${API_BASE_URL}/orders/${currentCustomerOrderId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeaders()
+                    },
+                    body: JSON.stringify({
+                        status: 'confirmed',
+                        paymentStatus: 'paid',
+                        paymentMethod: paymentMethod,
+                        paymentReference: paymentReference,
+                        paymentDate: paymentDate
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success || response.ok) {
+                    // Fetch full order details for receipt
+                    try {
+                        const orderResponse = await fetch(`${API_BASE_URL}/orders/${currentCustomerOrderId}`, {
+                            headers: getAuthHeaders()
+                        });
+                        const orderData = await orderResponse.json();
+                        if (orderData.success && orderData.data) {
+                            generateReceipt(orderData.data, 'customer');
+                        } else {
+                            generateReceipt({ _id: currentCustomerOrderId, totalAmount: parseFloat(document.getElementById('customerPaymentAmount').textContent.replace(/[KES,\s]/g, '')) }, 'customer');
+                        }
+                    } catch (err) {
+                        console.error('Error fetching order for receipt:', err);
+                        generateReceipt({ _id: currentCustomerOrderId, totalAmount: parseFloat(document.getElementById('customerPaymentAmount').textContent.replace(/[KES,\s]/g, '')) }, 'customer');
+                    }
+                    alert('Payment confirmed successfully! Receipt generated.');
+                    closeCustomerPaymentModal();
+                    loadOrders(); // Refresh orders table
+                    if (document.getElementById('orders-section').classList.contains('active')) {
+                        // Reload if orders section is active
+                    }
+                } else {
+                    alert('Error confirming payment: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error confirming payment:', error);
+                alert('Error confirming payment. Please try again.');
+            }
+        }
+        
+        // Supplier Payment Confirmation Functions
+        let currentSupplierOrderId = null;
+        
+        function openSupplierPaymentModal(orderId, orderNumber, supplierName, totalAmount) {
+            currentSupplierOrderId = orderId;
+            document.getElementById('supplierPaymentOrderNumber').textContent = orderNumber;
+            document.getElementById('supplierPaymentSupplier').textContent = supplierName;
+            document.getElementById('supplierPaymentAmount').textContent = `KES ${totalAmount.toLocaleString()}`;
+            document.getElementById('supplierPaymentPaidAmount').value = totalAmount;
+            document.getElementById('supplierPaymentDate').value = new Date().toISOString().slice(0, 16);
+            document.getElementById('supplierPaymentForm').reset();
+            document.getElementById('supplierPaymentOrderNumber').textContent = orderNumber;
+            document.getElementById('supplierPaymentSupplier').textContent = supplierName;
+            document.getElementById('supplierPaymentAmount').textContent = `KES ${totalAmount.toLocaleString()}`;
+            document.getElementById('supplierPaymentPaidAmount').value = totalAmount;
+            document.getElementById('supplierPaymentModal').style.display = 'flex';
+        }
+        
+        function closeSupplierPaymentModal() {
+            document.getElementById('supplierPaymentModal').style.display = 'none';
+            currentSupplierOrderId = null;
+        }
+        
+        async function confirmSupplierPayment(event) {
+            event.preventDefault();
+            
+            if (!currentSupplierOrderId) {
+                alert('Error: No order selected');
+                return;
+            }
+            
+            const paymentStatus = document.getElementById('supplierPaymentStatus').value;
+            const paidAmount = parseFloat(document.getElementById('supplierPaymentPaidAmount').value);
+            const paymentMethod = document.getElementById('supplierPaymentMethod').value;
+            const paymentReference = document.getElementById('supplierPaymentReference').value;
+            const paymentDate = document.getElementById('supplierPaymentDate').value;
+            const invoiceNumber = document.getElementById('supplierPaymentInvoice').value;
+            
+            try {
+                // Update supplier order payment status
+                const response = await fetch(`${API_BASE_URL}/supplier-orders/${currentSupplierOrderId}/payment`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeaders()
+                    },
+                    body: JSON.stringify({
+                        paymentStatus: paymentStatus,
+                        paidAmount: paidAmount,
+                        paymentMethod: paymentMethod,
+                        paymentReference: paymentReference,
+                        paymentDate: paymentDate,
+                        invoiceNumber: invoiceNumber || undefined
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success || response.ok) {
+                    // Generate receipt with the returned order data
+                    const orderData = data.data || { _id: currentSupplierOrderId };
+                    generateReceipt(orderData, 'supplier');
+                    alert('Supplier payment confirmed successfully! Receipt generated.');
+                    closeSupplierPaymentModal();
+                    closeSupplierOrderDetailsModal();
+                    loadSupplierPayments(); // Refresh supplier payments table
+                    // Reload supplier orders if that section is active
+                    if (document.getElementById('suppliers-section')?.classList.contains('active')) {
+                        loadSupplierOrders();
+                    }
+                } else {
+                    alert('Error confirming payment: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error confirming supplier payment:', error);
+                alert('Error confirming payment. Please try again.');
+            }
+        }
+        
+        function viewOrder(orderId) {
+            alert(`View order details for: ${orderId}\n\nThis feature can be expanded to show order details in a modal.`);
+        }
+        
+        function handleLogout() {
+            localStorage.removeItem('staffToken');
+            localStorage.removeItem('staffUser');
+            localStorage.removeItem('staffRole');
+            sessionStorage.removeItem('staffToken');
+            window.location.href = '/staff-login';
+        }
+        
+        // Supplier Tab Functions
+        function showSupplierTab(tab) {
+            // Hide all tabs
+            document.querySelectorAll('.supplier-tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab
+            if (tab === 'suppliers') {
+                document.getElementById('suppliers-tab').classList.add('active');
+                document.getElementById('suppliers-tab-btn').classList.add('active');
+                loadSuppliersList();
+            } else if (tab === 'orders') {
+                document.getElementById('supplier-orders-tab').classList.add('active');
+                document.getElementById('orders-tab-btn').classList.add('active');
+                loadSupplierOrders();
+            } else if (tab === 'inventory') {
+                document.getElementById('warehouse-inventory-tab').classList.add('active');
+                document.getElementById('inventory-tab-btn').classList.add('active');
+                loadWarehouseInventory();
+            }
+        }
+        
+        // Load Suppliers Data
+        async function loadSuppliers() {
+            await Promise.all([
+                loadSuppliersList(),
+                loadSupplierOrders(),
+                loadWarehouseInventory()
+            ]);
+        }
+        
+        // Load Suppliers List
+        async function loadSuppliersList(searchTerm = '') {
+            try {
+                let url = `${API_BASE_URL}/suppliers`;
+                if (searchTerm) {
+                    url += `?search=${encodeURIComponent(searchTerm)}`;
+                }
+                
+                const response = await fetch(url, {
+                    headers: getAuthHeaders()
+                });
+                const data = await response.json();
+                
+                const suppliersTable = document.getElementById('suppliers-table');
+                if (data.success && data.data && data.data.length > 0) {
+                    suppliersTable.innerHTML = `
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Contact Person</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Items Supplied</th>
+                                    <th>Payment Terms</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.data.map(supplier => `
+                                    <tr>
+                                        <td>${supplier.name || 'N/A'}</td>
+                                        <td>${supplier.contactPerson || 'N/A'}</td>
+                                        <td>${supplier.email || 'N/A'}</td>
+                                        <td>${supplier.phone || 'N/A'}</td>
+                                        <td>${supplier.itemsSupplied && supplier.itemsSupplied.length > 0 ? supplier.itemsSupplied.join(', ') : 'N/A'}</td>
+                                        <td>${supplier.paymentTerms || 'N/A'}</td>
+                                        <td><span class="badge badge-${supplier.isActive ? 'success' : 'danger'}">${supplier.isActive ? 'Active' : 'Inactive'}</span></td>
+                                        <td>
+                                            <button class="btn-view" onclick="editSupplier('${supplier._id}')" style="background: #28a745; margin-right: 5px;">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            <button class="btn-view" onclick="deleteSupplier('${supplier._id}', '${supplier.name}')" style="background: #dc3545;">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    suppliersTable.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">No suppliers found</p>';
+                }
+            } catch (error) {
+                console.error('Error loading suppliers:', error);
+                document.getElementById('suppliers-table').innerHTML = '<p style="text-align: center; color: #d32f2f; padding: 2rem;">Error loading suppliers</p>';
+            }
+        }
+        
+        // Supplier Modal Functions
+        function showAddSupplierModal() {
+            document.getElementById('supplierModalTitle').textContent = 'Add New Supplier';
+            document.getElementById('supplierForm').reset();
+            document.getElementById('supplierId').value = '';
+            document.querySelectorAll('.supplier-item-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('addSupplierModal').style.display = 'flex';
+        }
+        
+        function closeAddSupplierModal() {
+            document.getElementById('addSupplierModal').style.display = 'none';
+            document.getElementById('supplierForm').reset();
+            document.getElementById('supplierId').value = '';
+        }
+        
+        async function editSupplier(supplierId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/suppliers/${supplierId}`, {
+                    headers: getAuthHeaders()
+                });
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    const supplier = data.data;
+                    document.getElementById('supplierModalTitle').textContent = 'Edit Supplier';
+                    document.getElementById('supplierId').value = supplier._id;
+                    document.getElementById('supplierName').value = supplier.name || '';
+                    document.getElementById('supplierContactPerson').value = supplier.contactPerson || '';
+                    document.getElementById('supplierEmail').value = supplier.email || '';
+                    document.getElementById('supplierPhone').value = supplier.phone || '';
+                    document.getElementById('supplierStreet').value = supplier.address?.street || '';
+                    document.getElementById('supplierCity').value = supplier.address?.city || '';
+                    document.getElementById('supplierPostalCode').value = supplier.address?.postalCode || '';
+                    document.getElementById('supplierPaymentTerms').value = supplier.paymentTerms || 'net_30';
+                    document.getElementById('supplierNotes').value = supplier.notes || '';
+                    
+                    // Set items supplied checkboxes
+                    document.querySelectorAll('.supplier-item-checkbox').forEach(cb => {
+                        cb.checked = supplier.itemsSupplied && supplier.itemsSupplied.includes(cb.value);
+                    });
+                    
+                    document.getElementById('addSupplierModal').style.display = 'flex';
+                } else {
+                    alert('Error loading supplier details');
+                }
+            } catch (error) {
+                console.error('Error loading supplier:', error);
+                alert('Error loading supplier details');
+            }
+        }
+        
+        async function handleSaveSupplier(event) {
+            event.preventDefault();
+            
+            try {
+                const supplierId = document.getElementById('supplierId').value;
+                const itemsSupplied = Array.from(document.querySelectorAll('.supplier-item-checkbox:checked')).map(cb => cb.value);
+                
+                const supplierData = {
+                    name: document.getElementById('supplierName').value.trim(),
+                    email: document.getElementById('supplierEmail').value.trim(),
+                    phone: document.getElementById('supplierPhone').value.trim(),
+                    paymentTerms: document.getElementById('supplierPaymentTerms').value
+                };
+                
+                // Add optional fields only if they have values
+                const contactPerson = document.getElementById('supplierContactPerson').value.trim();
+                if (contactPerson) {
+                    supplierData.contactPerson = contactPerson;
+                }
+                
+                const street = document.getElementById('supplierStreet').value.trim();
+                const city = document.getElementById('supplierCity').value.trim();
+                const postalCode = document.getElementById('supplierPostalCode').value.trim();
+                if (street || city || postalCode) {
+                    supplierData.address = {
+                        street: street,
+                        city: city,
+                        postalCode: postalCode,
+                        country: 'Kenya'
+                    };
+                }
+                
+                if (itemsSupplied.length > 0) {
+                    supplierData.itemsSupplied = itemsSupplied;
+                }
+                
+                const notes = document.getElementById('supplierNotes').value.trim();
+                if (notes) {
+                    supplierData.notes = notes;
+                }
+                
+                const url = supplierId ? `${API_BASE_URL}/suppliers/${supplierId}` : `${API_BASE_URL}/suppliers`;
+                const method = supplierId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(supplierData)
+                });
+                
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('Non-JSON response received:', text.substring(0, 200));
+                    alert('Error saving supplier: Server returned an invalid response. Please check the server logs.');
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(supplierId ? 'Supplier updated successfully!' : 'Supplier created successfully!');
+                    closeAddSupplierModal();
+                    loadSuppliersList();
+                    // Also reload supplier orders to refresh supplier dropdown
+                    if (document.getElementById('supplier-orders-tab').classList.contains('active')) {
+                        showAddSupplierOrderModal(); // This will reload suppliers in dropdown
+                    }
+                } else {
+                    // Show detailed error message
+                    let errorMsg = 'Error saving supplier: ';
+                    if (data.details && Array.isArray(data.details)) {
+                        errorMsg += data.details.map(d => `${d.field || 'Field'}: ${d.message || d}`).join(', ');
+                    } else if (data.error) {
+                        errorMsg += data.error;
+                    } else if (data.message) {
+                        errorMsg += data.message;
+                    } else {
+                        errorMsg += 'Unknown error';
+                    }
+                    alert(errorMsg);
+                    console.error('Supplier save error:', data);
+                }
+            } catch (error) {
+                console.error('Error saving supplier:', error);
+                if (error.message && error.message.includes('JSON')) {
+                    alert('Error saving supplier: Invalid response from server. The server may be returning an error page. Please check server logs.');
+                } else {
+                    alert('Error saving supplier: ' + (error.message || 'Network error. Please check your connection.'));
+                }
+            }
+        }
+        
+        async function deleteSupplier(supplierId, supplierName) {
+            if (!confirm(`Are you sure you want to delete supplier "${supplierName}"? This action cannot be undone.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/suppliers/${supplierId}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders()
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Supplier deleted successfully!');
+                    loadSuppliersList();
+                } else {
+                    alert('Error deleting supplier: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error deleting supplier:', error);
+                alert('Error deleting supplier');
+            }
+        }
+        
+        function searchSuppliers() {
+            const term = document.getElementById('supplierSearch').value;
+            loadSuppliersList(term);
+        }
+        
+        // Load Supplier Orders
+        async function loadSupplierOrders(searchTerm = '') {
+            try {
+                let url = `${API_BASE_URL}/supplier-orders`;
+                if (searchTerm) {
+                    url += `?search=${encodeURIComponent(searchTerm)}`;
+                }
+                
+                const response = await fetch(url, {
+                    headers: getAuthHeaders()
+                });
+                const data = await response.json();
+                
+                const ordersTable = document.getElementById('supplier-orders-table');
+                if (data.success && data.data && data.data.length > 0) {
+                    ordersTable.innerHTML = `
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Order Number</th>
+                                    <th>Supplier</th>
+                                    <th>Items</th>
+                                    <th>Total Amount</th>
+                                    <th>Status</th>
+                                    <th>Order Date</th>
+                                    <th>Expected Delivery</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.data.map(order => `
+                                    <tr>
+                                        <td>${order.orderNumber || 'N/A'}</td>
+                                        <td>${order.supplier?.name || 'N/A'}</td>
+                                        <td>${order.items?.length || 0} item(s)</td>
+                                        <td>KES ${(order.totalAmount || 0).toLocaleString()}</td>
+                                        <td><span class="badge badge-${getSupplierOrderStatusColor(order.status)}">${order.status || 'pending'}</span></td>
+                                        <td>${new Date(order.orderDate).toLocaleDateString()}</td>
+                                        <td>${order.expectedDeliveryDate ? new Date(order.expectedDeliveryDate).toLocaleDateString() : 'N/A'}</td>
+                                        <td>
+                                            <button class="btn-view" onclick="viewSupplierOrder('${order._id}')">View</button>
+                                            ${order.status === 'pending' ? `<button class="btn-view" onclick="updateSupplierOrderStatus('${order._id}', 'ordered')" style="background: #28a745; margin-left: 5px;">Mark Ordered</button>` : ''}
+                                            ${order.status === 'in_transit' ? `<button class="btn-view" onclick="updateSupplierOrderStatus('${order._id}', 'received')" style="background: #28a745; margin-left: 5px;">Mark Received</button>` : ''}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    ordersTable.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">No supplier orders found</p>';
+                }
+            } catch (error) {
+                console.error('Error loading supplier orders:', error);
+                document.getElementById('supplier-orders-table').innerHTML = '<p style="text-align: center; color: #d32f2f; padding: 2rem;">Error loading supplier orders</p>';
+            }
+        }
+        
+        // Load Warehouse Inventory
+        async function loadWarehouseInventory(searchTerm = '') {
+            try {
+                const typeFilter = document.getElementById('inventoryTypeFilter')?.value || '';
+                const lowStockOnly = document.getElementById('lowStockFilter')?.checked || false;
+                
+                let url = `${API_BASE_URL}/warehouse-inventory`;
+                const params = [];
+                if (searchTerm) params.push(`search=${encodeURIComponent(searchTerm)}`);
+                if (typeFilter) params.push(`itemType=${encodeURIComponent(typeFilter)}`);
+                if (lowStockOnly) params.push(`lowStock=true`);
+                if (params.length > 0) url += '?' + params.join('&');
+                
+                const response = await fetch(url, {
+                    headers: getAuthHeaders()
+                });
+                const data = await response.json();
+                
+                const inventoryTable = document.getElementById('warehouse-inventory-table');
+                if (data.success && data.data && data.data.length > 0) {
+                    inventoryTable.innerHTML = `
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Item Type</th>
+                                    <th>Description</th>
+                                    <th>Quantity</th>
+                                    <th>Unit</th>
+                                    <th>Status</th>
+                                    <th>Location</th>
+                                    <th>Last Restocked</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.data.map(item => `
+                                    <tr>
+                                        <td>${item.itemType || 'N/A'}</td>
+                                        <td>${item.description || 'N/A'}</td>
+                                        <td>${(item.quantity || 0).toLocaleString()}</td>
+                                        <td>${item.unit || 'pieces'}</td>
+                                        <td><span class="badge badge-${getInventoryStatusColor(item.stockStatus || (item.quantity <= item.lowStockThreshold ? 'low_stock' : 'in_stock'))}">${getInventoryStatusText(item.stockStatus || (item.quantity <= item.lowStockThreshold ? 'low_stock' : 'in_stock'))}</span></td>
+                                        <td>${item.location || 'Main Warehouse'}</td>
+                                        <td>${item.lastRestocked ? new Date(item.lastRestocked).toLocaleDateString() : 'N/A'}</td>
+                                        <td>
+                                            <button class="btn-view" onclick="viewInventoryItem('${item._id}')">View</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    inventoryTable.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">No inventory items found</p>';
+                }
+            } catch (error) {
+                console.error('Error loading warehouse inventory:', error);
+                document.getElementById('warehouse-inventory-table').innerHTML = '<p style="text-align: center; color: #d32f2f; padding: 2rem;">Error loading warehouse inventory</p>';
+            }
+        }
+        
+        // Supplier Order Modal Functions
+        async function showAddSupplierOrderModal() {
+            // Load suppliers for dropdown
+            try {
+                const response = await fetch(`${API_BASE_URL}/suppliers?isActive=true`, {
+                    headers: getAuthHeaders()
+                });
+                const data = await response.json();
+                
+                const supplierSelect = document.getElementById('orderSupplier');
+                supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    data.data.forEach(supplier => {
+                        const option = document.createElement('option');
+                        option.value = supplier._id;
+                        option.textContent = supplier.name;
+                        supplierSelect.appendChild(option);
+                    });
+                } else {
+                    supplierSelect.innerHTML = '<option value="">No suppliers available. Please add a supplier first.</option>';
+                }
+            } catch (error) {
+                console.error('Error loading suppliers:', error);
+                const supplierSelect = document.getElementById('orderSupplier');
+                supplierSelect.innerHTML = '<option value="">Error loading suppliers</option>';
+            }
+            
+            document.getElementById('addSupplierOrderModal').style.display = 'flex';
+        }
+        
+        function closeAddSupplierOrderModal() {
+            document.getElementById('addSupplierOrderModal').style.display = 'none';
+            document.getElementById('supplierOrderForm').reset();
+            // Reset to one item
+            const container = document.getElementById('orderItemsContainer');
+            container.innerHTML = container.querySelector('.order-item').outerHTML;
+        }
+        
+        function addOrderItem() {
+            const container = document.getElementById('orderItemsContainer');
+            const newItem = container.querySelector('.order-item').cloneNode(true);
+            // Clear inputs in new item
+            newItem.querySelectorAll('input, select').forEach(input => {
+                if (input.type !== 'button') input.value = '';
+            });
+            container.appendChild(newItem);
+        }
+        
+        function removeOrderItem(btn) {
+            const items = document.querySelectorAll('.order-item');
+            if (items.length > 1) {
+                btn.closest('.order-item').remove();
+            } else {
+                alert('At least one item is required');
+            }
+        }
+        
+        async function handleAddSupplierOrder(event) {
+            event.preventDefault();
+            
+            try {
+                const formData = new FormData(event.target);
+                const items = [];
+                const itemElements = document.querySelectorAll('.order-item');
+                
+                itemElements.forEach(itemEl => {
+                    const itemType = itemEl.querySelector('[name="itemType"]').value;
+                    const description = itemEl.querySelector('[name="description"]').value;
+                    const quantity = parseInt(itemEl.querySelector('[name="quantity"]').value);
+                    const unitPrice = parseFloat(itemEl.querySelector('[name="unitPrice"]').value);
+                    
+                    if (itemType && description && quantity && unitPrice) {
+                        items.push({
+                            itemType,
+                            description,
+                            quantity,
+                            unitPrice,
+                            totalPrice: quantity * unitPrice
+                        });
+                    }
+                });
+                
+                if (items.length === 0) {
+                    alert('Please add at least one item');
+                    return;
+                }
+                
+                const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
+                const tax = parseFloat(document.getElementById('orderTax').value) || 0;
+                const shippingCost = parseFloat(document.getElementById('orderShipping').value) || 0;
+                const totalAmount = subtotal + tax + shippingCost;
+                
+                // Get staff user ID from localStorage if available
+                const staffUserStr = localStorage.getItem('staffUser');
+                let orderedBy = null;
+                if (staffUserStr) {
+                    try {
+                        const staffUser = JSON.parse(staffUserStr);
+                        orderedBy = staffUser.id || staffUser._id;
+                    } catch (e) {
+                        console.warn('Could not parse staff user:', e);
+                    }
+                }
+                
+                const orderData = {
+                    supplier: document.getElementById('orderSupplier').value,
+                    items,
+                    subtotal,
+                    tax,
+                    shippingCost,
+                    totalAmount,
+                    expectedDeliveryDate: document.getElementById('expectedDeliveryDate').value || undefined,
+                    notes: document.getElementById('orderNotes').value || undefined,
+                    orderedBy: orderedBy || undefined
+                };
+                
+                console.log('Sending order data:', JSON.stringify(orderData, null, 2));
+                console.log('Order items:', items);
+                console.log('Subtotal:', subtotal);
+                console.log('Tax:', tax);
+                console.log('Shipping:', shippingCost);
+                console.log('Total Amount:', totalAmount);
+                
+                const response = await fetch(`${API_BASE_URL}/supplier-orders`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(orderData)
+                });
+                
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('Non-JSON response received:', text.substring(0, 200));
+                    alert('Error creating order: Server returned an invalid response. Please check the server logs.');
+                    return;
+                }
+                
+                const data = await response.json();
+                console.log('Order creation response:', data);
+                
+                if (data.success) {
+                    alert('Supplier order created successfully!');
+                    closeAddSupplierOrderModal();
+                    loadSupplierOrders();
+                } else {
+                    // Show detailed error message
+                    console.error('Order creation error - full response:', JSON.stringify(data, null, 2));
+                    
+                    let errorMsg = 'Error creating order:\n\n';
+                    
+                    if (data.details) {
+                        if (Array.isArray(data.details)) {
+                            errorMsg += data.details.map(d => {
+                                const field = d.field || d.path || 'Field';
+                                const msg = d.message || d.msg || d;
+                                return `• ${field}: ${msg}`;
+                            }).join('\n');
+                        } else if (typeof data.details === 'object') {
+                            errorMsg += Object.entries(data.details).map(([key, value]) => {
+                                return `• ${key}: ${value}`;
+                            }).join('\n');
+                        }
+                    }
+                    
+                    if (!errorMsg.includes('•')) {
+                        // No details, show general error
+                        errorMsg += data.error || data.message || 'Unknown error occurred';
+                    }
+                    
+                    alert(errorMsg);
+                    console.error('Order creation error:', data);
+                }
+            } catch (error) {
+                console.error('Error creating supplier order:', error);
+                if (error.message && error.message.includes('JSON')) {
+                    alert('Error creating order: Invalid response from server. The server may be returning an error page. Please check server logs.');
+                } else {
+                    alert('Error creating order: ' + (error.message || 'Network error. Please check your connection.'));
+                }
+            }
+        }
+        
+        async function updateSupplierOrderStatus(orderId, status) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/supplier-orders/${orderId}`, {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ status })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Order status updated successfully!');
+                    loadSupplierOrders();
+                    if (status === 'received') {
+                        loadWarehouseInventory(); // Refresh inventory
+                    }
+                } else {
+                    alert('Error updating order status: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error updating order status:', error);
+                alert('Error updating order status');
+            }
+        }
+        
+        async function viewSupplierOrder(orderId) {
+            try {
+                // Show modal
+                document.getElementById('supplierOrderDetailsModal').style.display = 'flex';
+                document.getElementById('supplierOrderDetailsContent').innerHTML = '<div class="loading">Loading order details...</div>';
+                
+                // Fetch order details
+                const response = await fetch(`${API_BASE_URL}/supplier-orders/${orderId}`, {
+                    headers: getAuthHeaders()
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    const order = data.data;
+                    
+                    // Format order details HTML
+                    const orderDetailsHTML = `
+                        <div style="display: grid; gap: 1.5rem;">
+                            <!-- Order Header -->
+                            <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <div>
+                                        <strong style="color: #666; font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">Order Number</strong>
+                                        <div style="font-size: 1.2rem; font-weight: bold; color: #333; margin-top: 0.25rem;">${order.orderNumber || 'N/A'}</div>
+                                    </div>
+                                    <div>
+                                        <strong style="color: #666; font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">Status</strong>
+                                        <div style="margin-top: 0.25rem;"><span class="badge badge-${getSupplierOrderStatusColor(order.status)}" style="font-size: 1rem; padding: 0.5rem 1rem; display: inline-block;">${order.status || 'pending'}</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Supplier Information -->
+                            <div>
+                                <h3 style="margin-bottom: 1rem; color: #333; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem;">Supplier Information</h3>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <div>
+                                        <strong style="color: #666; font-size: 0.9rem;">Supplier Name</strong>
+                                        <div>${order.supplier?.name || 'N/A'}</div>
+                                    </div>
+                                    <div>
+                                        <strong style="color: #666; font-size: 0.9rem;">Email</strong>
+                                        <div>${order.supplier?.email || 'N/A'}</div>
+                                    </div>
+                                    <div>
+                                        <strong style="color: #666; font-size: 0.9rem;">Phone</strong>
+                                        <div>${order.supplier?.phone || 'N/A'}</div>
+                                    </div>
+                                    <div>
+                                        <strong style="color: #666; font-size: 0.9rem;">Payment Terms</strong>
+                                        <div>${order.supplier?.paymentTerms || 'N/A'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Order Dates -->
+                            <div>
+                                <h3 style="margin-bottom: 1rem; color: #333; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem;">Order Timeline</h3>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                                    <div>
+                                        <strong style="color: #666; font-size: 0.9rem;">Order Date</strong>
+                                        <div>${new Date(order.orderDate).toLocaleString()}</div>
+                                    </div>
+                                    <div>
+                                        <strong style="color: #666; font-size: 0.9rem;">Expected Delivery</strong>
+                                        <div>${order.expectedDeliveryDate ? new Date(order.expectedDeliveryDate).toLocaleString() : 'Not set'}</div>
+                                    </div>
+                                    <div>
+                                        <strong style="color: #666; font-size: 0.9rem;">Actual Delivery</strong>
+                                        <div>${order.actualDeliveryDate ? new Date(order.actualDeliveryDate).toLocaleString() : 'Not received'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Order Items -->
+                            <div>
+                                <h3 style="margin-bottom: 1rem; color: #333; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem;">Order Items</h3>
+                                <table class="data-table" style="width: 100%;">
+                                    <thead>
+                                        <tr>
+                                            <th>Item Type</th>
+                                            <th>Description</th>
+                                            <th>Quantity</th>
+                                            <th>Unit Price</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${order.items && order.items.length > 0 ? order.items.map(item => `
+                                            <tr>
+                                                <td>${item.itemType || 'N/A'}</td>
+                                                <td>${item.description || 'N/A'}</td>
+                                                <td>${item.quantity || 0}</td>
+                                                <td>KES ${(item.unitPrice || 0).toLocaleString()}</td>
+                                                <td>KES ${(item.totalPrice || 0).toLocaleString()}</td>
+                                            </tr>
+                                        `).join('') : '<tr><td colspan="5" style="text-align: center; padding: 1rem;">No items found</td></tr>'}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Order Summary -->
+                            <div>
+                                <h3 style="margin-bottom: 1rem; color: #333; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem;">Order Summary</h3>
+                                <div style="display: grid; gap: 0.5rem;">
+                                    <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+                                        <strong>Subtotal:</strong>
+                                        <span>KES ${(order.subtotal || 0).toLocaleString()}</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+                                        <strong>Tax:</strong>
+                                        <span>KES ${(order.tax || 0).toLocaleString()}</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+                                        <strong>Shipping Cost:</strong>
+                                        <span>KES ${(order.shippingCost || 0).toLocaleString()}</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-top: 2px solid #e0e0e0; margin-top: 0.5rem; font-size: 1.2rem; font-weight: bold;">
+                                        <strong>Total Amount:</strong>
+                                        <span>KES ${(order.totalAmount || 0).toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Payment and Status -->
+                            <div>
+                                <h3 style="margin-bottom: 1rem; color: #333; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem;">Payment & Status</h3>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                                    <div>
+                                        <strong style="color: #666; font-size: 0.9rem;">Payment Status</strong>
+                                        <div><span class="badge badge-${order.paymentStatus === 'paid' ? 'success' : order.paymentStatus === 'partial' ? 'warning' : 'danger'}">${order.paymentStatus || 'pending'}</span></div>
+                                    </div>
+                                    <div>
+                                        <strong style="color: #666; font-size: 0.9rem;">Invoice Number</strong>
+                                        <div>${order.invoiceNumber || 'Not assigned'}</div>
+                                    </div>
+                                </div>
+                                ${order.paymentStatus !== 'paid' ? `
+                                <div style="margin-top: 1rem;">
+                                    <button onclick="openSupplierPaymentModal('${order._id || order.id}', '${order.orderNumber || 'N/A'}', '${order.supplier?.name || 'N/A'}', ${order.totalAmount || 0})" style="width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600;">
+                                        <i class="fas fa-check-circle"></i> Mark as Paid
+                                    </button>
+                                </div>
+                                ` : ''}
+                            </div>
+                            
+                            <!-- Order Personnel -->
+                            <div>
+                                <h3 style="margin-bottom: 1rem; color: #333; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem;">Order Personnel</h3>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <div>
+                                        <strong style="color: #666; font-size: 0.9rem;">Ordered By</strong>
+                                        <div>${order.orderedBy?.name || 'N/A'}</div>
+                                        ${order.orderedBy?.email ? `<div style="color: #666; font-size: 0.85rem;">${order.orderedBy.email}</div>` : ''}
+                                    </div>
+                                    <div>
+                                        <strong style="color: #666; font-size: 0.9rem;">Received By</strong>
+                                        <div>${order.receivedBy?.name || 'Not received'}</div>
+                                        ${order.receivedBy?.email ? `<div style="color: #666; font-size: 0.85rem;">${order.receivedBy.email}</div>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Notes -->
+                            ${order.notes ? `
+                                <div>
+                                    <h3 style="margin-bottom: 1rem; color: #333; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem;">Notes</h3>
+                                    <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px; white-space: pre-wrap;">${order.notes}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                    
+                    document.getElementById('supplierOrderDetailsContent').innerHTML = orderDetailsHTML;
+                } else {
+                    document.getElementById('supplierOrderDetailsContent').innerHTML = '<p style="text-align: center; color: #d32f2f; padding: 2rem;">Error loading order details. Please try again.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading order details:', error);
+                document.getElementById('supplierOrderDetailsContent').innerHTML = '<p style="text-align: center; color: #d32f2f; padding: 2rem;">Error loading order details. Please check your connection.</p>';
+            }
+        }
+        
+        function closeSupplierOrderDetailsModal() {
+            document.getElementById('supplierOrderDetailsModal').style.display = 'none';
+            document.getElementById('supplierOrderDetailsContent').innerHTML = '<div class="loading">Loading order details...</div>';
+        }
+        
+        function viewInventoryItem(itemId) {
+            alert(`View inventory item details for: ${itemId}\n\nThis feature can be expanded to show item details in a modal.`);
+        }
+        
+        function searchSupplierOrders() {
+            const term = document.getElementById('supplierOrderSearch').value;
+            loadSupplierOrders(term);
+        }
+        
+        function searchInventory() {
+            const term = document.getElementById('inventorySearch').value;
+            loadWarehouseInventory(term);
+        }
+        
+        function showAddInventoryModal() {
+            alert('Add inventory item feature - to be implemented');
+        }
+        
+        // Helper functions
+        function getSupplierOrderStatusColor(status) {
+            const statusColors = {
+                'pending': 'warning',
+                'ordered': 'info',
+                'in_transit': 'info',
+                'received': 'success',
+                'cancelled': 'danger'
+            };
+            return statusColors[status] || 'info';
+        }
+        
+        function getInventoryStatusColor(status) {
+            const statusColors = {
+                'in_stock': 'success',
+                'low_stock': 'warning',
+                'out_of_stock': 'danger'
+            };
+            return statusColors[status] || 'info';
+        }
+        
+        function getInventoryStatusText(status) {
+            const statusTexts = {
+                'in_stock': 'In Stock',
+                'low_stock': 'Low Stock',
+                'out_of_stock': 'Out of Stock'
+            };
+            return statusTexts[status] || 'Unknown';
+        }
+        
+        // Receipt Generation Function
+        function generateReceipt(orderData, type = 'customer') {
+            // Create a new window for receipt
+            const receiptWindow = window.open('', '_blank', 'width=800,height=600');
+            
+            const currentDate = new Date().toLocaleString('en-KE', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            let receiptHTML = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Payment Receipt - ${type === 'customer' ? 'Customer Order' : 'Supplier Payment'}</title>
+                    <style>
+                        body {
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            padding: 40px;
+                            max-width: 600px;
+                            margin: 0 auto;
+                            background: #f5f5f5;
+                        }
+                        .receipt {
+                            background: white;
+                            padding: 30px;
+                            border-radius: 10px;
+                            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        .header {
+                            text-align: center;
+                            border-bottom: 3px solid #4facfe;
+                            padding-bottom: 20px;
+                            margin-bottom: 30px;
+                        }
+                        .header h1 {
+                            color: #4facfe;
+                            margin: 0;
+                            font-size: 28px;
+                        }
+                        .header p {
+                            color: #666;
+                            margin: 5px 0;
+                        }
+                        .receipt-info {
+                            margin-bottom: 25px;
+                        }
+                        .receipt-info div {
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 8px 0;
+                            border-bottom: 1px solid #eee;
+                        }
+                        .receipt-info strong {
+                            color: #333;
+                        }
+                        .items-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin: 20px 0;
+                        }
+                        .items-table th {
+                            background: #4facfe;
+                            color: white;
+                            padding: 12px;
+                            text-align: left;
+                        }
+                        .items-table td {
+                            padding: 10px;
+                            border-bottom: 1px solid #eee;
+                        }
+                        .total-section {
+                            margin-top: 20px;
+                            padding-top: 20px;
+                            border-top: 2px solid #4facfe;
+                        }
+                        .total-row {
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 10px 0;
+                            font-size: 16px;
+                        }
+                        .total-row.final {
+                            font-size: 20px;
+                            font-weight: bold;
+                            color: #4facfe;
+                        }
+                        .footer {
+                            text-align: center;
+                            margin-top: 30px;
+                            padding-top: 20px;
+                            border-top: 1px solid #eee;
+                            color: #666;
+                            font-size: 12px;
+                        }
+                        @media print {
+                            body {
+                                background: white;
+                                padding: 20px;
+                            }
+                            .receipt {
+                                box-shadow: none;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="receipt">
+                        <div class="header">
+                            <h1>Abai Springs</h1>
+                            <p>Payment Receipt</p>
+                            <p style="font-size: 12px; color: #999;">${currentDate}</p>
+                        </div>
+            `;
+            
+            if (type === 'customer') {
+                receiptHTML += `
+                        <div class="receipt-info">
+                            <div>
+                                <strong>Receipt Number:</strong>
+                                <span>REC-${orderData._id?.toString().slice(-8).toUpperCase() || 'N/A'}</span>
+                            </div>
+                            <div>
+                                <strong>Order ID:</strong>
+                                <span>#${orderData._id?.toString().slice(-6) || 'N/A'}</span>
+                            </div>
+                            <div>
+                                <strong>Customer:</strong>
+                                <span>${orderData.customer?.name || orderData.customerName || 'N/A'}</span>
+                            </div>
+                            <div>
+                                <strong>Payment Method:</strong>
+                                <span>${orderData.paymentMethod || 'N/A'}</span>
+                            </div>
+                            ${orderData.paymentReference ? `
+                            <div>
+                                <strong>Transaction Reference:</strong>
+                                <span>${orderData.paymentReference}</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                        
+                        ${orderData.items && orderData.items.length > 0 ? `
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${orderData.items.map(item => `
+                                    <tr>
+                                        <td>${item.product?.name || item.name || 'N/A'}</td>
+                                        <td>${item.quantity || 0}</td>
+                                        <td>KES ${(item.price || item.unitPrice || 0).toLocaleString()}</td>
+                                        <td>KES ${((item.quantity || 0) * (item.price || item.unitPrice || 0)).toLocaleString()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        ` : ''}
+                        
+                        <div class="total-section">
+                            <div class="total-row">
+                                <span>Subtotal:</span>
+                                <span>KES ${(orderData.subtotal || orderData.totalAmount || 0).toLocaleString()}</span>
+                            </div>
+                            ${orderData.tax ? `
+                            <div class="total-row">
+                                <span>Tax:</span>
+                                <span>KES ${(orderData.tax || 0).toLocaleString()}</span>
+                            </div>
+                            ` : ''}
+                            ${orderData.shippingCost ? `
+                            <div class="total-row">
+                                <span>Shipping:</span>
+                                <span>KES ${(orderData.shippingCost || 0).toLocaleString()}</span>
+                            </div>
+                            ` : ''}
+                            <div class="total-row final">
+                                <span>Total Paid:</span>
+                                <span>KES ${(orderData.totalAmount || 0).toLocaleString()}</span>
+                            </div>
+                        </div>
+                `;
+            } else {
+                receiptHTML += `
+                        <div class="receipt-info">
+                            <div>
+                                <strong>Receipt Number:</strong>
+                                <span>REC-SUP-${orderData._id?.toString().slice(-8).toUpperCase() || 'N/A'}</span>
+                            </div>
+                            <div>
+                                <strong>Order Number:</strong>
+                                <span>${orderData.orderNumber || 'N/A'}</span>
+                            </div>
+                            <div>
+                                <strong>Supplier:</strong>
+                                <span>${orderData.supplier?.name || 'N/A'}</span>
+                            </div>
+                            <div>
+                                <strong>Payment Method:</strong>
+                                <span>${orderData.paymentMethod || 'N/A'}</span>
+                            </div>
+                            ${orderData.paymentReference ? `
+                            <div>
+                                <strong>Transaction Reference:</strong>
+                                <span>${orderData.paymentReference}</span>
+                            </div>
+                            ` : ''}
+                            ${orderData.invoiceNumber ? `
+                            <div>
+                                <strong>Invoice Number:</strong>
+                                <span>${orderData.invoiceNumber}</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                        
+                        ${orderData.items && orderData.items.length > 0 ? `
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th>Item Type</th>
+                                    <th>Description</th>
+                                    <th>Quantity</th>
+                                    <th>Unit Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${orderData.items.map(item => `
+                                    <tr>
+                                        <td>${item.itemType || 'N/A'}</td>
+                                        <td>${item.description || 'N/A'}</td>
+                                        <td>${item.quantity || 0}</td>
+                                        <td>KES ${(item.unitPrice || 0).toLocaleString()}</td>
+                                        <td>KES ${(item.totalPrice || 0).toLocaleString()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        ` : ''}
+                        
+                        <div class="total-section">
+                            <div class="total-row">
+                                <span>Subtotal:</span>
+                                <span>KES ${(orderData.subtotal || 0).toLocaleString()}</span>
+                            </div>
+                            ${orderData.tax ? `
+                            <div class="total-row">
+                                <span>Tax:</span>
+                                <span>KES ${(orderData.tax || 0).toLocaleString()}</span>
+                            </div>
+                            ` : ''}
+                            ${orderData.shippingCost ? `
+                            <div class="total-row">
+                                <span>Shipping:</span>
+                                <span>KES ${(orderData.shippingCost || 0).toLocaleString()}</span>
+                            </div>
+                            ` : ''}
+                            <div class="total-row final">
+                                <span>Total Paid:</span>
+                                <span>KES ${(orderData.totalAmount || 0).toLocaleString()}</span>
+                            </div>
+                            ${orderData.paymentStatus === 'partial' ? `
+                            <div class="total-row" style="color: #ff9800;">
+                                <span>Payment Status:</span>
+                                <span>Partial Payment</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                `;
+            }
+            
+            receiptHTML += `
+                        <div class="footer">
+                            <p>Thank you for your business!</p>
+                            <p>This is a computer-generated receipt.</p>
+                            <p style="margin-top: 10px;">
+                                <button onclick="window.print()" style="padding: 10px 20px; background: #4facfe; color: white; border: none; border-radius: 5px; cursor: pointer;">Print Receipt</button>
+                            </p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            receiptWindow.document.write(receiptHTML);
+            receiptWindow.document.close();
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
+            const isAuthenticated = await checkAuth();
+            if (isAuthenticated) {
+                await loadDashboardData();
+            }
+        });
+    </script>
+</body>
+</html>
+
