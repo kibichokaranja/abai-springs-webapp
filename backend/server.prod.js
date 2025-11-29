@@ -43,11 +43,11 @@ import { globalRateLimit, apiRateLimit, adminRateLimit, getRateLimitStats } from
 // Production Security Middleware
 import productionSecurity from './middleware/productionSecurity.js';
 
-// Clustering for production
-if (cluster.isPrimary && process.env.NODE_ENV === 'production') {
+// Clustering for production (disabled for Railway - use single worker)
+if (cluster.isPrimary && process.env.NODE_ENV === 'production' && process.env.CLUSTER_WORKERS !== '0') {
   const numWorkers = process.env.CLUSTER_WORKERS === 'auto' 
-    ? os.cpus().length 
-    : parseInt(process.env.CLUSTER_WORKERS) || 2;
+    ? Math.min(os.cpus().length, 2) // Limit to max 2 workers
+    : (parseInt(process.env.CLUSTER_WORKERS) || 1); // Default to 1 worker
 
   logger.info(`Master process ${process.pid} starting ${numWorkers} workers`);
 

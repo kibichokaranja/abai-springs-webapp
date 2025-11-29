@@ -229,9 +229,12 @@ export const productionRateLimit = rateLimit({
 export const productionSlowDown = slowDown({
   windowMs: 15 * 60 * 1000, // 15 minutes
   delayAfter: 10, // allow 10 requests per windowMs without delay
-  delayMs: 500, // add 500ms delay per request after delayAfter
+  delayMs: () => 500, // add 500ms delay per request after delayAfter
   maxDelayMs: 5000, // maximum delay of 5 seconds
-  skipSuccessfulRequests: true
+  skipSuccessfulRequests: true,
+  validate: {
+    delayMs: false // Disable delayMs validation warning
+  }
 });
 
 // Request size limiter
