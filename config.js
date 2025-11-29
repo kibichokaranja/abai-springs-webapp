@@ -50,9 +50,14 @@
   // Set global API_BASE_URL
   window.API_BASE_URL = getApiUrl();
   
-  // Log for debugging (only in development)
-  if (isLocalhost) {
-    console.log('🔧 API Base URL:', window.API_BASE_URL);
+  // Log for debugging
+  console.log('🔧 API Base URL:', window.API_BASE_URL);
+  
+  // If on Vercel and still using localhost, warn user
+  if (isVercel && window.API_BASE_URL.includes('localhost')) {
+    console.error('❌ ERROR: Frontend is trying to connect to localhost!');
+    console.error('❌ Please set API_BASE_URL environment variable in Vercel dashboard');
+    console.error('❌ Expected: https://abai-springs-webapp-production.up.railway.app/api');
   }
   
   // Also export for module systems
