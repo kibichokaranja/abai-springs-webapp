@@ -1,12 +1,18 @@
-// Build script for Vercel to inject API_BASE_URL into HTML files
+// Build script for Vercel to inject API_BASE_URL into HTML and JS files
 // This script runs during Vercel build process
 
 const fs = require('fs');
 const path = require('path');
 
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3001/api';
+// Get API URL from environment variable (Vercel)
+const API_BASE_URL = process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api';
 
 console.log('🔧 Building for Vercel with API_BASE_URL:', API_BASE_URL);
+
+if (!API_BASE_URL || API_BASE_URL.includes('localhost')) {
+  console.warn('⚠️ WARNING: API_BASE_URL not set or still using localhost!');
+  console.warn('⚠️ Make sure to set API_BASE_URL environment variable in Vercel dashboard');
+}
 
 // List of HTML files to update
 const htmlFiles = [
@@ -59,5 +65,23 @@ htmlFiles.forEach(file => {
   }
 });
 
+// Update config.js to use the API URL directly
+const configJsPath = path.join(__dirname, 'config.js');
+if (fs.existsSync(configJsPath)) {
+  let configContent = fs.readFileSync(configJsPath, 'utf8');
+  
+  // Replace the fallback URL in config.js
+  configContent = configContent.replace(
+    /return 'https:\/\/your-railway-backend\.up\.railway\.app\/api';/g,
+    `return '${API_BASE_URL}';`
+  );
+  
+  fs.writeFileSync(configJsPath, configContent, 'utf8');
+  console.log('✅ Updated config.js');
+}
+
 console.log('✨ Build complete!');
+
+
+
 

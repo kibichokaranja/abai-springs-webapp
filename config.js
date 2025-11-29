@@ -39,12 +39,12 @@
     // If on Vercel but no env var set, show warning
     if (isVercel) {
       console.warn('⚠️ API_BASE_URL not set. Please set API_BASE_URL environment variable in Vercel dashboard.');
-      // Return a placeholder that will need to be updated
-      return 'https://your-railway-backend.up.railway.app/api';
+      // Fallback - will be replaced by build script
+      return 'https://abai-springs-webapp-production.up.railway.app/api';
     }
     
     // Fallback for other production environments
-    return 'https://your-railway-backend.up.railway.app/api';
+    return 'https://abai-springs-webapp-production.up.railway.app/api';
   };
   
   // Set global API_BASE_URL
