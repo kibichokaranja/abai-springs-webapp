@@ -1,0 +1,15 @@
+# Railway/Nixpacks configuration
+# This tells Railway to skip the build step and just install dependencies
+
+[phases.setup]
+nixPkgs = ["nodejs_18", "npm"]
+
+[phases.install]
+cmds = ["npm install --production"]
+
+[phases.build]
+# Skip build phase - we don't need it
+
+[start]
+cmd = "npm run start:prod"
+
