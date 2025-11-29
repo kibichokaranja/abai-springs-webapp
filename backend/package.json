@@ -14,7 +14,7 @@
     "test": "echo \"Authentication tests not implemented yet\"",
     "test:auth": "echo \"Authentication tests not implemented yet\"",
     "test:coverage": "echo \"Coverage tests not implemented yet\"",
-    "build": "npm ci --only=production",
+    "build": "echo 'Build step skipped - not needed for Railway deployment'",
     "docker:build": "docker build -t abai-springs .",
     "docker:run": "docker run -p 3001:3001 abai-springs",
     "docker:compose": "docker-compose -f docker-compose.prod.yml up -d",
