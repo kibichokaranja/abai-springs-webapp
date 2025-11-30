@@ -28,6 +28,7 @@ import analyticsRoutes from './routes/analytics.js';
 import paymentRoutes from './routes/payments.js';
 import logRoutes from './routes/logs.js';
 import cacheRoutes from './routes/cache.js';
+import dashboardRoutes from './routes/dashboards.js';
 
 // Import middleware
 import errorHandler from './middleware/errorHandler.js';
@@ -266,6 +267,7 @@ if (cluster.isPrimary && process.env.NODE_ENV === 'production' && process.env.CL
   app.use('/api/payments', paymentRoutes);
   app.use('/api/logs', adminRateLimit, logRoutes);
   app.use('/api/cache', adminRateLimit, cacheRoutes);
+  app.use('/api/dashboards', dashboardRoutes);
 
   // Rate limiting statistics
   app.get('/api/rate-limit-stats', adminRateLimit, getRateLimitStats);
@@ -278,6 +280,16 @@ if (cluster.isPrimary && process.env.NODE_ENV === 'production' && process.env.CL
       timestamp: new Date().toISOString(),
       version: process.env.npm_package_version || '1.0.0'
     });
+  });
+
+  // Admin Dashboard Route (before error handlers)
+  app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin-dashboard.html'));
+  });
+
+  // Staff Portal Routes
+  app.get('/staff-login', (req, res) => {
+    res.sendFile(path.join(__dirname, '../staff-login.html'));
   });
 
   // Error logging middleware
