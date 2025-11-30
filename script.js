@@ -924,10 +924,7 @@ async function handleRegister(event) {
       credentials: 'omit'
     });
     
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
-    
+    // Parse response even if status is not ok to get error message
     const data = await res.json();
     
     // Check if response is successful
@@ -968,8 +965,13 @@ async function handleRegister(event) {
         errorMessage = 'Please check your input and try again';
       }
       
+      // Special handling for 409 Conflict (user already exists)
+      if (res.status === 409) {
+        errorMessage = data.message || 'An account with this email already exists. Please try logging in instead.';
+      }
+      
       console.error('Registration failed:', data);
-      showToast(errorMessage);
+      showToast(errorMessage, 'error');
     }
   } catch (error) {
     console.error('❌ Registration error:', error);
