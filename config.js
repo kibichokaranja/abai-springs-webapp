@@ -36,10 +36,10 @@
     // The API_BASE_URL should be set in Vercel and will be available
     // via a build-time replacement or we'll use a default
     
-    // If on Vercel but no env var set, show warning
+    // If on Vercel but no env var set, use Railway backend directly
     if (isVercel) {
-      console.warn('⚠️ API_BASE_URL not set. Please set API_BASE_URL environment variable in Vercel dashboard.');
-      // Fallback - will be replaced by build script
+      console.warn('⚠️ API_BASE_URL not set in meta tag. Using Railway backend directly.');
+      // Direct fallback to Railway backend
       return 'https://abai-springs-webapp-production.up.railway.app/api';
     }
     
