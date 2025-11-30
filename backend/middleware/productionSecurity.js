@@ -16,8 +16,9 @@ const suspiciousActivity = new Map();
 
 // Production security middleware
 const productionSecurity = (req, res, next) => {
-  // Skip security checks for health endpoints
-  if (req.url === '/health' || req.url === '/api/health') {
+  // Skip security checks for health endpoints and API routes
+  // API routes have their own authentication and rate limiting
+  if (req.url === '/health' || req.url === '/api/health' || req.url.startsWith('/api/')) {
     return next();
   }
   
@@ -32,7 +33,7 @@ const productionSecurity = (req, res, next) => {
                    req.socket?.remoteAddress ||
                    'unknown';
   
-  // Check IP blacklist (with expiration)
+  // Check IP blacklist (with expiration) - only for non-API routes
   const blockedUntil = IP_BLACKLIST.get(clientIP);
   if (blockedUntil && Date.now() < blockedUntil) {
     logger.logSecurity('BLACKLISTED_IP_ACCESS', {
@@ -51,7 +52,7 @@ const productionSecurity = (req, res, next) => {
     IP_BLACKLIST.delete(clientIP);
   }
 
-  // Check for suspicious patterns
+  // Check for suspicious patterns - only for non-API routes
   if (isSuspiciousRequest(req)) {
     trackSuspiciousActivity(clientIP, req);
     
@@ -75,7 +76,7 @@ const productionSecurity = (req, res, next) => {
     }
   }
 
-  // Block common attack patterns
+  // Block common attack patterns - only for non-API routes
   if (hasAttackPatterns(req)) {
     logger.logSecurity('ATTACK_PATTERN_DETECTED', {
       ip: clientIP,
