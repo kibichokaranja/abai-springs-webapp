@@ -8,18 +8,33 @@ const ADMIN_IP_WHITELIST = process.env.ADMIN_IP_WHITELIST
   ? process.env.ADMIN_IP_WHITELIST.split(',').map(ip => ip.trim())
   : [];
 
-// IP blacklist for known malicious IPs
-const IP_BLACKLIST = new Set();
+// IP blacklist for known malicious IPs (with timestamps for expiration)
+const IP_BLACKLIST = new Map(); // Map<IP, blockedUntilTimestamp>
 
 // Suspicious activity tracking
 const suspiciousActivity = new Map();
 
 // Production security middleware
 const productionSecurity = (req, res, next) => {
-  const clientIP = req.ip || req.connection.remoteAddress;
+  // Skip security checks for health endpoints
+  if (req.url === '/health' || req.url === '/api/health') {
+    return next();
+  }
   
-  // Check IP blacklist
-  if (IP_BLACKLIST.has(clientIP)) {
+  // Get client IP - handle Railway proxy correctly
+  // Railway uses X-Forwarded-For header, and Express trust proxy should handle req.ip
+  // But we'll also check headers as fallback
+  const forwardedFor = req.get('X-Forwarded-For');
+  const clientIP = req.ip || 
+                   (forwardedFor ? forwardedFor.split(',')[0].trim() : null) ||
+                   req.get('X-Real-IP') ||
+                   req.connection?.remoteAddress ||
+                   req.socket?.remoteAddress ||
+                   'unknown';
+  
+  // Check IP blacklist (with expiration)
+  const blockedUntil = IP_BLACKLIST.get(clientIP);
+  if (blockedUntil && Date.now() < blockedUntil) {
     logger.logSecurity('BLACKLISTED_IP_ACCESS', {
       ip: clientIP,
       url: req.url,
@@ -31,20 +46,25 @@ const productionSecurity = (req, res, next) => {
       message: 'Access denied',
       code: 'IP_BLACKLISTED'
     });
+  } else if (blockedUntil && Date.now() >= blockedUntil) {
+    // Remove expired blacklist entry
+    IP_BLACKLIST.delete(clientIP);
   }
 
   // Check for suspicious patterns
   if (isSuspiciousRequest(req)) {
     trackSuspiciousActivity(clientIP, req);
     
-    // Block if too many suspicious requests
+    // Block if too many suspicious requests (block for 1 hour)
     if (shouldBlockIP(clientIP)) {
-      IP_BLACKLIST.add(clientIP);
+      const blockUntil = Date.now() + (60 * 60 * 1000); // Block for 1 hour
+      IP_BLACKLIST.set(clientIP, blockUntil);
       
       logger.logSecurity('IP_AUTO_BLOCKED', {
         ip: clientIP,
         reason: 'Multiple suspicious requests',
-        url: req.url
+        url: req.url,
+        blockedUntil: new Date(blockUntil).toISOString()
       });
       
       return sendError(res, {
@@ -140,7 +160,8 @@ function shouldBlockIP(ip) {
     Date.now() - a.timestamp < (15 * 60 * 1000) // Last 15 minutes
   );
   
-  return recentActivities.length >= 5; // 5 suspicious requests in 15 minutes
+  // Increased threshold: 10 suspicious requests in 15 minutes (less aggressive)
+  return recentActivities.length >= 10;
 }
 
 // Check for common attack patterns
@@ -174,7 +195,14 @@ export const adminIPRestriction = (req, res, next) => {
     return next(); // No restriction if whitelist is empty
   }
 
-  const clientIP = req.ip || req.connection.remoteAddress;
+  // Get client IP - handle Railway proxy correctly
+  const forwardedFor = req.get('X-Forwarded-For');
+  const clientIP = req.ip || 
+                   (forwardedFor ? forwardedFor.split(',')[0].trim() : null) ||
+                   req.get('X-Real-IP') ||
+                   req.connection?.remoteAddress ||
+                   req.socket?.remoteAddress ||
+                   'unknown';
   
   if (!ADMIN_IP_WHITELIST.includes(clientIP)) {
     logger.logSecurity('ADMIN_IP_RESTRICTION', {
@@ -317,8 +345,14 @@ setInterval(() => {
     }
   }
   
-  // Clean blacklist (remove IPs blocked more than 24 hours ago)
-  // In a real implementation, you'd want to persist this data
+  // Clean blacklist (remove expired entries)
+  const now = Date.now();
+  for (const [ip, blockedUntil] of IP_BLACKLIST.entries()) {
+    if (now >= blockedUntil) {
+      IP_BLACKLIST.delete(ip);
+      logger.info(`Removed expired blacklist entry for IP: ${ip}`);
+    }
+  }
   
 }, 60 * 60 * 1000); // Clean every hour
 
