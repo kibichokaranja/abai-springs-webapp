@@ -29,8 +29,21 @@ let outlets = [];
 let products = [];
 let selectedOutlet = null;
 
-// API Base URL - Load from config.js or use default
-const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001/api';
+// API Base URL - Load from config.js
+// config.js sets window.API_BASE_URL - wait for it if needed
+const API_BASE_URL = (function() {
+  // Wait for config.js to set window.API_BASE_URL
+  if (window.API_BASE_URL) {
+    return window.API_BASE_URL;
+  }
+  // If not set yet, check if we're on Vercel
+  const isVercel = window.location.hostname.includes('vercel.app');
+  if (isVercel) {
+    return 'https://abai-springs-webapp-production.up.railway.app/api';
+  }
+  // Localhost fallback only for development
+  return 'http://localhost:3001/api';
+})();
 
 // Add to Cart function is now defined later in the file with proper brand support
 
