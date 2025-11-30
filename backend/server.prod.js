@@ -117,9 +117,49 @@ if (cluster.isPrimary && process.env.NODE_ENV === 'production' && process.env.CL
 
   // CORS configuration for production
   const corsOptions = {
-    origin: process.env.NODE_ENV === 'production' 
-      ? (process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['*'])
-      : ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3001'],
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      if (process.env.NODE_ENV === 'production') {
+        const allowedOrigins = process.env.CORS_ORIGIN 
+          ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+          : ['*'];
+        
+        // Check if origin matches any allowed origin
+        const isAllowed = allowedOrigins.some(allowed => {
+          if (allowed === '*') return true;
+          if (allowed === origin) return true;
+          // Handle wildcard patterns like *.vercel.app
+          if (allowed.includes('*')) {
+            const pattern = allowed.replace(/\*/g, '.*');
+            const regex = new RegExp(`^${pattern}$`);
+            return regex.test(origin);
+          }
+          return false;
+        });
+        
+        if (isAllowed) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      } else {
+        // Development: allow localhost origins
+        const devOrigins = [
+          'http://localhost:5500', 
+          'http://127.0.0.1:5500', 
+          'http://localhost:3000', 
+          'http://localhost:3001', 
+          'http://127.0.0.1:3001'
+        ];
+        if (devOrigins.includes(origin) || !origin) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-cache-disabled'],

@@ -165,3 +165,7 @@ openssl rand -hex 32
 5. ✅ Limit CORS_ORIGIN to your actual domain
 6. ✅ Use MongoDB Atlas IP whitelist for production
 
+
+
+
+

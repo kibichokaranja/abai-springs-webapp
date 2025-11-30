@@ -9,6 +9,7 @@ backend/node_modules/
 backend/.env
 backend/.env.local
 backend/.env.production
+backend/config.env
 
 # Logs
 logs/
