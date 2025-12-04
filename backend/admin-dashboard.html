@@ -2389,7 +2389,10 @@
     </div>
     
     <script>
-        const API_BASE_URL = 'http://localhost:3001/api';
+        // Dynamically determine API base URL based on current location
+        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:3001/api'
+            : `${window.location.origin}/api`;
         
         // Helper function to get authentication token
         function getAuthToken() {

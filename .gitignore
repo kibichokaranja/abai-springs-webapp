@@ -50,3 +50,8 @@ backend/uploads/
 
 # Vercel
 .vercel/
+
+# Credentials (DO NOT COMMIT)
+ACCOUNT_CREDENTIALS.md
+YOUR_CONNECTION_STRING.txt
+CONNECTION_STRING_*.txt
