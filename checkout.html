@@ -534,32 +534,6 @@
             <div class="checkout-form">
                 <h2>Checkout</h2>
                 
-                <!-- Customer Information -->
-                <div class="form-section">
-                    <h3>
-                        <div class="section-icon">👤</div>
-                        Customer Information
-                    </h3>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="firstName">First Name *</label>
-                            <input type="text" id="firstName" name="firstName" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="lastName">Last Name *</label>
-                            <input type="text" id="lastName" name="lastName" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Email *</label>
-                        <input type="email" id="email" name="email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="phone">Phone Number *</label>
-                        <input type="tel" id="phone" name="phone" required>
-                    </div>
-                </div>
-
                 <!-- Delivery Information -->
                 <div class="form-section">
                     <h3>
@@ -701,14 +675,13 @@
         let deliveryAddress = null; // {formattedAddress, lat, lng, city, ...}
         let deliveryQuote = null;   // {fee, etaMin, zoneName, distanceKm, freeThreshold}
 
-        // Auto-fill user information if logged in
-        async function fillUserInformation() {
+        // Get user information from login
+        async function getUserInformation() {
             const token = localStorage.getItem('token');
             const userStr = localStorage.getItem('user');
             
             if (!token) {
-                // User not logged in, don't fill anything
-                return;
+                return null;
             }
             
             let userData = null;
@@ -744,35 +717,7 @@
                 // Continue with cached data if fetch fails
             }
             
-            // If we have user data, fill the form
-            if (userData) {
-                // Parse name into first and last name
-                const fullName = userData.name || '';
-                const nameParts = fullName.trim().split(/\s+/);
-                const firstName = nameParts[0] || '';
-                const lastName = nameParts.slice(1).join(' ') || '';
-                
-                // Fill form fields
-                const firstNameInput = document.getElementById('firstName');
-                const lastNameInput = document.getElementById('lastName');
-                const emailInput = document.getElementById('email');
-                const phoneInput = document.getElementById('phone');
-                
-                if (firstNameInput && firstName) {
-                    firstNameInput.value = firstName;
-                }
-                if (lastNameInput && lastName) {
-                    lastNameInput.value = lastName;
-                }
-                if (emailInput && userData.email) {
-                    emailInput.value = userData.email;
-                }
-                if (phoneInput && userData.phone) {
-                    phoneInput.value = userData.phone;
-                }
-                
-                console.log('User information auto-filled:', { firstName, lastName, email: userData.email, phone: userData.phone });
-            }
+            return userData;
         }
 
         // Load cart items from localStorage
@@ -1184,10 +1129,23 @@
                 // default to standard
                 return 'standard';
             })(rawDeliveryOpt);
+            // Get user information from login
+            const userData = await getUserInformation();
+            if (!userData) {
+                showToast('Please log in to place an order', 'error');
+                return;
+            }
+            
+            // Parse name into first and last name
+            const fullName = userData.name || '';
+            const nameParts = fullName.trim().split(/\s+/);
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+            
             const formData = {
-                customerName: document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
+                customerName: fullName || `${firstName} ${lastName}`.trim(),
+                email: userData.email || '',
+                phone: userData.phone || '',
                 address: document.getElementById('address').value,
                 deliveryOption: deliveryOptionMapped,
                 deliverySlot: deliverySlotText,
@@ -1215,10 +1173,10 @@
 
             // Validate form
             console.log('Form data:', formData);
-            if (!formData.customerName || !formData.phone || 
+            if (!formData.customerName || !formData.email || !formData.phone || 
                 !formData.address) {
                 console.log('Validation failed - missing required fields');
-                showToast('Please fill in all required fields', 'error');
+                showToast('Please ensure you are logged in and fill in all required fields', 'error');
                 return;
             }
             // Block out-of-radius
@@ -1365,8 +1323,15 @@
             loadCartItems();
             await loadProducts(); // Load products first
             
-            // Auto-fill user information if logged in
-            await fillUserInformation();
+            // Verify user is logged in
+            const userData = await getUserInformation();
+            if (!userData) {
+                showToast('Please log in to checkout', 'error');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+                return;
+            }
             
             // Load saved location and quote from localStorage
             try {
@@ -1633,11 +1598,12 @@
             msgDiv.style.display = 'none';
             
             try {
-                // Get phone number from form
-                const phoneNumber = document.getElementById('phone').value.trim();
+                // Get phone number from user data
+                const userData = await getUserInformation();
+                const phoneNumber = (userData?.phone || '').trim();
                 
                 if (!phoneNumber) {
-                    throw new Error('Phone number is required for M-Pesa payment');
+                    throw new Error('Phone number is required for M-Pesa payment. Please update your profile.');
                 }
                 
                 // Call payment API
