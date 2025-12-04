@@ -3921,6 +3921,11 @@ body.scrolled .main-header {
   border-bottom: 1px solid rgba(25, 118, 210, 0.1);
 }
 
+.nav-menu-link.hidden-when-logged-in {
+  display: none !important;
+  visibility: hidden !important;
+}
+
 .nav-menu-link:last-child {
   border-bottom: none;
 }

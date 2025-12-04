@@ -117,6 +117,11 @@ function toggleNavMenu() {
     const isVisible = dropdown.style.display !== 'none';
     dropdown.style.display = isVisible ? 'none' : 'block';
     
+    // Update auth status when opening menu to ensure login link visibility is correct
+    if (!isVisible) {
+      checkAuthStatus();
+    }
+    
     // Close products submenu when closing main menu
     if (isVisible) {
       const productsSubmenu = document.getElementById('nav-menu-products-submenu');
@@ -1354,20 +1359,45 @@ function checkAuthStatus() {
     const userData = JSON.parse(user);
     
     // Hide login links, show user menu
-    if (authNavItem) authNavItem.style.display = 'none';
-    if (loginLink) loginLink.style.display = 'none';
-    if (navMenuLoginLink) navMenuLoginLink.style.display = 'none';
+    if (authNavItem) {
+      authNavItem.style.display = 'none';
+      authNavItem.style.visibility = 'hidden';
+    }
+    if (loginLink) {
+      loginLink.style.display = 'none';
+      loginLink.style.visibility = 'hidden';
+    }
+    if (navMenuLoginLink) {
+      navMenuLoginLink.style.display = 'none';
+      navMenuLoginLink.style.visibility = 'hidden';
+      // Also add a class to ensure it stays hidden
+      navMenuLoginLink.classList.add('hidden-when-logged-in');
+    }
     
     if (userMenu) {
       userMenu.style.display = 'block';
+      userMenu.style.visibility = 'visible';
       if (userName) userName.textContent = userData.name || 'User';
     }
   } else {
     // User is not logged in
-    if (authNavItem) authNavItem.style.display = 'block';
-    if (loginLink) loginLink.style.display = 'block';
-    if (navMenuLoginLink) navMenuLoginLink.style.display = 'block';
-    if (userMenu) userMenu.style.display = 'none';
+    if (authNavItem) {
+      authNavItem.style.display = 'block';
+      authNavItem.style.visibility = 'visible';
+    }
+    if (loginLink) {
+      loginLink.style.display = 'block';
+      loginLink.style.visibility = 'visible';
+    }
+    if (navMenuLoginLink) {
+      navMenuLoginLink.style.display = 'block';
+      navMenuLoginLink.style.visibility = 'visible';
+      navMenuLoginLink.classList.remove('hidden-when-logged-in');
+    }
+    if (userMenu) {
+      userMenu.style.display = 'none';
+      userMenu.style.visibility = 'hidden';
+    }
   }
 }
 
