@@ -3154,16 +3154,21 @@
                 }
                 
                 // Load revenue chart
-                const revenueResponse = await fetch(`${API_BASE_URL}/analytics/revenue`);
-                if (!revenueResponse.ok) {
-                    throw new Error(`Failed to fetch revenue: ${revenueResponse.status} ${revenueResponse.statusText}`);
-                }
-                const revenueData = await revenueResponse.json();
-                
-                if (revenueData.success) {
-                    createRevenueChart(revenueData.data.dailyRevenue);
-                } else {
-                    console.error('Revenue analytics error:', revenueData.message);
+                try {
+                    const revenueResponse = await fetch(`${API_BASE_URL}/analytics/revenue`);
+                    if (!revenueResponse.ok) {
+                        console.error(`Failed to fetch revenue: ${revenueResponse.status} ${revenueResponse.statusText}`);
+                    } else {
+                        const revenueData = await revenueResponse.json();
+                        if (revenueData.success) {
+                            createRevenueChart(revenueData.data.dailyRevenue);
+                        } else {
+                            console.error('Revenue analytics error:', revenueData.message);
+                        }
+                    }
+                } catch (revenueError) {
+                    console.error('Error loading revenue chart:', revenueError);
+                    // Don't throw - let other analytics continue loading
                 }
                 
                 // Load product performance
@@ -3214,21 +3219,39 @@
         
         // Create revenue chart
         function createRevenueChart(revenueData) {
-            const ctx = document.getElementById('revenueChart').getContext('2d');
-            
-            // Destroy existing chart if it exists
-            if (window.revenueChart) {
-                window.revenueChart.destroy();
-            }
-            
-            const labels = revenueData.map(item => {
-                const date = new Date(item.date);
-                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            });
-            
-            const data = revenueData.map(item => item.revenue);
-            
-            window.revenueChart = new Chart(ctx, {
+            try {
+                // Check if Chart.js is loaded
+                if (typeof Chart === 'undefined') {
+                    console.error('Chart.js is not loaded');
+                    return;
+                }
+                
+                // Check if canvas element exists
+                const canvas = document.getElementById('revenueChart');
+                if (!canvas) {
+                    console.error('Revenue chart canvas not found');
+                    return;
+                }
+                
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    console.error('Could not get 2d context from canvas');
+                    return;
+                }
+                
+                // Destroy existing chart if it exists and is a valid Chart instance
+                if (window.revenueChart && typeof window.revenueChart.destroy === 'function') {
+                    window.revenueChart.destroy();
+                }
+                
+                const labels = revenueData.map(item => {
+                    const date = new Date(item.date);
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                });
+                
+                const data = revenueData.map(item => item.revenue);
+                
+                window.revenueChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
@@ -3262,6 +3285,13 @@
                     }
                 }
             });
+            } catch (chartError) {
+                console.error('Error creating revenue chart:', chartError);
+                const canvas = document.getElementById('revenueChart');
+                if (canvas && canvas.parentElement) {
+                    canvas.parentElement.innerHTML = '<p style="color: red;">Error loading revenue chart. Please refresh the page.</p>';
+                }
+            }
         }
         
         // Display product performance
