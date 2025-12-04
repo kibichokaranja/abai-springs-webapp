@@ -1,0 +1,50 @@
+# Capacitor ignore file
+# Files and directories to exclude when syncing to native projects
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build files
+dist/
+build/
+.cache/
+
+# Development files
+.git/
+.gitignore
+.vscode/
+.idea/
+*.log
+*.swp
+*.swo
+*~
+
+# Documentation
+*.md
+!README.md
+
+# Backend files
+backend/
+*.env
+*.env.local
+
+# Deployment configs
+vercel.json
+railway.json
+railway.toml
+Dockerfile
+.dockerignore
+
+# Testing
+coverage/
+.nyc_output/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+*.sublime-project
+*.sublime-workspace
+

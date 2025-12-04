@@ -55,3 +55,21 @@ backend/uploads/
 ACCOUNT_CREDENTIALS.md
 YOUR_CONNECTION_STRING.txt
 CONNECTION_STRING_*.txt
+
+# Capacitor / Native App Builds
+ios/
+android/
+.capacitor/
+*.xcworkspace
+*.xcodeproj
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcworkspace/contents.xcworkspacedata
+**/xcuserdata/
+**/Pods/
+**/build/
+*.apk
+*.aab
+*.ipa
+*.dSYM.zip
+*.dSYM
