@@ -165,6 +165,130 @@
             color: #667eea;
         }
         
+        .section h3 {
+            color: #333;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .section h3 i {
+            color: #667eea;
+        }
+        
+        /* Theft Detection Styles */
+        .stat-card-warning {
+            border-left: 4px solid #ffc107;
+        }
+        
+        .stat-card-danger {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .theft-alerts {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+        
+        .alert-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .alert-badge {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        .alert-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .alert-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid white;
+        }
+        
+        .alert-item.critical {
+            border-left-color: #ff0000;
+            background: rgba(255, 0, 0, 0.2);
+        }
+        
+        .theft-detection-section {
+            margin-top: 2rem;
+        }
+        
+        /* Tabs Styles */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .tab-button {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-button:hover {
+            color: #667eea;
+        }
+        
+        .tab-button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            font-weight: 600;
+        }
+        
+        .theft-tab-content,
+        .bi-tab-content {
+            display: none;
+        }
+        
+        .theft-tab-content.active,
+        .bi-tab-content.active {
+            display: block;
+        }
+        
+        .severity-high {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        .severity-medium {
+            color: #ffc107;
+            font-weight: 600;
+        }
+        
+        .severity-low {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
         /* Tables */
         .data-table {
             width: 100%;
@@ -1305,6 +1429,226 @@
                         <div class="stat-icon"><i class="fas fa-clock"></i></div>
                         <div class="stat-number" id="recent-orders-count">0</div>
                         <div class="stat-label">Recent Orders (7d)</div>
+                    </div>
+                    <div class="stat-card stat-card-warning">
+                        <div class="stat-icon"><i class="fas fa-shield-alt"></i></div>
+                        <div class="stat-number" id="theft-alerts-summary">0</div>
+                        <div class="stat-label">Security Alerts</div>
+                    </div>
+                    <div class="stat-card stat-card-danger">
+                        <div class="stat-icon"><i class="fas fa-exclamation-circle"></i></div>
+                        <div class="stat-number" id="inventory-discrepancies-count">0</div>
+                        <div class="stat-label">Stock Discrepancies</div>
+                    </div>
+                </div>
+                
+                <!-- Theft Detection Alert Banner -->
+                <div id="theft-alerts-banner" class="theft-alerts" style="display: none;">
+                    <div class="alert-header">
+                        <i class="fas fa-shield-alt"></i>
+                        <strong>Security Alerts</strong>
+                        <span id="theft-alert-count" class="alert-badge">0</span>
+                    </div>
+                    <div id="theft-alerts-list" class="alert-list"></div>
+                </div>
+                
+                <!-- Theft Detection Section -->
+                <div class="section theft-detection-section">
+                    <h2><i class="fas fa-shield-alt"></i> Theft Detection & Security Monitoring</h2>
+                    <div class="tabs">
+                        <button class="tab-button active" onclick="showTheftTab('money')">Money Theft</button>
+                        <button class="tab-button" onclick="showTheftTab('stock')">Stock Theft</button>
+                        <button class="tab-button" onclick="showTheftTab('anomalies')">Anomalies</button>
+                    </div>
+                    
+                    <!-- Money Theft Tab -->
+                    <div id="money-theft-tab" class="theft-tab-content active">
+                        <div class="content-grid">
+                            <div class="section">
+                                <h3><i class="fas fa-cash-register"></i> Cash Register Discrepancies</h3>
+                                <div id="cash-discrepancies">
+                                    <div class="loading">Loading cash discrepancies...</div>
+                                </div>
+                            </div>
+                            <div class="section">
+                                <h3><i class="fas fa-credit-card"></i> Payment Anomalies</h3>
+                                <div id="payment-anomalies">
+                                    <div class="loading">Loading payment anomalies...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <h3><i class="fas fa-chart-bar"></i> Transaction Monitoring</h3>
+                            <div id="transaction-monitoring">
+                                <div class="loading">Loading transaction monitoring...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Stock Theft Tab -->
+                    <div id="stock-theft-tab" class="theft-tab-content">
+                        <div class="content-grid">
+                            <div class="section">
+                                <h3><i class="fas fa-boxes"></i> Inventory Discrepancies</h3>
+                                <div id="inventory-discrepancies-list">
+                                    <div class="loading">Loading inventory discrepancies...</div>
+                                </div>
+                            </div>
+                            <div class="section">
+                                <h3><i class="fas fa-truck"></i> Delivery Monitoring</h3>
+                                <div id="delivery-monitoring">
+                                    <div class="loading">Loading delivery monitoring...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <h3><i class="fas fa-warehouse"></i> Warehouse Alerts</h3>
+                            <div id="warehouse-alerts">
+                                <div class="loading">Loading warehouse alerts...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Anomalies Tab -->
+                    <div id="anomalies-tab" class="theft-tab-content">
+                        <div class="section">
+                            <h3><i class="fas fa-exclamation-triangle"></i> Unusual Activity Patterns</h3>
+                            <div id="activity-anomalies">
+                                <div class="loading">Loading activity anomalies...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Business Intelligence Section -->
+                <div class="section">
+                    <h2><i class="fas fa-brain"></i> Business Intelligence</h2>
+                    <div class="tabs">
+                        <button class="tab-button active" onclick="showBITab('sales')">Sales Analytics</button>
+                        <button class="tab-button" onclick="showBITab('inventory')">Inventory Management</button>
+                        <button class="tab-button" onclick="showBITab('financial')">Financial Analytics</button>
+                        <button class="tab-button" onclick="showBITab('operational')">Operational Metrics</button>
+                        <button class="tab-button" onclick="showBITab('customer')">Customer Insights</button>
+                    </div>
+                    
+                    <!-- Sales Analytics Tab -->
+                    <div id="sales-analytics-tab" class="bi-tab-content active">
+                        <div class="content-grid">
+                            <div class="section">
+                                <h3><i class="fas fa-chart-line"></i> Sales Trends</h3>
+                                <div id="sales-trends">
+                                    <div class="loading">Loading sales trends...</div>
+                                </div>
+                            </div>
+                            <div class="section">
+                                <h3><i class="fas fa-clock"></i> Peak Hours Analysis</h3>
+                                <div id="peak-hours">
+                                    <div class="loading">Loading peak hours...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <h3><i class="fas fa-trophy"></i> Top Products</h3>
+                            <div id="top-products">
+                                <div class="loading">Loading top products...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Inventory Management Tab -->
+                    <div id="inventory-management-tab" class="bi-tab-content">
+                        <div class="content-grid">
+                            <div class="section">
+                                <h3><i class="fas fa-sync"></i> Stock Turnover</h3>
+                                <div id="stock-turnover">
+                                    <div class="loading">Loading stock turnover...</div>
+                                </div>
+                            </div>
+                            <div class="section">
+                                <h3><i class="fas fa-bell"></i> Reorder Alerts</h3>
+                                <div id="reorder-alerts">
+                                    <div class="loading">Loading reorder alerts...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <h3><i class="fas fa-box-open"></i> Dead Stock</h3>
+                            <div id="dead-stock">
+                                <div class="loading">Loading dead stock...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Financial Analytics Tab -->
+                    <div id="financial-analytics-tab" class="bi-tab-content">
+                        <div class="content-grid">
+                            <div class="section">
+                                <h3><i class="fas fa-percent"></i> Profit Margins</h3>
+                                <div id="profit-margins">
+                                    <div class="loading">Loading profit margins...</div>
+                                </div>
+                            </div>
+                            <div class="section">
+                                <h3><i class="fas fa-chart-area"></i> Revenue Forecasting</h3>
+                                <div id="revenue-forecast">
+                                    <div class="loading">Loading revenue forecast...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <h3><i class="fas fa-calculator"></i> Cost Analysis</h3>
+                            <div id="cost-analysis">
+                                <div class="loading">Loading cost analysis...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Operational Metrics Tab -->
+                    <div id="operational-metrics-tab" class="bi-tab-content">
+                        <div class="content-grid">
+                            <div class="section">
+                                <h3><i class="fas fa-shipping-fast"></i> Order Fulfillment</h3>
+                                <div id="order-fulfillment">
+                                    <div class="loading">Loading order fulfillment...</div>
+                                </div>
+                            </div>
+                            <div class="section">
+                                <h3><i class="fas fa-truck"></i> Delivery Performance</h3>
+                                <div id="delivery-performance">
+                                    <div class="loading">Loading delivery performance...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <h3><i class="fas fa-users"></i> Staff Productivity</h3>
+                            <div id="staff-productivity">
+                                <div class="loading">Loading staff productivity...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Customer Insights Tab -->
+                    <div id="customer-insights-tab" class="bi-tab-content">
+                        <div class="content-grid">
+                            <div class="section">
+                                <h3><i class="fas fa-user-friends"></i> Customer Segmentation</h3>
+                                <div id="customer-segmentation">
+                                    <div class="loading">Loading customer segmentation...</div>
+                                </div>
+                            </div>
+                            <div class="section">
+                                <h3><i class="fas fa-redo"></i> Repeat Purchase Patterns</h3>
+                                <div id="repeat-purchases">
+                                    <div class="loading">Loading repeat purchases...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <h3><i class="fas fa-map-marked-alt"></i> Geographic Sales</h3>
+                            <div id="geographic-sales">
+                                <div class="loading">Loading geographic sales...</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3229,6 +3573,12 @@
                     }
                 }
                 
+                // Load theft detection data
+                await loadTheftDetection();
+                
+                // Load business intelligence data
+                await loadBusinessIntelligence();
+                
             } catch (error) {
                 console.error('Error loading analytics:', error);
                 // Show error in UI
@@ -3240,6 +3590,770 @@
                 if (outletContainer) {
                     outletContainer.innerHTML = `<p style="color: red;">Error loading outlet performance: ${error.message}</p>`;
                 }
+            }
+        }
+        
+        // Tab switching functions
+        function showTheftTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.theft-tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            // Remove active class from all buttons
+            document.querySelectorAll('.theft-detection-section .tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            // Show selected tab
+            const tabElement = document.getElementById(`${tabName}-theft-tab`);
+            if (tabElement) {
+                tabElement.classList.add('active');
+            }
+            // Add active class to clicked button
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+            
+            // Load data for the selected tab
+            if (tabName === 'money') {
+                loadMoneyTheftData();
+            } else if (tabName === 'stock') {
+                loadStockTheftData();
+            } else if (tabName === 'anomalies') {
+                loadAnomaliesData();
+            }
+        }
+        
+        function showBITab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.bi-tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            // Remove active class from all buttons in BI section
+            const biSection = document.querySelector('.section:has(.bi-tab-content)');
+            if (biSection) {
+                biSection.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+            }
+            // Show selected tab
+            const tabId = `${tabName}-analytics-tab` || 
+                         `${tabName}-management-tab` ||
+                         `${tabName}-metrics-tab` ||
+                         `${tabName}-insights-tab`;
+            const tabElement = document.getElementById(tabId);
+            if (tabElement) {
+                tabElement.classList.add('active');
+            }
+            // Add active class to clicked button
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+            
+            // Load data for the selected tab
+            if (tabName === 'sales') {
+                loadSalesAnalytics();
+            } else if (tabName === 'inventory') {
+                loadInventoryAnalytics();
+            } else if (tabName === 'financial') {
+                loadFinancialAnalytics();
+            } else if (tabName === 'operational') {
+                loadOperationalMetrics();
+            } else if (tabName === 'customer') {
+                loadCustomerInsights();
+            }
+        }
+        
+        // Load theft detection data
+        async function loadTheftDetection() {
+            try {
+                // Load money theft data
+                const moneyResponse = await fetch(`${API_BASE_URL}/analytics/theft/money`);
+                if (moneyResponse.ok) {
+                    const moneyData = await moneyResponse.json();
+                    if (moneyData.success) {
+                        updateTheftAlerts(moneyData.data);
+                        displayMoneyTheftData(moneyData.data);
+                    }
+                }
+                
+                // Load stock theft data
+                const stockResponse = await fetch(`${API_BASE_URL}/analytics/theft/stock`);
+                if (stockResponse.ok) {
+                    const stockData = await stockResponse.json();
+                    if (stockData.success) {
+                        displayStockTheftData(stockData.data);
+                    }
+                }
+                
+                // Load anomalies
+                const anomaliesResponse = await fetch(`${API_BASE_URL}/analytics/theft/anomalies`);
+                if (anomaliesResponse.ok) {
+                    const anomaliesData = await anomaliesResponse.json();
+                    if (anomaliesData.success) {
+                        displayAnomaliesData(anomaliesData.data);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading theft detection:', error);
+            }
+        }
+        
+        // Update theft alerts banner
+        function updateTheftAlerts(data) {
+            const totalAlerts = (data.cashDiscrepancies?.length || 0) + 
+                               (data.paymentAnomalies?.length || 0) + 
+                               (data.transactionMonitoring?.length || 0);
+            
+            if (totalAlerts > 0) {
+                const banner = document.getElementById('theft-alerts-banner');
+                const countBadge = document.getElementById('theft-alert-count');
+                const alertsList = document.getElementById('theft-alerts-list');
+                
+                if (banner) banner.style.display = 'block';
+                if (countBadge) countBadge.textContent = totalAlerts;
+                if (document.getElementById('theft-alerts-summary')) {
+                    document.getElementById('theft-alerts-summary').textContent = totalAlerts;
+                }
+                
+                if (alertsList) {
+                    const allAlerts = [
+                        ...(data.cashDiscrepancies || []),
+                        ...(data.paymentAnomalies || []),
+                        ...(data.transactionMonitoring || [])
+                    ].slice(0, 5);
+                    
+                    alertsList.innerHTML = allAlerts.map(alert => `
+                        <div class="alert-item ${alert.severity === 'high' ? 'critical' : ''}">
+                            <strong>${alert.type || 'Alert'}:</strong> ${alert.message || alert.amount || 'Check details'}
+                        </div>
+                    `).join('');
+                }
+            }
+        }
+        
+        // Display money theft data
+        function displayMoneyTheftData(data) {
+            // Cash discrepancies
+            const cashContainer = document.getElementById('cash-discrepancies');
+            if (cashContainer) {
+                if (data.cashDiscrepancies && data.cashDiscrepancies.length > 0) {
+                    cashContainer.innerHTML = `
+                        <table class="alert-table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Severity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.cashDiscrepancies.map(item => `
+                                    <tr>
+                                        <td>${item.type}</td>
+                                        <td>KSH ${item.amount?.toLocaleString() || 'N/A'}</td>
+                                        <td>${new Date(item.date).toLocaleDateString()}</td>
+                                        <td class="severity-${item.severity}">${item.severity.toUpperCase()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    cashContainer.innerHTML = '<p style="color: green;">✓ No cash discrepancies detected</p>';
+                }
+            }
+            
+            // Payment anomalies
+            const paymentContainer = document.getElementById('payment-anomalies');
+            if (paymentContainer) {
+                if (data.paymentAnomalies && data.paymentAnomalies.length > 0) {
+                    paymentContainer.innerHTML = `
+                        <table class="alert-table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Severity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.paymentAnomalies.map(item => `
+                                    <tr>
+                                        <td>${item.type}</td>
+                                        <td>KSH ${item.amount?.toLocaleString() || 'N/A'}</td>
+                                        <td>${new Date(item.date).toLocaleDateString()}</td>
+                                        <td class="severity-${item.severity}">${item.severity.toUpperCase()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    paymentContainer.innerHTML = '<p style="color: green;">✓ No payment anomalies detected</p>';
+                }
+            }
+            
+            // Transaction monitoring
+            const transactionContainer = document.getElementById('transaction-monitoring');
+            if (transactionContainer) {
+                if (data.transactionMonitoring && data.transactionMonitoring.length > 0) {
+                    transactionContainer.innerHTML = `
+                        <table class="alert-table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Details</th>
+                                    <th>Severity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.transactionMonitoring.map(item => `
+                                    <tr>
+                                        <td>${item.type}</td>
+                                        <td>${item.message || `Count: ${item.count || 'N/A'}`}</td>
+                                        <td class="severity-${item.severity}">${item.severity.toUpperCase()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    transactionContainer.innerHTML = '<p style="color: green;">✓ No transaction anomalies detected</p>';
+                }
+            }
+        }
+        
+        // Load money theft data separately
+        async function loadMoneyTheftData() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/analytics/theft/money`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        displayMoneyTheftData(data.data);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading money theft data:', error);
+            }
+        }
+        
+        // Display stock theft data
+        function displayStockTheftData(data) {
+            // Inventory discrepancies
+            const inventoryContainer = document.getElementById('inventory-discrepancies-list');
+            if (inventoryContainer) {
+                if (data.inventoryDiscrepancies && data.inventoryDiscrepancies.length > 0) {
+                    if (document.getElementById('inventory-discrepancies-count')) {
+                        document.getElementById('inventory-discrepancies-count').textContent = data.inventoryDiscrepancies.length;
+                    }
+                    inventoryContainer.innerHTML = `
+                        <table class="alert-table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Product</th>
+                                    <th>Details</th>
+                                    <th>Severity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.inventoryDiscrepancies.map(item => `
+                                    <tr>
+                                        <td>${item.type}</td>
+                                        <td>${item.productName || 'Unknown'}</td>
+                                        <td>${item.stockLevel !== undefined ? `Stock: ${item.stockLevel}` : `Sold: ${item.sold}, Available: ${item.available}`}</td>
+                                        <td class="severity-${item.severity}">${item.severity.toUpperCase()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    inventoryContainer.innerHTML = '<p style="color: green;">✓ No inventory discrepancies detected</p>';
+                }
+            }
+            
+            // Delivery monitoring
+            const deliveryContainer = document.getElementById('delivery-monitoring');
+            if (deliveryContainer) {
+                if (data.deliveryMonitoring && data.deliveryMonitoring.length > 0) {
+                    deliveryContainer.innerHTML = `
+                        <table class="alert-table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Order ID</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Severity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.deliveryMonitoring.map(item => `
+                                    <tr>
+                                        <td>${item.type}</td>
+                                        <td>${item.orderId}</td>
+                                        <td>KSH ${item.amount?.toLocaleString() || 'N/A'}</td>
+                                        <td>${new Date(item.date).toLocaleDateString()}</td>
+                                        <td class="severity-${item.severity}">${item.severity.toUpperCase()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    deliveryContainer.innerHTML = '<p style="color: green;">✓ No delivery issues detected</p>';
+                }
+            }
+            
+            // Warehouse alerts
+            const warehouseContainer = document.getElementById('warehouse-alerts');
+            if (warehouseContainer) {
+                if (data.warehouseAlerts && data.warehouseAlerts.length > 0) {
+                    warehouseContainer.innerHTML = `
+                        <table class="alert-table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Date</th>
+                                    <th>Severity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.warehouseAlerts.map(item => `
+                                    <tr>
+                                        <td>${item.type}</td>
+                                        <td>${item.product || 'N/A'}</td>
+                                        <td>${item.quantity || 'N/A'}</td>
+                                        <td>${new Date(item.date).toLocaleDateString()}</td>
+                                        <td class="severity-${item.severity}">${item.severity.toUpperCase()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    warehouseContainer.innerHTML = '<p style="color: green;">✓ No warehouse alerts</p>';
+                }
+            }
+        }
+        
+        // Load stock theft data separately
+        async function loadStockTheftData() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/analytics/theft/stock`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        displayStockTheftData(data.data);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading stock theft data:', error);
+            }
+        }
+        
+        // Display anomalies data
+        function displayAnomaliesData(data) {
+            const container = document.getElementById('activity-anomalies');
+            if (container) {
+                if (data.anomalies && data.anomalies.length > 0) {
+                    container.innerHTML = `
+                        <table class="alert-table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Details</th>
+                                    <th>Severity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.anomalies.map(item => `
+                                    <tr>
+                                        <td>${item.type}</td>
+                                        <td>${item.message || `Orders: ${item.orders?.length || item.count || 'N/A'}`}</td>
+                                        <td class="severity-${item.severity}">${item.severity.toUpperCase()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    container.innerHTML = '<p style="color: green;">✓ No unusual activity patterns detected</p>';
+                }
+            }
+        }
+        
+        // Load anomalies data separately
+        async function loadAnomaliesData() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/analytics/theft/anomalies`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        displayAnomaliesData(data.data);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading anomalies data:', error);
+            }
+        }
+        
+        // Load business intelligence data
+        async function loadBusinessIntelligence() {
+            // Data will be loaded when tabs are clicked
+        }
+        
+        // Load sales analytics
+        async function loadSalesAnalytics() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/analytics/business/sales`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        displaySalesAnalytics(data.data);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading sales analytics:', error);
+            }
+        }
+        
+        function displaySalesAnalytics(data) {
+            // Sales trends
+            const trendsContainer = document.getElementById('sales-trends');
+            if (trendsContainer) {
+                trendsContainer.innerHTML = `
+                    <div style="padding: 1rem;">
+                        <p><strong>Last 7 Days:</strong> ${data.salesTrends?.last7Days || 0} orders</p>
+                        <p><strong>Total Revenue:</strong> KSH ${(data.salesTrends?.totalRevenue || 0).toLocaleString()}</p>
+                    </div>
+                `;
+            }
+            
+            // Peak hours
+            const peakContainer = document.getElementById('peak-hours');
+            if (peakContainer && data.peakHours) {
+                peakContainer.innerHTML = `
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Hour</th>
+                                <th>Orders</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.peakHours.map(item => `
+                                <tr>
+                                    <td>${item.hour}:00</td>
+                                    <td>${item.count}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+            
+            // Top products
+            const topProductsContainer = document.getElementById('top-products');
+            if (topProductsContainer && data.topProducts) {
+                topProductsContainer.innerHTML = `
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Quantity Sold</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.topProducts.map(item => `
+                                <tr>
+                                    <td>${item.productName}</td>
+                                    <td>${item.quantity}</td>
+                                    <td>KSH ${item.revenue.toLocaleString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+        }
+        
+        // Load inventory analytics
+        async function loadInventoryAnalytics() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/analytics/business/inventory`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        displayInventoryAnalytics(data.data);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading inventory analytics:', error);
+            }
+        }
+        
+        function displayInventoryAnalytics(data) {
+            // Stock turnover
+            const turnoverContainer = document.getElementById('stock-turnover');
+            if (turnoverContainer && data.stockTurnover) {
+                turnoverContainer.innerHTML = `
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Stock Level</th>
+                                <th>Sold (30d)</th>
+                                <th>Turnover Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.stockTurnover.map(item => `
+                                <tr>
+                                    <td>${item.productName}</td>
+                                    <td>${item.stockLevel}</td>
+                                    <td>${item.sold}</td>
+                                    <td>${item.turnoverRate}%</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+            
+            // Reorder alerts
+            const reorderContainer = document.getElementById('reorder-alerts');
+            if (reorderContainer && data.reorderAlerts) {
+                if (data.reorderAlerts.length > 0) {
+                    reorderContainer.innerHTML = `
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Current Stock</th>
+                                    <th>Recommended Order</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.reorderAlerts.map(item => `
+                                    <tr>
+                                        <td>${item.productName}</td>
+                                        <td>${item.stockLevel}</td>
+                                        <td>${item.recommendedOrder}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    reorderContainer.innerHTML = '<p>No reorder alerts</p>';
+                }
+            }
+            
+            // Dead stock
+            const deadStockContainer = document.getElementById('dead-stock');
+            if (deadStockContainer && data.deadStock) {
+                if (data.deadStock.length > 0) {
+                    deadStockContainer.innerHTML = `
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Stock Level</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.deadStock.map(item => `
+                                    <tr>
+                                        <td>${item.productName}</td>
+                                        <td>${item.stockLevel}</td>
+                                        <td>${item.lastSale}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    deadStockContainer.innerHTML = '<p>No dead stock identified</p>';
+                }
+            }
+        }
+        
+        // Load financial analytics
+        async function loadFinancialAnalytics() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/analytics/business/financial`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        displayFinancialAnalytics(data.data);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading financial analytics:', error);
+            }
+        }
+        
+        function displayFinancialAnalytics(data) {
+            // Profit margins
+            const marginsContainer = document.getElementById('profit-margins');
+            if (marginsContainer && data.profitMargins) {
+                marginsContainer.innerHTML = `
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Revenue</th>
+                                <th>Estimated Cost</th>
+                                <th>Profit</th>
+                                <th>Margin %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.profitMargins.map(item => `
+                                <tr>
+                                    <td>${item.productName}</td>
+                                    <td>KSH ${item.revenue.toLocaleString()}</td>
+                                    <td>KSH ${item.estimatedCost.toLocaleString()}</td>
+                                    <td>KSH ${item.profit.toLocaleString()}</td>
+                                    <td>${item.margin}%</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+            
+            // Revenue forecast
+            const forecastContainer = document.getElementById('revenue-forecast');
+            if (forecastContainer && data.revenueForecast) {
+                forecastContainer.innerHTML = `
+                    <div style="padding: 1rem;">
+                        <p><strong>Next 30 Days Forecast:</strong> KSH ${data.revenueForecast.next30Days.toLocaleString()}</p>
+                        <p><strong>Average Daily Revenue:</strong> KSH ${data.revenueForecast.averageDaily.toLocaleString()}</p>
+                    </div>
+                `;
+            }
+            
+            // Cost analysis
+            const costContainer = document.getElementById('cost-analysis');
+            if (costContainer && data.costAnalysis) {
+                costContainer.innerHTML = `
+                    <div style="padding: 1rem;">
+                        <p><strong>Total Revenue:</strong> KSH ${data.costAnalysis.totalRevenue.toLocaleString()}</p>
+                        <p><strong>Estimated Costs:</strong> KSH ${data.costAnalysis.estimatedCosts.toLocaleString()}</p>
+                        <p><strong>Estimated Profit:</strong> KSH ${data.costAnalysis.estimatedProfit.toLocaleString()}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Load operational metrics
+        async function loadOperationalMetrics() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/analytics/business/operational`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        displayOperationalMetrics(data.data);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading operational metrics:', error);
+            }
+        }
+        
+        function displayOperationalMetrics(data) {
+            // Order fulfillment
+            const fulfillmentContainer = document.getElementById('order-fulfillment');
+            if (fulfillmentContainer && data.orderFulfillment) {
+                fulfillmentContainer.innerHTML = `
+                    <div style="padding: 1rem;">
+                        <p><strong>Average Fulfillment Time:</strong> ${data.orderFulfillment.averageTime} ${data.orderFulfillment.unit}</p>
+                    </div>
+                `;
+            }
+            
+            // Delivery performance
+            const deliveryContainer = document.getElementById('delivery-performance');
+            if (deliveryContainer && data.deliveryPerformance) {
+                deliveryContainer.innerHTML = `
+                    <div style="padding: 1rem;">
+                        <p><strong>Total Orders:</strong> ${data.deliveryPerformance.total}</p>
+                        <p><strong>Delivered:</strong> ${data.deliveryPerformance.delivered}</p>
+                        <p><strong>Pending:</strong> ${data.deliveryPerformance.pending}</p>
+                        <p><strong>Failed:</strong> ${data.deliveryPerformance.failed}</p>
+                        <p><strong>Success Rate:</strong> ${data.deliveryPerformance.successRate}%</p>
+                    </div>
+                `;
+            }
+            
+            // Staff productivity
+            const staffContainer = document.getElementById('staff-productivity');
+            if (staffContainer && data.staffProductivity) {
+                staffContainer.innerHTML = `
+                    <div style="padding: 1rem;">
+                        <p>${data.staffProductivity.message || `Orders per staff: ${data.staffProductivity.ordersPerStaff || 'N/A'}`}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Load customer insights
+        async function loadCustomerInsights() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/analytics/business/customer`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        displayCustomerInsights(data.data);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading customer insights:', error);
+            }
+        }
+        
+        function displayCustomerInsights(data) {
+            // Customer segmentation
+            const segmentationContainer = document.getElementById('customer-segmentation');
+            if (segmentationContainer && data.customerSegmentation) {
+                segmentationContainer.innerHTML = `
+                    <div style="padding: 1rem;">
+                        <p><strong>VIP Customers:</strong> ${data.customerSegmentation.vip || 0}</p>
+                        <p><strong>Regular Customers:</strong> ${data.customerSegmentation.regular || 0}</p>
+                        <p><strong>New Customers:</strong> ${data.customerSegmentation.new || 0}</p>
+                    </div>
+                `;
+            }
+            
+            // Repeat purchases
+            const repeatContainer = document.getElementById('repeat-purchases');
+            if (repeatContainer && data.repeatPurchases) {
+                repeatContainer.innerHTML = `
+                    <div style="padding: 1rem;">
+                        <p><strong>Repeat Customers:</strong> ${data.repeatPurchases.repeatCustomers || 0}</p>
+                        <p><strong>Repeat Rate:</strong> ${data.repeatPurchases.repeatRate || 0}%</p>
+                    </div>
+                `;
+            }
+            
+            // Geographic sales
+            const geoContainer = document.getElementById('geographic-sales');
+            if (geoContainer && data.geographicSales) {
+                geoContainer.innerHTML = `
+                    <div style="padding: 1rem;">
+                        <p>${data.geographicSales.message || 'Geographic data not available'}</p>
+                    </div>
+                `;
             }
         }
         
