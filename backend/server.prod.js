@@ -32,6 +32,7 @@ import dashboardRoutes from './routes/dashboards.js';
 import staffRoutes from './routes/staff.js';
 import stockMovementRoutes from './routes/stock-movements.js';
 import warehouseInventoryRoutes from './routes/warehouseInventory.js';
+import driverRoutes from './routes/drivers.js';
 
 // Import middleware
 import errorHandler from './middleware/errorHandler.js';
@@ -279,6 +280,7 @@ if (cluster.isPrimary && process.env.NODE_ENV === 'production' && process.env.CL
   app.use('/api/staff', apiRateLimit, staffRoutes);
   app.use('/api/stock-movements', apiRateLimit, stockMovementRoutes);
   app.use('/api/warehouse-inventory', apiRateLimit, warehouseInventoryRoutes);
+  app.use('/api/drivers', apiRateLimit, driverRoutes);
 
   // Rate limiting statistics
   app.get('/api/rate-limit-stats', adminRateLimit, getRateLimitStats);
