@@ -648,9 +648,12 @@
                     </div>
                 </div>
 
-                <button class="checkout-btn" id="place-order-btn" onclick="placeOrder();">
-                    Place Order
+                <button class="checkout-btn" id="place-order-btn" type="button" onclick="if(typeof window.placeOrder === 'function') { window.placeOrder(); } else { console.error('placeOrder not available'); alert('Please refresh the page and try again.'); }">
+                    <span class="btn-text">Place Order</span>
                 </button>
+                <div id="place-order-help" style="display: none; margin-top: 10px; padding: 10px; background: #fff4e6; border-radius: 8px; border-left: 3px solid #ff9800; font-size: 13px; color: #e65100;">
+                    <strong>⚠️ Please fill in your delivery address above to enable the Place Order button.</strong>
+                </div>
             </div>
         </div>
     </main>
@@ -1366,17 +1369,79 @@
             validatePlaceOrderEnabled();
             
             // Set default payment method to Cash on Delivery
-            document.querySelector('.payment-method[data-method="cash_on_delivery"]').classList.add('selected');
-            selectedPaymentMethod = 'cash_on_delivery';
+            const codMethod = document.querySelector('.payment-method[data-method="cash_on_delivery"]');
+            if (codMethod) {
+                codMethod.classList.add('selected');
+                selectedPaymentMethod = 'cash_on_delivery';
+            } else {
+                console.warn('Cash on Delivery payment method not found');
+                selectedPaymentMethod = 'cash_on_delivery'; // Set default anyway
+            }
             
             // Test if placeOrder function is defined
             console.log('placeOrder function defined:', typeof window.placeOrder);
             console.log('All variables:', { cartItems, products, selectedPaymentMethod });
+            
+            // Ensure place order button works correctly
+            const placeOrderBtn = document.getElementById('place-order-btn');
+            if (placeOrderBtn) {
+                // Make sure onclick handler is set
+                if (!placeOrderBtn.onclick) {
+                    placeOrderBtn.onclick = function() {
+                        console.log('Place Order button clicked (onclick handler)');
+                        if (typeof window.placeOrder === 'function') {
+                            window.placeOrder();
+                        } else {
+                            console.error('placeOrder function is not defined!');
+                            showToast('Error: Order function not available. Please refresh the page.', 'error');
+                        }
+                    };
+                }
+                
+                // Debug button state
+                console.log('Place Order button initialized:', {
+                    disabled: placeOrderBtn.disabled,
+                    hasOnclick: !!placeOrderBtn.onclick,
+                    cartItemsCount: cartItems.length
+                });
+            } else {
+                console.error('Place Order button not found!');
+            }
         });
         function validatePlaceOrderEnabled(){
             const btn = document.getElementById('place-order-btn');
-            const addressOk = (document.getElementById('address').value || '').trim().length > 0;
-            btn.disabled = !addressOk;
+            const helpMsg = document.getElementById('place-order-help');
+            if (!btn) return;
+            const addressEl = document.getElementById('address');
+            const addressOk = addressEl && (addressEl.value || '').trim().length > 0;
+            const cartOk = cartItems && cartItems.length > 0;
+            const shouldDisable = !addressOk || !cartOk;
+            
+            btn.disabled = shouldDisable;
+            
+            // Show/hide help message
+            if (helpMsg) {
+                if (shouldDisable && !addressOk) {
+                    helpMsg.style.display = 'block';
+                } else {
+                    helpMsg.style.display = 'none';
+                }
+            }
+            
+            // Add visual feedback
+            if (btn.disabled) {
+                btn.style.opacity = '0.6';
+                btn.style.cursor = 'not-allowed';
+            } else {
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+            }
+            
+            console.log('Button validation:', {
+                addressOk,
+                cartOk,
+                disabled: btn.disabled
+            });
         }
         // --- Simple OTP modal for COD ---
         (function setupOtpModal(){
