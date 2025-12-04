@@ -2976,31 +2976,79 @@ input[type="email"]:focus, input[type="text"]:focus, select:focus {
 .nav-toggle.open .nav-toggle-bar:nth-child(3) {
   transform: translateY(-6px) rotate(-45deg);
 }
-/* Mobile nav */
+/* Mobile nav - Show full navigation bar like desktop */
 @media (max-width: 900px) {
+  .main-header.glassy-header {
+    display: flex !important;
+    visibility: visible !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    padding: 0.5em 1vw !important;
+    gap: 0.5em !important;
+  }
+  .main-nav {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 1 1 100% !important;
+    order: 2 !important;
+    width: 100% !important;
+    margin-top: 0.5em !important;
+  }
   .nav-links {
-    position: fixed;
-    top: 4.2em;
-    left: 0;
-    width: 100vw;
-    background: rgba(25, 118, 210, 0.98);
-    box-shadow: 0 8px 32px #1976d244;
-    flex-direction: column;
-    gap: 1.2em;
-    padding: 2.5em 0 1.5em 0;
-    transform: translateY(-120%);
-    opacity: 0;
-    pointer-events: none;
-    transition: transform 0.35s cubic-bezier(.68,-0.55,.27,1.55), opacity 0.25s;
-    z-index: 1200;
+    display: flex !important;
+    flex-direction: row !important;
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    width: auto !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    gap: 0.6em !important;
+    padding: 0 !important;
+    transform: none !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transition: none !important;
+    z-index: auto !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    visibility: visible !important;
+    margin: 0 !important;
   }
   .main-nav.nav-open .nav-links {
-    transform: translateY(0);
-    opacity: 1;
-    pointer-events: auto;
+    transform: none !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    display: flex !important;
   }
   .nav-toggle {
-    display: flex;
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+  .nav-link {
+    font-size: 0.75rem !important;
+    padding: 0.4em 0.6em !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    white-space: nowrap !important;
+  }
+  .nav-links li {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  .header-actions {
+    order: 1 !important;
+    margin-left: auto !important;
   }
 }
 /* Animate nav links in mobile */

@@ -28,12 +28,56 @@
   <link rel="icon" type="image/png" sizes="16x16" href="images/logo.png">
   
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=4" />
   <link href="https://fonts.googleapis.com/css?family=Montserrat:700,900|Open+Sans:400,600&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   
+  <!-- Force mobile navigation to be visible - inline styles to override everything -->
+  <style>
+    @media (max-width: 900px) {
+      .nav-toggle {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
+        position: absolute !important;
+        left: -9999px !important;
+      }
+      .nav-links {
+        display: flex !important;
+        flex-direction: row !important;
+        position: static !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        transform: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        width: auto !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        gap: 0.6em !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        pointer-events: auto !important;
+      }
+      .main-nav {
+        display: flex !important;
+        visibility: visible !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex: 1 1 100% !important;
+        width: 100% !important;
+      }
+      .main-header.glassy-header {
+        flex-wrap: wrap !important;
+      }
+    }
+  </style>
+  
   <!-- Scripts -->
-  <script src="config.js"></script>
   <script defer src="script.js"></script>
   <script defer src="chatbot.js"></script>
   <script defer src="pwa-install.js"></script>
@@ -54,6 +98,56 @@
   </script>
     
     <!-- Debug script removed - chatbot is now working properly -->
+    <!-- Force navigation visible - runs immediately before page renders -->
+    <script>
+      (function() {
+        // Remove hamburger button if it exists
+        function removeHamburger() {
+          const navToggle = document.querySelector('.nav-toggle');
+          if (navToggle) {
+            navToggle.remove();
+          }
+        }
+        
+        // Force nav links visible
+        function showNavLinks() {
+          const navLinks = document.querySelector('.nav-links');
+          const mainNav = document.querySelector('.main-nav');
+          
+          if (navLinks) {
+            navLinks.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; position: static !important; transform: none !important; flex-direction: row !important; flex-wrap: wrap !important; justify-content: center !important; gap: 0.6em !important; padding: 0 !important; margin: 0 !important; background: transparent !important; box-shadow: none !important; width: auto !important; list-style: none !important;';
+          }
+          if (mainNav) {
+            mainNav.style.cssText = 'display: flex !important; visibility: visible !important; align-items: center !important; justify-content: center !important; flex: 1 1 100% !important; width: 100% !important;';
+          }
+        }
+        
+        // Run immediately
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', function() {
+            removeHamburger();
+            showNavLinks();
+          });
+        } else {
+          removeHamburger();
+          showNavLinks();
+        }
+        
+        // Also run after delays
+        setTimeout(function() {
+          removeHamburger();
+          showNavLinks();
+        }, 0);
+        setTimeout(function() {
+          removeHamburger();
+          showNavLinks();
+        }, 100);
+        setTimeout(function() {
+          removeHamburger();
+          showNavLinks();
+        }, 500);
+      })();
+    </script>
 </head>
 <body>
   <!-- Announcement Bar -->
@@ -65,12 +159,8 @@
       <span class="logo-text abai-glow-move">Abai Springs</span>
     </div>
     <nav class="main-nav">
-      <button class="nav-toggle" aria-label="Open navigation menu" onclick="toggleMobileNav(this)">
-        <span class="nav-toggle-bar"></span>
-        <span class="nav-toggle-bar"></span>
-        <span class="nav-toggle-bar"></span>
-      </button>
-      <ul class="nav-links">
+      <!-- Hamburger menu removed - navigation always visible -->
+      <ul class="nav-links" style="display: flex !important; visibility: visible !important; opacity: 1 !important; position: static !important; transform: none !important; flex-direction: row !important; flex-wrap: wrap !important; justify-content: center !important; gap: 0.6em !important; padding: 0 !important; margin: 0 !important; background: transparent !important; box-shadow: none !important; width: auto !important; list-style: none !important;">
         <li><a href="#home" class="nav-link ripple-link">Home</a></li>
         <li><a href="#about" class="nav-link ripple-link">About</a></li>
         <li class="nav-products-dropdown">

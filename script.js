@@ -29,40 +29,8 @@ let outlets = [];
 let products = [];
 let selectedOutlet = null;
 
-// API Base URL - Load from config.js or detect environment
-(function() {
-  const hostname = window.location.hostname;
-  const protocol = window.location.protocol;
-  
-  // Check if we're on Vercel (more robust detection)
-  const isVercel = hostname.includes('vercel.app') || 
-                   hostname === 'abaisprings.vercel.app' ||
-                   hostname.endsWith('.vercel.app');
-  
-  // Check if we're in production (HTTPS and not localhost)
-  const isProduction = protocol === 'https:' && 
-                       !hostname.includes('localhost') && 
-                       !hostname.includes('127.0.0.1');
-  
-  // If on Vercel or production, use Railway backend
-  if (isVercel || isProduction) {
-    window.API_BASE_URL = 'https://abai-springs-webapp-production.up.railway.app/api';
-    console.log('🌐 Production mode detected. Using Railway backend:', window.API_BASE_URL);
-  } else if (window.API_BASE_URL) {
-    // Use config.js value if set
-    console.log('⚙️ Using configured API URL:', window.API_BASE_URL);
-  } else {
-    // Fallback to localhost for development
-    window.API_BASE_URL = 'http://localhost:3001/api';
-    console.log('🔧 Development mode. Using localhost:', window.API_BASE_URL);
-  }
-})();
-
-// Use the global API_BASE_URL
-const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001/api';
-
-// Log the final API URL being used
-console.log('📍 API Base URL:', API_BASE_URL);
+// API Base URL
+const API_BASE_URL = 'http://localhost:3001/api';
 
 // Add to Cart function is now defined later in the file with proper brand support
 
@@ -120,21 +88,54 @@ function toggleCart() {
   window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
 }
 
-// Hamburger menu functionality for mobile nav
-const navToggle = document.querySelector('.nav-toggle');
-const navLinks = document.querySelector('.nav-links');
-
-if (navToggle && navLinks) {
-  navToggle.addEventListener('click', () => {
-    navLinks.classList.toggle('open');
-  });
-  // Optional: close menu when a link is clicked (mobile UX)
-  navLinks.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', () => {
-      navLinks.classList.remove('open');
-    });
-  });
+// Force navigation to be visible on mobile - ALWAYS SHOW NAV BAR
+function ensureNavVisible() {
+  const navLinks = document.querySelector('.nav-links');
+  const navToggle = document.querySelector('.nav-toggle');
+  const mainNav = document.querySelector('.main-nav');
+  
+  if (navLinks) {
+    navLinks.style.display = 'flex';
+    navLinks.style.visibility = 'visible';
+    navLinks.style.opacity = '1';
+    navLinks.style.transform = 'none';
+    navLinks.style.position = 'static';
+    navLinks.style.background = 'transparent';
+    navLinks.style.boxShadow = 'none';
+    navLinks.style.width = 'auto';
+    navLinks.style.flexDirection = 'row';
+    navLinks.style.flexWrap = 'wrap';
+    navLinks.style.justifyContent = 'center';
+    navLinks.style.gap = '0.8em';
+    navLinks.style.padding = '0';
+    navLinks.style.margin = '0';
+  }
+  if (navToggle) {
+    navToggle.style.display = 'none';
+    navToggle.style.visibility = 'hidden';
+    navToggle.style.opacity = '0';
+    navToggle.style.width = '0';
+    navToggle.style.height = '0';
+    navToggle.style.overflow = 'hidden';
+  }
+  if (mainNav) {
+    mainNav.style.display = 'flex';
+    mainNav.style.visibility = 'visible';
+    mainNav.style.opacity = '1';
+  }
 }
+
+// Run immediately and on various events
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', ensureNavVisible);
+} else {
+  ensureNavVisible();
+}
+window.addEventListener('load', ensureNavVisible);
+window.addEventListener('resize', ensureNavVisible);
+setTimeout(ensureNavVisible, 100);
+setTimeout(ensureNavVisible, 500);
+setTimeout(ensureNavVisible, 1000);
 
 // Play sound utility
 function playSound(id) {
@@ -632,18 +633,9 @@ document.addEventListener('mousedown', function(e) {
 // --- Fetch and Render Outlets from Backend ---
 async function loadOutlets() {
   try {
-    const url = `${API_BASE_URL}/outlets`;
-    console.log('🔄 Fetching outlets from:', url);
-    
-    const response = await fetch(url, {
-      headers: { 'x-cache-disabled': 'true' },
-      mode: 'cors',
-      credentials: 'omit'
+    const response = await fetch(`${API_BASE_URL}/outlets`, {
+      headers: { 'x-cache-disabled': 'true' }
     });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
     
     const data = await response.json();
     
@@ -656,19 +648,11 @@ async function loadOutlets() {
       if (outletsChanged) {
         // Removed toast notification for cleaner user experience
       }
-      console.log('✅ Outlets loaded successfully:', newOutlets.length);
     } else {
-      console.error('❌ Failed to load outlets:', data.message);
+      console.error('Failed to load outlets:', data.message);
     }
   } catch (error) {
-    console.error('❌ Error loading outlets:', error);
-    console.error('   API URL:', API_BASE_URL);
-    console.error('   Error details:', error.message);
-    
-    // Show user-friendly error message
-    if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
-      console.warn('⚠️ CORS or network error. Check backend CORS configuration.');
-    }
+    console.error('Error loading outlets:', error);
   }
 }
 
@@ -825,19 +809,11 @@ async function handleLogin(event) {
   
   try {
     // For demo: try login first, if fails, try register
-    const url = `${API_BASE_URL}/auth/login`;
-    let res = await fetch(url, {
+    let res = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-      mode: 'cors',
-      credentials: 'omit'
+      body: JSON.stringify({ email, password })
     });
-    
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
-    
     let data = await res.json();
     
     if (!data.success) {
@@ -869,16 +845,8 @@ async function handleLogin(event) {
       showToast(data.message || 'Login/Registration failed');
     }
   } catch (error) {
-    console.error('❌ Login error:', error);
-    console.error('   API URL:', API_BASE_URL);
-    console.error('   Error details:', error.message);
-    
-    if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
-      console.warn('⚠️ CORS or network error. Check backend CORS configuration.');
-      showToast('Connection error. Please check your internet connection.');
-    } else {
-      showToast('Login failed. Please try again.');
-    }
+    console.error('Login error:', error);
+    showToast('Login failed. Please try again.');
   } finally {
     // Reset button state
     if (btnText && btnLoading) {
@@ -915,16 +883,12 @@ async function handleRegister(event) {
   }
   
   try {
-    const url = `${API_BASE_URL}/auth/register`;
-    const res = await fetch(url, {
+    const res = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, phone, password }),
-      mode: 'cors',
-      credentials: 'omit'
+      body: JSON.stringify({ name, email, phone, password })
     });
     
-    // Parse response even if status is not ok to get error message
     const data = await res.json();
     
     // Check if response is successful
@@ -965,25 +929,12 @@ async function handleRegister(event) {
         errorMessage = 'Please check your input and try again';
       }
       
-      // Special handling for 409 Conflict (user already exists)
-      if (res.status === 409) {
-        errorMessage = data.message || 'An account with this email already exists. Please try logging in instead.';
-      }
-      
       console.error('Registration failed:', data);
-      showToast(errorMessage, 'error');
+      showToast(errorMessage);
     }
   } catch (error) {
-    console.error('❌ Registration error:', error);
-    console.error('   API URL:', API_BASE_URL);
-    console.error('   Error details:', error.message);
-    
-    if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
-      console.warn('⚠️ CORS or network error. Check backend CORS configuration.');
-      showToast('Connection error. Please check your internet connection.');
-    } else {
-      showToast('Network error. Please check your connection and try again.');
-    }
+    console.error('Registration error:', error);
+    showToast('Network error. Please check your connection and try again.');
   } finally {
     // Reset button state
     if (btnText && btnLoading) {
@@ -1303,14 +1254,11 @@ async function showProfile() {
     
     try {
       // Fetch fresh user data from backend
-      const url = `${API_BASE_URL}/auth/profile`;
-      const response = await fetch(url, {
+      const response = await fetch(`${API_BASE_URL}/auth/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        mode: 'cors',
-        credentials: 'omit'
+        }
       });
       
       if (response.ok) {
@@ -1320,15 +1268,9 @@ async function showProfile() {
           localStorage.setItem('user', JSON.stringify(profileData.data));
           userData = profileData.data;
         }
-      } else {
-        console.warn('⚠️ Profile fetch returned non-OK status:', response.status);
       }
     } catch (error) {
-      console.error('❌ Error fetching profile:', error);
-      console.error('   API URL:', API_BASE_URL);
-      if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
-        console.warn('⚠️ CORS or network error. Check backend CORS configuration.');
-      }
+      console.error('Error fetching profile:', error);
       // Continue with cached data if fetch fails
     }
     
@@ -1416,8 +1358,7 @@ async function handleEditProfileSubmit(event) {
   submitBtn.disabled = true;
   
   try {
-    const url = `${API_BASE_URL}/auth/profile`;
-    const response = await fetch(url, {
+    const response = await fetch(`${API_BASE_URL}/auth/profile`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -1426,14 +1367,8 @@ async function handleEditProfileSubmit(event) {
       body: JSON.stringify({
         name: newName,
         phone: newPhone
-      }),
-      mode: 'cors',
-      credentials: 'omit'
+      })
     });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
     
     const data = await response.json();
     
@@ -1462,16 +1397,8 @@ async function handleEditProfileSubmit(event) {
       showToast(data.message || 'Failed to update profile');
     }
   } catch (error) {
-    console.error('❌ Error updating profile:', error);
-    console.error('   API URL:', API_BASE_URL);
-    console.error('   Error details:', error.message);
-    
-    if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
-      console.warn('⚠️ CORS or network error. Check backend CORS configuration.');
-      showToast('Connection error. Please check your internet connection.');
-    } else {
-      showToast('Failed to update profile. Please try again.');
-    }
+    console.error('Error updating profile:', error);
+    showToast('Failed to update profile. Please try again.');
   } finally {
     // Reset button state
     if (btnText && btnLoading) {
