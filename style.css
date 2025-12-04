@@ -4199,11 +4199,11 @@ body.scrolled .main-header {
 
 /* Ensure proper brand switching */
 #sprinkle-products {
-  display: none !important;
+  display: none;
 }
 
 #sprinkle-products.show {
-  display: grid !important;
+  display: grid;
 }
 
 #abai-products.hide {

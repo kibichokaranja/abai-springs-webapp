@@ -1196,7 +1196,7 @@ function showBrandProducts(brand) {
       sprinkleContainer.style.visibility = 'visible';
     }
     if (sprinkleProducts) {
-      sprinkleProducts.style.display = 'flex';
+      sprinkleProducts.style.display = 'grid';
       sprinkleProducts.style.visibility = 'visible';
     }
     if (productsTitle) productsTitle.textContent = 'Our Products (Sprinkle)';
