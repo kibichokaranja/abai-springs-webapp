@@ -88,27 +88,66 @@ function toggleCart() {
   window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
 }
 
-// Force navigation to be visible on mobile - ALWAYS SHOW NAV BAR
-function ensureNavVisible() {
+// Navigation Menu Functions
+function toggleNavMenu() {
+  const dropdown = document.getElementById('nav-menu-dropdown');
+  if (dropdown) {
+    const isVisible = dropdown.style.display !== 'none';
+    dropdown.style.display = isVisible ? 'none' : 'block';
+    
+    // Close products submenu when closing main menu
+    if (isVisible) {
+      const productsSubmenu = document.getElementById('nav-menu-products-submenu');
+      if (productsSubmenu) {
+        productsSubmenu.style.display = 'none';
+      }
+    }
+  }
+}
+
+function closeNavMenu() {
+  const dropdown = document.getElementById('nav-menu-dropdown');
+  if (dropdown) {
+    dropdown.style.display = 'none';
+    const productsSubmenu = document.getElementById('nav-menu-products-submenu');
+    if (productsSubmenu) {
+      productsSubmenu.style.display = 'none';
+    }
+  }
+}
+
+function toggleNavProductsDropdown(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const submenu = document.getElementById('nav-menu-products-submenu');
+  if (submenu) {
+    const isVisible = submenu.style.display !== 'none';
+    submenu.style.display = isVisible ? 'none' : 'block';
+  }
+}
+
+// Close menu when clicking outside
+document.addEventListener('click', function(event) {
+  const menuButton = document.querySelector('.nav-menu-button');
+  const dropdown = document.getElementById('nav-menu-dropdown');
+  
+  if (dropdown && menuButton && !menuButton.contains(event.target) && !dropdown.contains(event.target)) {
+    closeNavMenu();
+  }
+});
+
+// Hide navigation bar - use menu button instead
+function hideNavBar() {
   const navLinks = document.querySelector('.nav-links');
   const navToggle = document.querySelector('.nav-toggle');
   const mainNav = document.querySelector('.main-nav');
   
   if (navLinks) {
-    navLinks.style.display = 'flex';
-    navLinks.style.visibility = 'visible';
-    navLinks.style.opacity = '1';
-    navLinks.style.transform = 'none';
-    navLinks.style.position = 'static';
-    navLinks.style.background = 'transparent';
-    navLinks.style.boxShadow = 'none';
-    navLinks.style.width = 'auto';
-    navLinks.style.flexDirection = 'row';
-    navLinks.style.flexWrap = 'wrap';
-    navLinks.style.justifyContent = 'center';
-    navLinks.style.gap = '0.8em';
-    navLinks.style.padding = '0';
-    navLinks.style.margin = '0';
+    navLinks.style.display = 'none';
+    navLinks.style.visibility = 'hidden';
+    navLinks.style.opacity = '0';
   }
   if (navToggle) {
     navToggle.style.display = 'none';
@@ -119,23 +158,23 @@ function ensureNavVisible() {
     navToggle.style.overflow = 'hidden';
   }
   if (mainNav) {
-    mainNav.style.display = 'flex';
-    mainNav.style.visibility = 'visible';
-    mainNav.style.opacity = '1';
+    mainNav.style.display = 'none';
+    mainNav.style.visibility = 'hidden';
+    mainNav.style.opacity = '0';
   }
 }
 
-// Run immediately and on various events
+// Run immediately and on various events to hide nav bar
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', ensureNavVisible);
+  document.addEventListener('DOMContentLoaded', hideNavBar);
 } else {
-  ensureNavVisible();
+  hideNavBar();
 }
-window.addEventListener('load', ensureNavVisible);
-window.addEventListener('resize', ensureNavVisible);
-setTimeout(ensureNavVisible, 100);
-setTimeout(ensureNavVisible, 500);
-setTimeout(ensureNavVisible, 1000);
+window.addEventListener('load', hideNavBar);
+window.addEventListener('resize', hideNavBar);
+setTimeout(hideNavBar, 100);
+setTimeout(hideNavBar, 500);
+setTimeout(hideNavBar, 1000);
 
 // Play sound utility
 function playSound(id) {
@@ -551,6 +590,71 @@ function addToCart(name, price, brand) {
     void cartCount.offsetWidth; // force reflow
     cartCount.classList.add('cart-count-pulse');
   }
+}
+
+// View Product function - scrolls to product and highlights it
+function viewProduct(name, price, brand) {
+  // Find the product card in the DOM
+  const productCards = document.querySelectorAll('.product-card-modern');
+  let targetCard = null;
+  
+  productCards.forEach(card => {
+    const cardName = card.querySelector('h3')?.textContent.trim();
+    const cardPrice = card.querySelector('.product-price')?.textContent;
+    if (cardName === name && cardPrice.includes(price.toString())) {
+      targetCard = card;
+    }
+  });
+  
+  if (targetCard) {
+    // Scroll to the product card
+    targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Highlight the product card
+    targetCard.style.transition = 'all 0.3s';
+    targetCard.style.transform = 'scale(1.05)';
+    targetCard.style.boxShadow = '0 8px 48px #1976d244, 0 4px 16px #4fc3f7cc';
+    
+    // Remove highlight after 2 seconds
+    setTimeout(() => {
+      targetCard.style.transform = '';
+      targetCard.style.boxShadow = '';
+    }, 2000);
+    
+    showToast(`Viewing ${name} - ${brand}`);
+  } else {
+    // If on mobile, just add to cart as fallback
+    addToCart(name, price, brand);
+  }
+}
+
+// Carousel navigation functions
+function scrollProductsLeft(gridId) {
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  
+  const cardWidth = grid.querySelector('.product-card-modern')?.offsetWidth || 0;
+  const gap = 24; // 1.5em gap in pixels (approximately)
+  const scrollAmount = cardWidth + gap;
+  
+  grid.scrollBy({
+    left: -scrollAmount,
+    behavior: 'smooth'
+  });
+}
+
+function scrollProductsRight(gridId) {
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  
+  const cardWidth = grid.querySelector('.product-card-modern')?.offsetWidth || 0;
+  const gap = 24; // 1.5em gap in pixels (approximately)
+  const scrollAmount = cardWidth + gap;
+  
+  grid.scrollBy({
+    left: scrollAmount,
+    behavior: 'smooth'
+  });
 }
 function updateCartQty(idx, delta) {
   let cart = getCartItems();
@@ -1075,97 +1179,45 @@ function closeProductsDropdownOnClick(e) {
   }
 }
 function showBrandProducts(brand) {
-  const productsGrid = document.getElementById('abai-products');
+  const abaiProducts = document.getElementById('abai-products');
+  const abaiContainer = abaiProducts?.closest('.products-carousel-container');
+  const sprinkleProducts = document.getElementById('sprinkle-products');
+  const sprinkleContainer = sprinkleProducts?.closest('.products-carousel-container');
   const productsTitle = document.getElementById('products-title');
-  if (!productsGrid) return;
-
+  
   if (brand === 'sprinkle') {
-    productsGrid.innerHTML = `
-      <div class="product-card-modern sprinkle-card-modern">
-        <img src="images/sprinkle-500ml.png" alt="500ml Sprinkle bottle" class="product-img-modern">
-        <div class="product-info-modern">
-          <h3>500ml</h3>
-          <p>Perfect for on-the-go hydration.</p>
-          <button class="modern-add-to-cart" onclick="addToCart('500ml', 18, 'Sprinkle')">Add to Cart</button>
-        </div>
-      </div>
-      <div class="product-card-modern sprinkle-card-modern">
-        <img src="images/sprinkle-1l.png" alt="1 Litre Sprinkle bottle" class="product-img-modern">
-        <div class="product-info-modern">
-          <h3>1 Litre</h3>
-          <p>Great for daily use and travel.</p>
-          <button class="modern-add-to-cart" onclick="addToCart('1 Litre', 25, 'Sprinkle')">Add to Cart</button>
-        </div>
-      </div>
-      <div class="product-card-modern sprinkle-card-modern">
-        <img src="images/sprinkle-5l.png" alt="5 Litre Sprinkle bottle" class="product-img-modern">
-        <div class="product-info-modern">
-          <h3>5 Litre</h3>
-          <p>Ideal for families and small offices.</p>
-          <button class="modern-add-to-cart" onclick="addToCart('5 Litre', 70, 'Sprinkle')">Add to Cart</button>
-        </div>
-      </div>
-      <div class="product-card-modern sprinkle-card-modern">
-        <img src="images/sprinkle-10l.png" alt="10 Litre Sprinkle bottle" class="product-img-modern">
-        <div class="product-info-modern">
-          <h3>10 Litre</h3>
-          <p>Perfect for gatherings and events.</p>
-          <button class="modern-add-to-cart" onclick="addToCart('10 Litre', 90, 'Sprinkle')">Add to Cart</button>
-        </div>
-      </div>
-      <div class="product-card-modern sprinkle-card-modern">
-        <img src="images/sprinkle-20l.png" alt="20 Litre Sprinkle bottle" class="product-img-modern">
-        <div class="product-info-modern">
-          <h3>20 Litre</h3>
-          <p>Bulk size for large needs.</p>
-          <button class="modern-add-to-cart" onclick="addToCart('20 Litre', 120, 'Sprinkle')">Add to Cart</button>
-        </div>
-      </div>
-    `;
+    // Hide Abai products and show Sprinkle products
+    if (abaiContainer) {
+      abaiContainer.style.display = 'none';
+      abaiContainer.style.visibility = 'hidden';
+    }
+    if (sprinkleContainer) {
+      sprinkleContainer.style.display = 'flex';
+      sprinkleContainer.style.visibility = 'visible';
+    }
+    if (sprinkleProducts) {
+      sprinkleProducts.style.display = 'flex';
+      sprinkleProducts.style.visibility = 'visible';
+    }
     if (productsTitle) productsTitle.textContent = 'Our Products (Sprinkle)';
   } else {
-    productsGrid.innerHTML = `
-      <div class="product-card-modern">
-        <img src="images/500ml.png" alt="500ml Abai Springs bottle" class="product-img-modern">
-        <div class="product-info-modern">
-          <h3>500ml</h3>
-          <p>Perfect for on-the-go hydration.</p>
-          <button class="modern-add-to-cart" onclick="addToCart('500ml', 20, 'Abai Springs')">Add to Cart</button>
-        </div>
-      </div>
-      <div class="product-card-modern">
-        <img src="images/1l.png" alt="1 Litre Abai Springs bottle" class="product-img-modern">
-        <div class="product-info-modern">
-          <h3>1 Litre</h3>
-          <p>Great for daily use and travel.</p>
-          <button class="modern-add-to-cart" onclick="addToCart('1 Litre', 30, 'Abai Springs')">Add to Cart</button>
-        </div>
-      </div>
-      <div class="product-card-modern">
-        <img src="images/5l.png" alt="5 Litre Abai Springs bottle" class="product-img-modern">
-        <div class="product-info-modern">
-          <h3>5 Litre</h3>
-          <p>Ideal for families and small offices.</p>
-          <button class="modern-add-to-cart" onclick="addToCart('5 Litre', 80, 'Abai Springs')">Add to Cart</button>
-        </div>
-      </div>
-      <div class="product-card-modern">
-        <img src="images/10l.png" alt="10 Litre Abai Springs bottle" class="product-img-modern">
-        <div class="product-info-modern">
-          <h3>10 Litre</h3>
-          <p>Perfect for gatherings and events.</p>
-          <button class="modern-add-to-cart" onclick="addToCart('10 Litre', 100, 'Abai Springs')">Add to Cart</button>
-        </div>
-      </div>
-      <div class="product-card-modern">
-        <img src="images/20l.png" alt="20 Litre Abai Springs bottle" class="product-img-modern">
-        <div class="product-info-modern">
-          <h3>20 Litre</h3>
-          <p>Bulk size for large needs.</p>
-          <button class="modern-add-to-cart" onclick="addToCart('20 Litre', 150, 'Abai Springs')">Add to Cart</button>
-        </div>
-      </div>
-    `;
+    // Show Abai products and hide Sprinkle products
+    if (abaiContainer) {
+      abaiContainer.style.display = 'flex';
+      abaiContainer.style.visibility = 'visible';
+    }
+    if (abaiProducts) {
+      abaiProducts.style.display = 'grid';
+      abaiProducts.style.visibility = 'visible';
+    }
+    if (sprinkleContainer) {
+      sprinkleContainer.style.display = 'none';
+      sprinkleContainer.style.visibility = 'hidden';
+    }
+    if (sprinkleProducts) {
+      sprinkleProducts.style.display = 'none';
+      sprinkleProducts.style.visibility = 'hidden';
+    }
     if (productsTitle) productsTitle.textContent = 'Our Products';
   }
   // Always scroll to products section

@@ -32,7 +32,7 @@
   <link href="https://fonts.googleapis.com/css?family=Montserrat:700,900|Open+Sans:400,600&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   
-  <!-- Force mobile navigation to be visible - inline styles to override everything -->
+  <!-- Hide navigation bar - accessible only through menu button -->
   <style>
     @media (max-width: 900px) {
       .nav-toggle {
@@ -47,33 +47,26 @@
         left: -9999px !important;
       }
       .nav-links {
-        display: flex !important;
-        flex-direction: row !important;
-        position: static !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        transform: none !important;
-        background: transparent !important;
-        box-shadow: none !important;
-        width: auto !important;
-        flex-wrap: wrap !important;
-        justify-content: center !important;
-        gap: 0.6em !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        pointer-events: auto !important;
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
       }
       .main-nav {
-        display: flex !important;
-        visibility: visible !important;
-        align-items: center !important;
-        justify-content: center !important;
-        flex: 1 1 100% !important;
-        width: 100% !important;
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
       }
       .main-header.glassy-header {
-        flex-wrap: wrap !important;
+        flex-wrap: nowrap !important;
       }
+    }
+    /* Hide nav bar on all screen sizes - use menu button instead */
+    .main-nav {
+      display: none !important;
+      visibility: hidden !important;
     }
   </style>
   
@@ -97,8 +90,7 @@
     }
   </script>
     
-    <!-- Debug script removed - chatbot is now working properly -->
-    <!-- Force navigation visible - runs immediately before page renders -->
+    <!-- Hide navigation bar - use menu button instead -->
     <script>
       (function() {
         // Remove hamburger button if it exists
@@ -109,16 +101,16 @@
           }
         }
         
-        // Force nav links visible
-        function showNavLinks() {
+        // Hide nav links and main nav
+        function hideNavLinks() {
           const navLinks = document.querySelector('.nav-links');
           const mainNav = document.querySelector('.main-nav');
           
           if (navLinks) {
-            navLinks.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; position: static !important; transform: none !important; flex-direction: row !important; flex-wrap: wrap !important; justify-content: center !important; gap: 0.6em !important; padding: 0 !important; margin: 0 !important; background: transparent !important; box-shadow: none !important; width: auto !important; list-style: none !important;';
+            navLinks.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important;';
           }
           if (mainNav) {
-            mainNav.style.cssText = 'display: flex !important; visibility: visible !important; align-items: center !important; justify-content: center !important; flex: 1 1 100% !important; width: 100% !important;';
+            mainNav.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important;';
           }
         }
         
@@ -126,25 +118,25 @@
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', function() {
             removeHamburger();
-            showNavLinks();
+            hideNavLinks();
           });
         } else {
           removeHamburger();
-          showNavLinks();
+          hideNavLinks();
         }
         
         // Also run after delays
         setTimeout(function() {
           removeHamburger();
-          showNavLinks();
+          hideNavLinks();
         }, 0);
         setTimeout(function() {
           removeHamburger();
-          showNavLinks();
+          hideNavLinks();
         }, 100);
         setTimeout(function() {
           removeHamburger();
-          showNavLinks();
+          hideNavLinks();
         }, 500);
       })();
     </script>
@@ -158,9 +150,9 @@
     <div class="brand-bar">
       <span class="logo-text abai-glow-move">Abai Springs</span>
     </div>
-    <nav class="main-nav">
-      <!-- Hamburger menu removed - navigation always visible -->
-      <ul class="nav-links" style="display: flex !important; visibility: visible !important; opacity: 1 !important; position: static !important; transform: none !important; flex-direction: row !important; flex-wrap: wrap !important; justify-content: center !important; gap: 0.6em !important; padding: 0 !important; margin: 0 !important; background: transparent !important; box-shadow: none !important; width: auto !important; list-style: none !important;">
+    <nav class="main-nav" style="display: none !important; visibility: hidden !important;">
+      <!-- Navigation bar hidden - use menu button instead -->
+      <ul class="nav-links" style="display: none !important; visibility: hidden !important;">
         <li><a href="#home" class="nav-link ripple-link">Home</a></li>
         <li><a href="#about" class="nav-link ripple-link">About</a></li>
         <li class="nav-products-dropdown">
@@ -179,6 +171,22 @@
       </ul>
     </nav>
     <div class="header-actions">
+      <div class="nav-menu-button" onclick="toggleNavMenu()" aria-label="Open navigation menu" tabindex="0">
+        <i class="fas fa-bars"></i>
+      </div>
+      <div class="nav-menu-dropdown" id="nav-menu-dropdown" style="display: none;">
+        <a href="#home" class="nav-menu-link" onclick="closeNavMenu()">Home</a>
+        <a href="#about" class="nav-menu-link" onclick="closeNavMenu()">About</a>
+        <div class="nav-menu-products">
+          <a href="#" class="nav-menu-link" onclick="toggleNavProductsDropdown(event); return false;">Products <i class="fas fa-chevron-down"></i></a>
+          <div class="nav-menu-products-submenu" id="nav-menu-products-submenu" style="display: none;">
+            <a href="#" class="nav-menu-link" onclick="showBrandProducts('abai'); closeNavMenu(); return false;">Abai Springs</a>
+            <a href="#" class="nav-menu-link" onclick="showBrandProducts('sprinkle'); closeNavMenu(); return false;">Sprinkle</a>
+          </div>
+        </div>
+        <a href="#" class="nav-menu-link" onclick="openWhatsAppPopup(); closeNavMenu(); return false;">Contact</a>
+        <a href="#" class="nav-menu-link" onclick="toggleLoginModal(); closeNavMenu(); return false;"><i class="fas fa-sign-in-alt"></i> Login</a>
+      </div>
       <div class="cart-icon" onclick="toggleCart()" aria-label="Open cart" tabindex="0">
         <span class="cart-emoji">🛒</span> <span id="cart-count">0</span>
       </div>
@@ -249,14 +257,23 @@
     </div>
     
     <!-- Abai Springs Products -->
-    <div class="products-grid" id="abai-products" style="display: grid;">
+    <div class="products-carousel-container">
+      <button class="carousel-arrow carousel-arrow-left" onclick="scrollProductsLeft('abai-products')" aria-label="Previous product">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+      <div class="products-grid" id="abai-products" style="display: grid;">
       <div class="product-card-modern">
         <img src="images/500ml.png" alt="500ml Abai Springs bottle" class="product-img-modern">
         <div class="product-info-modern">
           <h3>500ml</h3>
           <p>Perfect for on-the-go hydration.</p>
           <div class="product-price">KSH 20</div>
-          <button class="modern-add-to-cart" onclick="addToCart('500ml', 20, 'Abai Springs')">Add to Cart</button>
+          <div class="product-actions">
+            <button class="modern-add-to-cart" onclick="addToCart('500ml', 20, 'Abai Springs')">Add to Cart</button>
+            <button class="modern-view-product" onclick="viewProduct('500ml', 20, 'Abai Springs')">View Product</button>
+          </div>
         </div>
       </div>
       <div class="product-card-modern">
@@ -265,7 +282,10 @@
           <h3>1 Litre</h3>
           <p>Great for daily use and travel.</p>
           <div class="product-price">KSH 30</div>
-          <button class="modern-add-to-cart" onclick="addToCart('1 Litre', 30, 'Abai Springs')">Add to Cart</button>
+          <div class="product-actions">
+            <button class="modern-add-to-cart" onclick="addToCart('1 Litre', 30, 'Abai Springs')">Add to Cart</button>
+            <button class="modern-view-product" onclick="viewProduct('1 Litre', 30, 'Abai Springs')">View Product</button>
+          </div>
         </div>
       </div>
       <div class="product-card-modern">
@@ -274,7 +294,10 @@
           <h3>5 Litre</h3>
           <p>Ideal for families and small offices.</p>
           <div class="product-price">KSH 80</div>
-          <button class="modern-add-to-cart" onclick="addToCart('5 Litre', 80, 'Abai Springs')">Add to Cart</button>
+          <div class="product-actions">
+            <button class="modern-add-to-cart" onclick="addToCart('5 Litre', 80, 'Abai Springs')">Add to Cart</button>
+            <button class="modern-view-product" onclick="viewProduct('5 Litre', 80, 'Abai Springs')">View Product</button>
+          </div>
         </div>
       </div>
       <div class="product-card-modern">
@@ -283,7 +306,10 @@
           <h3>10 Litre</h3>
           <p>Perfect for gatherings and events.</p>
           <div class="product-price">KSH 100</div>
-          <button class="modern-add-to-cart" onclick="addToCart('10 Litre', 100, 'Abai Springs')">Add to Cart</button>
+          <div class="product-actions">
+            <button class="modern-add-to-cart" onclick="addToCart('10 Litre', 100, 'Abai Springs')">Add to Cart</button>
+            <button class="modern-view-product" onclick="viewProduct('10 Litre', 100, 'Abai Springs')">View Product</button>
+          </div>
         </div>
       </div>
       <div class="product-card-modern">
@@ -292,20 +318,38 @@
           <h3>20 Litre</h3>
           <p>Bulk size for large needs.</p>
           <div class="product-price">KSH 150</div>
-          <button class="modern-add-to-cart" onclick="addToCart('20 Litre', 150, 'Abai Springs')">Add to Cart</button>
+          <div class="product-actions">
+            <button class="modern-add-to-cart" onclick="addToCart('20 Litre', 150, 'Abai Springs')">Add to Cart</button>
+            <button class="modern-view-product" onclick="viewProduct('20 Litre', 150, 'Abai Springs')">View Product</button>
+          </div>
         </div>
       </div>
+      </div>
+      <button class="carousel-arrow carousel-arrow-right" onclick="scrollProductsRight('abai-products')" aria-label="Next product">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+      </button>
     </div>
     
     <!-- Sprinkle Products (Hidden by default) -->
-    <div class="products-grid" id="sprinkle-products" style="display: none !important; visibility: hidden;">
-      <div class="product-card-modern sprinkle-card-modern">
+    <div class="products-carousel-container" style="display: none;">
+      <button class="carousel-arrow carousel-arrow-left" onclick="scrollProductsLeft('sprinkle-products')" aria-label="Previous product">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+      <div class="products-grid" id="sprinkle-products" style="display: none !important; visibility: hidden;">
+        <div class="product-card-modern sprinkle-card-modern">
         <img src="images/500ml.png" alt="500ml Sprinkle bottle" class="product-img-modern">
         <div class="product-info-modern">
           <h3>500ml</h3>
           <p>Perfect for on-the-go hydration.</p>
           <div class="product-price">KSH 18</div>
-          <button class="modern-add-to-cart" onclick="addToCart('500ml', 18, 'Sprinkle')">Add to Cart</button>
+          <div class="product-actions">
+            <button class="modern-add-to-cart" onclick="addToCart('500ml', 18, 'Sprinkle')">Add to Cart</button>
+            <button class="modern-view-product" onclick="viewProduct('500ml', 18, 'Sprinkle')">View Product</button>
+          </div>
         </div>
       </div>
       <div class="product-card-modern sprinkle-card-modern">
@@ -314,7 +358,10 @@
           <h3>1 Litre</h3>
           <p>Great for daily use and travel.</p>
           <div class="product-price">KSH 25</div>
-          <button class="modern-add-to-cart" onclick="addToCart('1 Litre', 25, 'Sprinkle')">Add to Cart</button>
+          <div class="product-actions">
+            <button class="modern-add-to-cart" onclick="addToCart('1 Litre', 25, 'Sprinkle')">Add to Cart</button>
+            <button class="modern-view-product" onclick="viewProduct('1 Litre', 25, 'Sprinkle')">View Product</button>
+          </div>
         </div>
       </div>
       <div class="product-card-modern sprinkle-card-modern">
@@ -323,7 +370,10 @@
           <h3>5 Litre</h3>
           <p>Ideal for families and small offices.</p>
           <div class="product-price">KSH 70</div>
-          <button class="modern-add-to-cart" onclick="addToCart('5 Litre', 70, 'Sprinkle')">Add to Cart</button>
+          <div class="product-actions">
+            <button class="modern-add-to-cart" onclick="addToCart('5 Litre', 70, 'Sprinkle')">Add to Cart</button>
+            <button class="modern-view-product" onclick="viewProduct('5 Litre', 70, 'Sprinkle')">View Product</button>
+          </div>
         </div>
       </div>
       <div class="product-card-modern sprinkle-card-modern">
@@ -332,7 +382,10 @@
           <h3>10 Litre</h3>
           <p>Perfect for gatherings and events.</p>
           <div class="product-price">KSH 90</div>
-          <button class="modern-add-to-cart" onclick="addToCart('10 Litre', 90, 'Sprinkle')">Add to Cart</button>
+          <div class="product-actions">
+            <button class="modern-add-to-cart" onclick="addToCart('10 Litre', 90, 'Sprinkle')">Add to Cart</button>
+            <button class="modern-view-product" onclick="viewProduct('10 Litre', 90, 'Sprinkle')">View Product</button>
+          </div>
         </div>
       </div>
       <div class="product-card-modern sprinkle-card-modern">
@@ -341,9 +394,18 @@
           <h3>20 Litre</h3>
           <p>Bulk size for large needs.</p>
           <div class="product-price">KSH 120</div>
-          <button class="modern-add-to-cart" onclick="addToCart('20 Litre', 120, 'Sprinkle')">Add to Cart</button>
+          <div class="product-actions">
+            <button class="modern-add-to-cart" onclick="addToCart('20 Litre', 120, 'Sprinkle')">Add to Cart</button>
+            <button class="modern-view-product" onclick="viewProduct('20 Litre', 120, 'Sprinkle')">View Product</button>
+          </div>
         </div>
       </div>
+      </div>
+      <button class="carousel-arrow carousel-arrow-right" onclick="scrollProductsRight('sprinkle-products')" aria-label="Next product">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+      </button>
     </div>
     <!-- End of products grid -->
     
