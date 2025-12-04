@@ -1346,14 +1346,18 @@ function checkAuthStatus() {
   const authNavItem = document.getElementById('auth-nav-item');
   const userMenu = document.getElementById('user-menu');
   const loginLink = document.getElementById('login-link');
+  const navMenuLoginLink = document.getElementById('nav-menu-login-link');
   const userName = document.getElementById('user-name');
   
   if (token && user) {
     // User is logged in
     const userData = JSON.parse(user);
     
-    // Hide login link, show user menu
+    // Hide login links, show user menu
     if (authNavItem) authNavItem.style.display = 'none';
+    if (loginLink) loginLink.style.display = 'none';
+    if (navMenuLoginLink) navMenuLoginLink.style.display = 'none';
+    
     if (userMenu) {
       userMenu.style.display = 'block';
       if (userName) userName.textContent = userData.name || 'User';
@@ -1361,6 +1365,8 @@ function checkAuthStatus() {
   } else {
     // User is not logged in
     if (authNavItem) authNavItem.style.display = 'block';
+    if (loginLink) loginLink.style.display = 'block';
+    if (navMenuLoginLink) navMenuLoginLink.style.display = 'block';
     if (userMenu) userMenu.style.display = 'none';
   }
 }
