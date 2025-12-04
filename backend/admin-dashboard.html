@@ -3172,34 +3172,60 @@
                 }
                 
                 // Load product performance
-                const productResponse = await fetch(`${API_BASE_URL}/analytics/products`);
-                if (!productResponse.ok) {
-                    throw new Error(`Failed to fetch products: ${productResponse.status} ${productResponse.statusText}`);
-                }
-                const productData = await productResponse.json();
-                
-                if (productData.success) {
-                    displayProductPerformance(productData.data);
-                } else {
+                try {
+                    const productResponse = await fetch(`${API_BASE_URL}/analytics/products`);
+                    if (!productResponse.ok) {
+                        console.error(`Failed to fetch products: ${productResponse.status} ${productResponse.statusText}`);
+                        const container = document.getElementById('product-performance');
+                        if (container) {
+                            container.innerHTML = `<p style="color: red;">Error: Failed to fetch product data (${productResponse.status})</p>`;
+                        }
+                    } else {
+                        const productData = await productResponse.json();
+                        console.log('Product data received:', productData);
+                        if (productData.success) {
+                            displayProductPerformance(productData.data);
+                        } else {
+                            const container = document.getElementById('product-performance');
+                            if (container) {
+                                container.innerHTML = `<p style="color: red;">Error: ${productData.message || 'Failed to load product performance'}</p>`;
+                            }
+                        }
+                    }
+                } catch (productError) {
+                    console.error('Error loading product performance:', productError);
                     const container = document.getElementById('product-performance');
                     if (container) {
-                        container.innerHTML = `<p style="color: red;">Error: ${productData.message || 'Failed to load product performance'}</p>`;
+                        container.innerHTML = `<p style="color: red;">Error loading product performance: ${productError.message}</p>`;
                     }
                 }
                 
                 // Load outlet performance
-                const outletResponse = await fetch(`${API_BASE_URL}/analytics/outlets`);
-                if (!outletResponse.ok) {
-                    throw new Error(`Failed to fetch outlets: ${outletResponse.status} ${outletResponse.statusText}`);
-                }
-                const outletData = await outletResponse.json();
-                
-                if (outletData.success) {
-                    displayOutletPerformance(outletData.data);
-                } else {
+                try {
+                    const outletResponse = await fetch(`${API_BASE_URL}/analytics/outlets`);
+                    if (!outletResponse.ok) {
+                        console.error(`Failed to fetch outlets: ${outletResponse.status} ${outletResponse.statusText}`);
+                        const container = document.getElementById('outlet-performance');
+                        if (container) {
+                            container.innerHTML = `<p style="color: red;">Error: Failed to fetch outlet data (${outletResponse.status})</p>`;
+                        }
+                    } else {
+                        const outletData = await outletResponse.json();
+                        console.log('Outlet data received:', outletData);
+                        if (outletData.success) {
+                            displayOutletPerformance(outletData.data);
+                        } else {
+                            const container = document.getElementById('outlet-performance');
+                            if (container) {
+                                container.innerHTML = `<p style="color: red;">Error: ${outletData.message || 'Failed to load outlet performance'}</p>`;
+                            }
+                        }
+                    }
+                } catch (outletError) {
+                    console.error('Error loading outlet performance:', outletError);
                     const container = document.getElementById('outlet-performance');
                     if (container) {
-                        container.innerHTML = `<p style="color: red;">Error: ${outletData.message || 'Failed to load outlet performance'}</p>`;
+                        container.innerHTML = `<p style="color: red;">Error loading outlet performance: ${outletError.message}</p>`;
                     }
                 }
                 
@@ -3222,7 +3248,11 @@
             try {
                 // Check if Chart.js is loaded
                 if (typeof Chart === 'undefined') {
-                    console.error('Chart.js is not loaded');
+                    console.error('Chart.js is not loaded - check if CDN is accessible');
+                    const canvas = document.getElementById('revenueChart');
+                    if (canvas && canvas.parentElement) {
+                        canvas.parentElement.innerHTML = '<p style="color: red;">Chart.js library failed to load. Please check your internet connection and refresh.</p>';
+                    }
                     return;
                 }
                 
@@ -3236,6 +3266,13 @@
                 const ctx = canvas.getContext('2d');
                 if (!ctx) {
                     console.error('Could not get 2d context from canvas');
+                    return;
+                }
+                
+                // Check if revenueData is valid
+                if (!revenueData || !Array.isArray(revenueData) || revenueData.length === 0) {
+                    console.warn('No revenue data to display');
+                    canvas.parentElement.innerHTML = '<p>No revenue data available for the selected period.</p>';
                     return;
                 }
                 
@@ -3298,6 +3335,16 @@
         function displayProductPerformance(products) {
             const container = document.getElementById('product-performance');
             
+            if (!container) {
+                console.error('Product performance container not found');
+                return;
+            }
+            
+            if (!products || !Array.isArray(products)) {
+                container.innerHTML = '<p style="color: orange;">Invalid product data received</p>';
+                return;
+            }
+            
             if (products.length > 0) {
                 const topProducts = products.slice(0, 5); // Show top 5
                 container.innerHTML = `
@@ -3332,6 +3379,16 @@
         // Display outlet performance
         function displayOutletPerformance(outlets) {
             const container = document.getElementById('outlet-performance');
+            
+            if (!container) {
+                console.error('Outlet performance container not found');
+                return;
+            }
+            
+            if (!outlets || !Array.isArray(outlets)) {
+                container.innerHTML = '<p style="color: orange;">Invalid outlet data received</p>';
+                return;
+            }
             
             if (outlets.length > 0) {
                 const topOutlets = outlets.slice(0, 5); // Show top 5
