@@ -3130,42 +3130,85 @@
             try {
                 // Load summary analytics
                 const summaryResponse = await fetch(`${API_BASE_URL}/analytics/summary`);
+                if (!summaryResponse.ok) {
+                    throw new Error(`Failed to fetch summary: ${summaryResponse.status} ${summaryResponse.statusText}`);
+                }
                 const summaryData = await summaryResponse.json();
                 
                 if (summaryData.success) {
                     // Update summary cards
-                    document.getElementById('total-revenue').textContent = `KSH ${summaryData.data.totalRevenue.toLocaleString()}`;
-                    document.getElementById('avg-order-value').textContent = `KSH ${summaryData.data.averageOrderValue.toLocaleString()}`;
-                    document.getElementById('low-stock-count').textContent = summaryData.data.lowStockProducts;
-                    document.getElementById('recent-orders-count').textContent = summaryData.data.recentOrders;
+                    if (document.getElementById('total-revenue')) {
+                        document.getElementById('total-revenue').textContent = `KSH ${summaryData.data.totalRevenue.toLocaleString()}`;
+                    }
+                    if (document.getElementById('avg-order-value')) {
+                        document.getElementById('avg-order-value').textContent = `KSH ${summaryData.data.averageOrderValue.toLocaleString()}`;
+                    }
+                    if (document.getElementById('low-stock-count')) {
+                        document.getElementById('low-stock-count').textContent = summaryData.data.lowStockProducts;
+                    }
+                    if (document.getElementById('recent-orders-count')) {
+                        document.getElementById('recent-orders-count').textContent = summaryData.data.recentOrders;
+                    }
+                } else {
+                    console.error('Summary analytics error:', summaryData.message);
                 }
                 
                 // Load revenue chart
                 const revenueResponse = await fetch(`${API_BASE_URL}/analytics/revenue`);
+                if (!revenueResponse.ok) {
+                    throw new Error(`Failed to fetch revenue: ${revenueResponse.status} ${revenueResponse.statusText}`);
+                }
                 const revenueData = await revenueResponse.json();
                 
                 if (revenueData.success) {
                     createRevenueChart(revenueData.data.dailyRevenue);
+                } else {
+                    console.error('Revenue analytics error:', revenueData.message);
                 }
                 
                 // Load product performance
                 const productResponse = await fetch(`${API_BASE_URL}/analytics/products`);
+                if (!productResponse.ok) {
+                    throw new Error(`Failed to fetch products: ${productResponse.status} ${productResponse.statusText}`);
+                }
                 const productData = await productResponse.json();
                 
                 if (productData.success) {
                     displayProductPerformance(productData.data);
+                } else {
+                    const container = document.getElementById('product-performance');
+                    if (container) {
+                        container.innerHTML = `<p style="color: red;">Error: ${productData.message || 'Failed to load product performance'}</p>`;
+                    }
                 }
                 
                 // Load outlet performance
                 const outletResponse = await fetch(`${API_BASE_URL}/analytics/outlets`);
+                if (!outletResponse.ok) {
+                    throw new Error(`Failed to fetch outlets: ${outletResponse.status} ${outletResponse.statusText}`);
+                }
                 const outletData = await outletResponse.json();
                 
                 if (outletData.success) {
                     displayOutletPerformance(outletData.data);
+                } else {
+                    const container = document.getElementById('outlet-performance');
+                    if (container) {
+                        container.innerHTML = `<p style="color: red;">Error: ${outletData.message || 'Failed to load outlet performance'}</p>`;
+                    }
                 }
                 
             } catch (error) {
                 console.error('Error loading analytics:', error);
+                // Show error in UI
+                const productContainer = document.getElementById('product-performance');
+                const outletContainer = document.getElementById('outlet-performance');
+                if (productContainer) {
+                    productContainer.innerHTML = `<p style="color: red;">Error loading product performance: ${error.message}</p>`;
+                }
+                if (outletContainer) {
+                    outletContainer.innerHTML = `<p style="color: red;">Error loading outlet performance: ${error.message}</p>`;
+                }
             }
         }
         
