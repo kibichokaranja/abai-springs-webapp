@@ -45,6 +45,7 @@ class PWAInstallHandler {
           const daysSinceDismissed = (Date.now() - parseInt(dismissedTime)) / (1000 * 60 * 60 * 24);
           if (daysSinceDismissed < 7) {
             shouldShow = false;
+            console.log('📱 Install prompt was dismissed recently, not showing');
           }
         }
       } catch (e) {
@@ -52,14 +53,32 @@ class PWAInstallHandler {
       }
 
       if (shouldShow) {
+        // Better iOS detection
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isIOSStandalone = window.navigator.standalone === true;
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
+        console.log('📱 Device detection:', { isIOS, isIOSStandalone, isMobile, hasDeferredPrompt: !!this.deferredPrompt });
+        
+        // Check if already in standalone mode (already installed)
+        if (isIOSStandalone) {
+          this.isInstalled = true;
+          console.log('📱 Already installed (iOS standalone mode)');
+          return;
+        }
+        
         if (isIOS || (isMobile && !this.deferredPrompt)) {
+          console.log('📱 Will show install prompt in 3 seconds');
           // Show iOS/manual install prompt after 3 seconds
           setTimeout(() => {
             if (!this.isInstalled && !this.deferredPrompt) {
-              this.showIOSInstallPrompt();
+              // Double check we're not in standalone mode
+              if (!window.navigator.standalone && !window.matchMedia('(display-mode: standalone)').matches) {
+                console.log('📱 Showing iOS install prompt');
+                this.showIOSInstallPrompt();
+              } else {
+                console.log('📱 App is in standalone mode, not showing prompt');
+              }
             }
           }, 3000);
         }
@@ -72,6 +91,7 @@ class PWAInstallHandler {
     if (window.matchMedia('(display-mode: standalone)').matches || 
         window.navigator.standalone === true) {
       this.isInstalled = true;
+      console.log('📱 App already installed (standalone mode)');
     }
   }
 
@@ -116,10 +136,10 @@ class PWAInstallHandler {
           <h4>Install Abai Springs App</h4>
           <p>Get quick access to water delivery</p>
         </div>
-        <button class="pwa-install-btn" onclick="pwaInstallHandler.installApp()">
+        <button class="pwa-install-btn" id="android-install-btn">
           Install
         </button>
-        <button class="pwa-install-close" onclick="pwaInstallHandler.hideInstallButton()">
+        <button class="pwa-install-close" id="android-install-close-btn">
           <i class="fas fa-times"></i>
         </button>
       </div>
@@ -130,6 +150,24 @@ class PWAInstallHandler {
 
     // Add to page
     document.body.appendChild(this.installButton);
+
+    // Add event listeners for Android install button
+    const installBtn = document.getElementById('android-install-btn');
+    const closeBtn = document.getElementById('android-install-close-btn');
+    
+    if (installBtn) {
+      installBtn.addEventListener('click', () => {
+        this.installApp();
+      });
+      installBtn.style.cursor = 'pointer';
+    }
+    
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        this.hideInstallButton();
+      });
+      closeBtn.style.cursor = 'pointer';
+    }
   }
 
   addInstallButtonStyles() {
@@ -196,11 +234,18 @@ class PWAInstallHandler {
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s ease;
+        -webkit-tap-highlight-color: rgba(255, 255, 255, 0.3);
+        touch-action: manipulation;
       }
 
       .pwa-install-btn:hover {
         background: rgba(255, 255, 255, 0.3);
         transform: translateY(-1px);
+      }
+
+      .pwa-install-btn:active {
+        background: rgba(255, 255, 255, 0.4);
+        transform: translateY(0);
       }
 
       .pwa-install-close {
@@ -212,11 +257,22 @@ class PWAInstallHandler {
         padding: 4px;
         border-radius: 4px;
         transition: all 0.2s ease;
+        -webkit-tap-highlight-color: rgba(255, 255, 255, 0.3);
+        touch-action: manipulation;
+        min-width: 32px;
+        min-height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .pwa-install-close:hover {
         background: rgba(255, 255, 255, 0.1);
         color: white;
+      }
+
+      .pwa-install-close:active {
+        background: rgba(255, 255, 255, 0.2);
       }
 
       @keyframes slideInUp {
@@ -275,6 +331,7 @@ class PWAInstallHandler {
           flex: 0 0 auto;
           white-space: nowrap;
           padding: 10px 16px !important;
+          min-width: 100px;
         }
 
         .pwa-install-icon {
@@ -341,19 +398,22 @@ class PWAInstallHandler {
   showIOSInstallPrompt() {
     if (this.isInstalled) return;
 
-    // Create iOS install prompt
+    // Create iOS install prompt with better instructions
     const iosPrompt = document.createElement('div');
     iosPrompt.id = 'pwa-install-button';
     iosPrompt.innerHTML = `
       <div class="pwa-install-content">
         <div class="pwa-install-icon">
-          <i class="fas fa-download"></i>
+          <i class="fas fa-mobile-alt"></i>
         </div>
         <div class="pwa-install-text">
-          <h4>Install Abai Springs App</h4>
-          <p>Tap <i class="fas fa-share"></i> then "Add to Home Screen"</p>
+          <h4>Install Abai Springs</h4>
+          <p>Add to Home Screen for quick access</p>
         </div>
-        <button class="pwa-install-close" onclick="pwaInstallHandler.hideInstallButton()">
+        <button class="pwa-install-btn" id="ios-install-howto-btn">
+          How to Install
+        </button>
+        <button class="pwa-install-close" id="ios-install-close-btn">
           <i class="fas fa-times"></i>
         </button>
       </div>
@@ -374,9 +434,137 @@ class PWAInstallHandler {
       this.installButton = iosPrompt;
     }
 
+    // Add event listeners (better for iOS than onclick)
+    const howToBtn = document.getElementById('ios-install-howto-btn');
+    const closeBtn = document.getElementById('ios-install-close-btn');
+    
+    if (howToBtn) {
+      howToBtn.addEventListener('click', () => {
+        this.showIOSInstructions();
+      });
+      // Make sure it's tappable on iOS
+      howToBtn.style.cursor = 'pointer';
+      howToBtn.style.webkitTapHighlightColor = 'rgba(255, 255, 255, 0.3)';
+    }
+    
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        this.hideInstallButton();
+      });
+      closeBtn.style.cursor = 'pointer';
+    }
+
     // Show the button
     this.installButton.style.display = 'block';
     this.installButton.style.animation = 'slideInUp 0.5s ease-out';
+    
+    console.log('📱 iOS install prompt displayed');
+  }
+
+  showIOSInstructions() {
+    // Create modal with step-by-step instructions
+    const modal = document.createElement('div');
+    modal.id = 'ios-install-modal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 10003;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    `;
+
+    const isIPad = /iPad/.test(navigator.userAgent);
+    const instructions = isIPad ? [
+      { step: 1, text: 'Tap the Share button <span style="font-size: 20px;">📤</span> at the top of Safari' },
+      { step: 2, text: 'Scroll down and tap "Add to Home Screen"' },
+      { step: 3, text: 'Tap "Add" to confirm' }
+    ] : [
+      { step: 1, text: 'Tap the Share button <span style="font-size: 20px;">📤</span> at the bottom of Safari' },
+      { step: 2, text: 'Scroll down and tap "Add to Home Screen"' },
+      { step: 3, text: 'Tap "Add" to confirm' }
+    ];
+
+    modal.innerHTML = `
+      <div style="
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        max-width: 400px;
+        width: 100%;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      ">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2 style="margin: 0; color: #2563eb; font-size: 22px;">Install on iPhone</h2>
+          <button onclick="this.closest('#ios-install-modal').remove()" style="
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          ">&times;</button>
+        </div>
+        <div style="margin-bottom: 20px;">
+          ${instructions.map(inst => `
+            <div style="
+              display: flex;
+              align-items: flex-start;
+              margin-bottom: 16px;
+              padding: 12px;
+              background: #f0f7ff;
+              border-radius: 8px;
+            ">
+              <div style="
+                background: #2563eb;
+                color: white;
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+                font-size: 14px;
+                flex-shrink: 0;
+                margin-right: 12px;
+              ">${inst.step}</div>
+              <div style="flex: 1; color: #1e293b; line-height: 1.5;">${inst.text}</div>
+            </div>
+          `).join('')}
+        </div>
+        <button onclick="this.closest('#ios-install-modal').remove(); pwaInstallHandler.hideInstallButton();" style="
+          width: 100%;
+          background: linear-gradient(135deg, #2563eb, #1d4ed8);
+          color: white;
+          border: none;
+          padding: 14px;
+          border-radius: 8px;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+        ">Got it!</button>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
   }
 
   showInstallSuccess() {
