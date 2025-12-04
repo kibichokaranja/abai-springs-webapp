@@ -274,6 +274,7 @@ if (cluster.isPrimary && process.env.NODE_ENV === 'production' && process.env.CL
   app.use('/api/logs', adminRateLimit, logRoutes);
   app.use('/api/cache', adminRateLimit, cacheRoutes);
   app.use('/api/dashboards', dashboardRoutes);
+  app.use('/api/staff', apiRateLimit, staffRoutes);
 
   // Rate limiting statistics
   app.get('/api/rate-limit-stats', adminRateLimit, getRateLimitStats);
