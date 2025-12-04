@@ -29,8 +29,30 @@ let outlets = [];
 let products = [];
 let selectedOutlet = null;
 
-// API Base URL
-const API_BASE_URL = 'http://localhost:3001/api';
+// API Base URL - automatically detect environment
+// Priority: 1. Vercel env var, 2. Auto-detect production, 3. Localhost
+const API_BASE_URL = (() => {
+  // Check for Vercel environment variable first (set in Vercel dashboard)
+  if (typeof window !== 'undefined' && window.API_BASE_URL) {
+    return window.API_BASE_URL;
+  }
+  
+  // Check if we're in production (deployed on Vercel)
+  const isProduction = window.location.hostname !== 'localhost' && 
+                       window.location.hostname !== '127.0.0.1' &&
+                       !window.location.hostname.startsWith('192.168.');
+  
+  if (isProduction) {
+    // Production backend URL (Railway)
+    return 'https://abai-springs-webapp-production.up.railway.app/api';
+  } else {
+    // Local development
+    return 'http://localhost:3001/api';
+  }
+})();
+
+// Log API URL for debugging (remove in production if needed)
+console.log('API Base URL:', API_BASE_URL);
 
 // Add to Cart function is now defined later in the file with proper brand support
 
@@ -964,11 +986,56 @@ async function handleLogin(event) {
 async function handleRegister(event) {
   event.preventDefault();
   
-  const name = document.getElementById('register-name').value;
-  const email = document.getElementById('register-email').value;
-  const phone = document.getElementById('register-phone').value;
-  const password = document.getElementById('register-password').value;
-  const confirmPassword = document.getElementById('register-confirm-password').value;
+  // Get form elements
+  const registerForm = document.getElementById('register-form');
+  const nameInput = document.getElementById('register-name');
+  const emailInput = document.getElementById('register-email');
+  const phoneInput = document.getElementById('register-phone');
+  const passwordInput = document.getElementById('register-password');
+  const confirmPasswordInput = document.getElementById('register-confirm-password');
+  
+  // Check if register form exists and is visible
+  if (!registerForm) {
+    console.error('Registration form not found');
+    showToast('Form error. Please refresh the page and try again.');
+    return;
+  }
+  
+  // Check if form is visible
+  const formStyle = window.getComputedStyle(registerForm);
+  if (formStyle.display === 'none' || formStyle.visibility === 'hidden') {
+    console.error('Registration form is not visible');
+    showToast('Please make sure the registration form is visible.');
+    // Try to show it
+    registerForm.style.display = 'block';
+    return;
+  }
+  
+  // Check if all form elements exist
+  if (!nameInput || !emailInput || !phoneInput || !passwordInput || !confirmPasswordInput) {
+    console.error('Registration form elements not found');
+    showToast('Form error. Please refresh the page and try again.');
+    return;
+  }
+  
+  const name = nameInput.value.trim();
+  const email = emailInput.value.trim();
+  const phone = phoneInput.value.trim();
+  const password = passwordInput.value;
+  const confirmPassword = confirmPasswordInput.value;
+  
+  // Basic validation
+  if (!name || !email || !phone || !password || !confirmPassword) {
+    showToast('Please fill in all fields');
+    return;
+  }
+  
+  // Email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    showToast('Please enter a valid email address');
+    return;
+  }
   
   // Validate passwords match
   if (password !== confirmPassword) {
@@ -976,24 +1043,41 @@ async function handleRegister(event) {
     return;
   }
   
-  // Show loading state
-  const submitBtn = event.target.querySelector('button[type="submit"]');
-  const btnText = submitBtn.querySelector('.btn-text');
-  const btnLoading = submitBtn.querySelector('.btn-loading');
+  // Validate password strength
+  const passwordValid = validatePasswordRealtime(password);
+  if (!passwordValid) {
+    showToast('Password does not meet requirements');
+    return;
+  }
   
-  if (btnText && btnLoading) {
-    btnText.style.display = 'none';
-    btnLoading.style.display = 'flex';
+  // Show loading state - find button more reliably
+  const submitBtn = registerForm.querySelector('button[type="submit"]');
+  let btnText = null;
+  let btnLoading = null;
+  
+  if (submitBtn) {
+    btnText = submitBtn.querySelector('.btn-text');
+    btnLoading = submitBtn.querySelector('.btn-loading');
+    
+    if (btnText && btnLoading) {
+      btnText.style.display = 'none';
+      btnLoading.style.display = 'flex';
+      submitBtn.disabled = true;
+    }
   }
   
   try {
+    console.log('Attempting to register user:', { name, email, phone });
+    
     const res = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, phone, password })
     });
     
+    console.log('Registration response status:', res.status);
     const data = await res.json();
+    console.log('Registration response data:', data);
     
     // Check if response is successful
     if (res.ok && data.success && data.data && data.data.token) {
@@ -1041,6 +1125,9 @@ async function handleRegister(event) {
     showToast('Network error. Please check your connection and try again.');
   } finally {
     // Reset button state
+    if (submitBtn) {
+      submitBtn.disabled = false;
+    }
     if (btnText && btnLoading) {
       btnText.style.display = 'block';
       btnLoading.style.display = 'none';
@@ -1121,6 +1208,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // Add event listener to register form as backup (in addition to onsubmit attribute)
+  const registerForm = document.getElementById('register-form');
+  if (registerForm && !registerForm.hasAttribute('data-listener-attached')) {
+    registerForm.addEventListener('submit', handleRegister);
+    registerForm.setAttribute('data-listener-attached', 'true');
+  }
+
   // Add real-time password validation
   const passwordInput = document.getElementById('register-password');
   const passwordRequirements = document.getElementById('password-requirements');
@@ -1154,8 +1248,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
-
-// Note: Event listener is handled by HTML onsubmit attribute
 
 // Products dropdown logic
 function toggleProductsDropdown(event) {
