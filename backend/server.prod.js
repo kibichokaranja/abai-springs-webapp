@@ -86,11 +86,11 @@ if (cluster.isPrimary && process.env.NODE_ENV === 'production' && process.env.CL
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
         imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: ["'self'"],
-        fontSrc: ["'self'"],
+        connectSrc: ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
+        fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
         objectSrc: ["'none'"],
         mediaSrc: ["'self'"],
         frameSrc: ["'none'"],
@@ -123,6 +123,11 @@ if (cluster.isPrimary && process.env.NODE_ENV === 'production' && process.env.CL
       if (!origin) return callback(null, true);
       
       if (process.env.NODE_ENV === 'production') {
+        // Always allow Railway domain requests (same-origin)
+        if (origin.includes('.up.railway.app') || origin.includes('railway.app')) {
+          return callback(null, true);
+        }
+        
         const allowedOrigins = process.env.CORS_ORIGIN 
           ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
           : ['*'];
