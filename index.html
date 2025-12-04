@@ -9,28 +9,24 @@
   <meta name="description" content="Premium water delivery service with smart stock alerts and real-time tracking">
   <meta name="theme-color" content="#2563eb">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Abai Springs">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#2563eb">
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- PWA Manifest -->
   <link rel="manifest" href="manifest.json">
   
-  <!-- Apple Touch Icons - iOS requires 180x180 for best results -->
-  <!-- Primary icon (180x180 is critical for modern iOS devices) -->
+  <!-- Apple Touch Icons - iOS requires square icons, 180x180 minimum -->
+  <!-- Precomposed tells iOS not to add effects (use if logo already has styling) -->
+  <link rel="apple-touch-icon-precomposed" sizes="180x180" href="/images/logo.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/images/logo.png">
+  <!-- Fallback without size specification -->
   <link rel="apple-touch-icon" href="/images/logo.png">
-  <!-- Legacy iOS icon sizes -->
-  <link rel="apple-touch-icon" sizes="57x57" href="/images/logo.png">
-  <link rel="apple-touch-icon" sizes="60x60" href="/images/logo.png">
-  <link rel="apple-touch-icon" sizes="72x72" href="/images/logo.png">
-  <link rel="apple-touch-icon" sizes="76x76" href="/images/logo.png">
-  <link rel="apple-touch-icon" sizes="114x114" href="/images/logo.png">
-  <link rel="apple-touch-icon" sizes="120x120" href="/images/logo.png">
-  <link rel="apple-touch-icon" sizes="144x144" href="/images/logo.png">
+  <!-- Legacy iOS sizes for older devices -->
   <link rel="apple-touch-icon" sizes="152x152" href="/images/logo.png">
-  <link rel="apple-touch-icon" sizes="167x167" href="/images/logo.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="/images/logo.png">
   
   <!-- Favicon -->
   <link rel="icon" type="image/png" sizes="16x16" href="images/logo.png">
