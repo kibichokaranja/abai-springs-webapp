@@ -29,6 +29,7 @@ import paymentRoutes from './routes/payments.js';
 import logRoutes from './routes/logs.js';
 import cacheRoutes from './routes/cache.js';
 import dashboardRoutes from './routes/dashboards.js';
+import staffRoutes from './routes/staff.js';
 
 // Import middleware
 import errorHandler from './middleware/errorHandler.js';
