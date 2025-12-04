@@ -411,7 +411,6 @@ export const validatePasswordStrength = (req, res, next) => {
   const hasUpperCase = /[A-Z]/.test(password);
   const hasLowerCase = /[a-z]/.test(password);
   const hasNumbers = /\d/.test(password);
-  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
 
   const errors = [];
 
@@ -426,9 +425,6 @@ export const validatePasswordStrength = (req, res, next) => {
   }
   if (!hasNumbers) {
     errors.push('Password must contain at least one number');
-  }
-  if (!hasSpecialChar) {
-    errors.push('Password must contain at least one special character');
   }
 
   if (errors.length > 0) {

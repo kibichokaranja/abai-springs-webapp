@@ -1086,8 +1086,7 @@ function validatePasswordRealtime(password) {
     length: password.length >= 8,
     uppercase: /[A-Z]/.test(password),
     lowercase: /[a-z]/.test(password),
-    number: /\d/.test(password),
-    special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    number: /\d/.test(password)
   };
 
   // Update requirement indicators
@@ -1095,7 +1094,6 @@ function validatePasswordRealtime(password) {
   const reqUppercase = document.getElementById('req-uppercase');
   const reqLowercase = document.getElementById('req-lowercase');
   const reqNumber = document.getElementById('req-number');
-  const reqSpecial = document.getElementById('req-special');
 
   if (reqLength) {
     reqLength.className = `password-req-item ${requirements.length ? 'valid' : 'invalid'}`;
@@ -1108,9 +1106,6 @@ function validatePasswordRealtime(password) {
   }
   if (reqNumber) {
     reqNumber.className = `password-req-item ${requirements.number ? 'valid' : 'invalid'}`;
-  }
-  if (reqSpecial) {
-    reqSpecial.className = `password-req-item ${requirements.special ? 'valid' : 'invalid'}`;
   }
 
   return Object.values(requirements).every(req => req);

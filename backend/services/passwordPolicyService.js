@@ -11,7 +11,7 @@ class PasswordPolicyService {
       requireUppercase: true,
       requireLowercase: true,
       requireNumbers: true,
-      requireSpecialChars: true,
+      requireSpecialChars: false,
       forbidCommonPasswords: true,
       forbidPersonalInfo: true,
       maxRepeatingChars: 3,
