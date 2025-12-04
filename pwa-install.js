@@ -12,7 +12,7 @@ class PWAInstallHandler {
     // Check if already installed
     this.checkInstallStatus();
     
-    // Listen for beforeinstallprompt event
+    // Listen for beforeinstallprompt event (Android Chrome/Edge)
     window.addEventListener('beforeinstallprompt', (e) => {
       console.log('📱 PWA install prompt available');
       e.preventDefault();
@@ -32,6 +32,38 @@ class PWAInstallHandler {
     if (window.matchMedia('(display-mode: standalone)').matches) {
       console.log('📱 Running as PWA');
       this.isInstalled = true;
+    }
+
+    // For iOS and other mobile browsers, show install prompt after a delay
+    // iOS doesn't support beforeinstallprompt, so we show manual instructions
+    if (!this.isInstalled) {
+      // Check if user previously dismissed (within last 7 days)
+      let shouldShow = true;
+      try {
+        const dismissedTime = localStorage.getItem('pwa-install-dismissed');
+        if (dismissedTime) {
+          const daysSinceDismissed = (Date.now() - parseInt(dismissedTime)) / (1000 * 60 * 60 * 24);
+          if (daysSinceDismissed < 7) {
+            shouldShow = false;
+          }
+        }
+      } catch (e) {
+        // Ignore localStorage errors
+      }
+
+      if (shouldShow) {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isIOS || (isMobile && !this.deferredPrompt)) {
+          // Show iOS/manual install prompt after 3 seconds
+          setTimeout(() => {
+            if (!this.isInstalled && !this.deferredPrompt) {
+              this.showIOSInstallPrompt();
+            }
+          }, 3000);
+        }
+      }
     }
   }
 
@@ -62,6 +94,12 @@ class PWAInstallHandler {
       setTimeout(() => {
         this.installButton.style.display = 'none';
       }, 500);
+      // Remember that user dismissed the prompt (don't show again for 7 days)
+      try {
+        localStorage.setItem('pwa-install-dismissed', Date.now().toString());
+      } catch (e) {
+        console.log('Could not save dismiss state');
+      }
     }
   }
 
@@ -95,7 +133,13 @@ class PWAInstallHandler {
   }
 
   addInstallButtonStyles() {
+    // Check if styles already added
+    if (document.getElementById('pwa-install-styles')) {
+      return;
+    }
+
     const style = document.createElement('style');
+    style.id = 'pwa-install-styles';
     style.textContent = `
       #pwa-install-button {
         position: fixed;
@@ -106,7 +150,7 @@ class PWAInstallHandler {
         color: white;
         border-radius: 12px;
         box-shadow: 0 8px 32px rgba(37, 99, 235, 0.3);
-        z-index: 10000;
+        z-index: 10001 !important;
         display: none;
         max-width: 400px;
         margin: 0 auto;
@@ -197,23 +241,70 @@ class PWAInstallHandler {
         }
       }
 
-      @media (max-width: 480px) {
+      @media (max-width: 768px) {
         #pwa-install-button {
-          left: 10px;
-          right: 10px;
-          bottom: 10px;
+          left: 10px !important;
+          right: 10px !important;
+          bottom: 10px !important;
+          max-width: none !important;
+          width: calc(100% - 20px) !important;
         }
         
         .pwa-install-content {
-          padding: 12px;
+          padding: 14px !important;
+          flex-wrap: nowrap;
+          gap: 10px;
+        }
+        
+        .pwa-install-text {
+          min-width: 0;
+          flex: 1 1 auto;
         }
         
         .pwa-install-text h4 {
-          font-size: 14px;
+          font-size: 15px !important;
+          margin-bottom: 4px;
         }
         
         .pwa-install-text p {
-          font-size: 12px;
+          font-size: 13px !important;
+          line-height: 1.3;
+        }
+
+        .pwa-install-btn {
+          flex: 0 0 auto;
+          white-space: nowrap;
+          padding: 10px 16px !important;
+        }
+
+        .pwa-install-icon {
+          font-size: 20px !important;
+        }
+      }
+
+      @media (max-width: 480px) {
+        #pwa-install-button {
+          left: 8px !important;
+          right: 8px !important;
+          bottom: 8px !important;
+          width: calc(100% - 16px) !important;
+        }
+        
+        .pwa-install-content {
+          padding: 12px !important;
+        }
+        
+        .pwa-install-text h4 {
+          font-size: 14px !important;
+        }
+        
+        .pwa-install-text p {
+          font-size: 12px !important;
+        }
+
+        .pwa-install-btn {
+          padding: 8px 14px !important;
+          font-size: 13px !important;
         }
       }
     `;
@@ -247,6 +338,47 @@ class PWAInstallHandler {
     }
   }
 
+  showIOSInstallPrompt() {
+    if (this.isInstalled) return;
+
+    // Create iOS install prompt
+    const iosPrompt = document.createElement('div');
+    iosPrompt.id = 'pwa-install-button';
+    iosPrompt.innerHTML = `
+      <div class="pwa-install-content">
+        <div class="pwa-install-icon">
+          <i class="fas fa-download"></i>
+        </div>
+        <div class="pwa-install-text">
+          <h4>Install Abai Springs App</h4>
+          <p>Tap <i class="fas fa-share"></i> then "Add to Home Screen"</p>
+        </div>
+        <button class="pwa-install-close" onclick="pwaInstallHandler.hideInstallButton()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    `;
+
+    // Add styles if not already added
+    if (!document.getElementById('pwa-install-styles')) {
+      this.addInstallButtonStyles();
+    }
+
+    // Replace or add the button
+    const existing = document.getElementById('pwa-install-button');
+    if (existing) {
+      existing.replaceWith(iosPrompt);
+      this.installButton = iosPrompt;
+    } else {
+      document.body.appendChild(iosPrompt);
+      this.installButton = iosPrompt;
+    }
+
+    // Show the button
+    this.installButton.style.display = 'block';
+    this.installButton.style.animation = 'slideInUp 0.5s ease-out';
+  }
+
   showInstallSuccess() {
     // Create success notification
     const successNotification = document.createElement('div');
@@ -271,7 +403,7 @@ class PWAInstallHandler {
         padding: 12px 24px;
         border-radius: 8px;
         box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
-        z-index: 10001;
+        z-index: 10002 !important;
         animation: slideInDown 0.5s ease-out;
       }
 
@@ -301,7 +433,9 @@ class PWAInstallHandler {
     setTimeout(() => {
       successNotification.style.animation = 'slideOutUp 0.5s ease-in';
       setTimeout(() => {
-        document.body.removeChild(successNotification);
+        if (document.body.contains(successNotification)) {
+          document.body.removeChild(successNotification);
+        }
       }, 500);
     }, 3000);
   }
